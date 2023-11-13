@@ -1,0 +1,26 @@
+一、Common包
+Common用来封装一些常用的公共方法。
+
+二、Dao包
+Dao主要用来封装对数据库的新增，删除，查询，修改。叫做数据访问层。ServiceImpl层调用Dao
+
+三、Service包
+服务层，相比Dao较高层次，可将多种方法封装起来。
+
+四、Po包（Persistant Object）
+Po将数据库表中的记录在java对象中。也就是一个Po就是一个数据库表中的一个记录。
+
+五、Vo包（value object）
+和PO一样也是包含数据，但PO中的数据一般跟数据库中的表是一一对应的，而VO不同，一般用来存储数据和传递数据。
+
+六、Util包
+Util是utiliy的缩写，是一个多功能，相当于工具的包，封装一些实用的方法和数据结构。
+
+七、Web包
+该包内放置Servlet接口，通常实现HttpServlet接口，它能够处理HTTP请求的servlet，它在原有Servlet接口上添加了一些与HTTP协议处理方法，它比Servlet接口的功能更为强大。
+
+八、Jsp
+是一种动态网页开发技术，主要用于实现界面部分。
+
+九、Jdbc
+Jdbc用来连接数据库，主要步骤：与数据库建立连接、发送sql语句、执行操作数据库的sql语句并处理结果。

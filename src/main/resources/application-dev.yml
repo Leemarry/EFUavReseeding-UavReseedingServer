@@ -1,0 +1,103 @@
+#
+#  yml的优先级会大于properties,所以如果同时存在这两种配置,
+#  因为properties是后加载的,所以此时yml就没有生效”
+#
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  datasource:
+    username: reseeding
+    password: cPCbtKjXmTc3r8KF
+    url: jdbc:mysql://175.178.237.52:3306/reseeding?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+#    driver-class-name: com.mysql.jdbc.Driver
+    #druid连接池配置
+    type: com.alibaba.druid.pool.DruidDataSource
+    initialSize: 5
+    minIdle: 5
+    maxActive: 20
+    maxWait: 60000
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    validationQuery: SELECT 1 FROM DUAL
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxPoolPreparedStatementPerConnectionSize: 20
+    filters: stat,wall,log4j
+    connectionProperties: druid.stat.mergeSql=true;druid.stat.slowSqlMillis=5000
+  config:
+    needEncrypt: false #是否需要对接口返回数据进行 加密
+    needDecrypt: false #是否需要对接收请求参数进行 解密
+    secretKey: efsdfe124587jshqcgszmghstcw54735 #AES加密私钥 32字节
+    secretIv: 553456qwdscfrtgb #AES密钥向量 16字节
+    encryptMd5Soft: water #账户密码MD5加盐
+    videoStreamStorage: false #流媒体服务器，true:自定义,false:云服务器
+    singleOn: false  #true 开启单点 false 关闭单点
+    # 光伏项目公钥，私钥
+    publishGuangfu: false #是否自动推送光伏检测数据
+    PhotoStorage: false #照片储存 true存本地 false存minio 查看 删除照片也是
+    DatabaseStorage: false #数据库储存 true 开始存
+    rsaPublicKey_pro_guangfu: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArQmpjAneqZ64ujSqaoVhFnch/MemFB6x2WEZKgreB8Tic3/qXoThRF/FYcbXcWeAIMlO+7szId/Dk3xTYuY5BZSI+it1EZZUjgduI3LZk56xQkZsdsGRpok6xsBD1RDgTG7mhf6pUkHd/xaqZEAcDtbwTcD9ocdTIBKKz2Rg5xAApUz69Rqrn7PRZUg+6ejlPtcYnbhwm5YfQYddgU3m/7sCjAvWAEhDT/8XlRWB/SDmnxEsKflg55gJKEdI2MutD/m6Gm9bCBTnNib9J+v3XqPYEhCLlHvT4y1/9Yi1v2wxb4ymk4HUJSDnmGpgXfrb3B/BjykV2rqjrIYkCAGv6QIDAQAB
+    rsaPrivateKey_pro_guangfu: MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCtCamMCd6pnri6NKpqhWEWdyH8x6YUHrHZYRkqCt4HxOJzf+pehOFEX8VhxtdxZ4AgyU77uzMh38OTfFNi5jkFlIj6K3URllSOB24jctmTnrFCRmx2wZGmiTrGwEPVEOBMbuaF/qlSQd3/FqpkQBwO1vBNwP2hx1MgEorPZGDnEAClTPr1Gqufs9FlSD7p6OU+1xiduHCblh9Bh12BTeb/uwKMC9YASENP/xeVFYH9IOafESwp+WDnmAkoR0jYy60P+boab1sIFOc2Jv0n6/deo9gSEIuUe9PjLX/1iLW/bDFvjKaTgdQlIOeYamBd+tvcH8GPKRXauqOshiQIAa/pAgMBAAECggEBAINjudT2zZbYSYZCZUA7BOyNC0aoxmeyovLfsr7kv5EAo751251norFLU1IaLQ8UOwsqMIoerAXFpfjAR4TqMVQWZCgphVwUXSH3bF8IX0OjFQ+w770A4DqnKvUtmpQXm2kOMIaAR0uJbiq6qCk1MNjnxlIT/8Ku2mSZD8PIgXgQveFGkzY6fHLL46NuR9GxpTTBAaEUhydqOvZayGE5OCCIJulASpaMTChySNSRctmQz99Slkdc9OwW93nd906OwDMrhopSV3uY4iYsIXYDH8w2/NX83zMcRSYltYpF4dmnJPdpWsZ7KBOqK640YuFAuTlXJSEfihAXNV4DHJzkuvECgYEA/9A395fm3oPtfrTizMl5rT7nB9zThKyK4JoUWWFabFrhHTC1YzDV95T0ZhoN4aYBcvu1Clj/SZKutNcdd69tDxQn9/3adN31NmJMjMOm8jo0KQdG0EKj05Cuv6S+m2vf8VC8Lh3AK6vx5TmKNiqajO0BquvebbTPVRav1xfUZfUCgYEArSn7j7WDLPJpgCnsJ8ZpFP7MvKsHn9qP6Uz0qo+goIC0jPF9ri1ncqTh9BdAxezU0eNAMzxG+5fJ/KMTOiaQy/RMuIdIK+2IBnnjCDOkUh8D41hgiySDoHrvlFi8QOa+gLXcsqIvCP5EgC9Utd9hd/CKZqmbAYnx93LWX96XdaUCgYEA85aMxInzf+z2CBIsaL5sy6g7DASdsRcvguGVAOsv1D/RXh9UiWgmRoOjGVoz36tYc+n0oS7PoHo5O+Aeoin8WkBiMsWZ8HCuH6QIqn1figYcRvkz1/ms0DdT/w7bpVlaPAoZtnwD0lH/m7tnvV5iHlFMpjnFaoeiaa6Zr+J0EMUCgYAXiiZ9YbJkUMvQtWI6AfnU9dJFL4bIz0BS+bgk24N9biGdK1Lnc5qldg6VTPfsMAa6RYc7r80CdJ7rrgt2EzoJz7sCNrmz5wVfw//95G9JDphLtn7hS2RtU2jwJKPqurNY8d//lJaKRW5wcn60fppUYKmfzRyaN/NhrQXBYJP8VQKBgFWWhwmip1QoBgDwIe0NxiXsS0Syl/WxpPoooxNJ+hSBUoJMm1bO+IEFPgZ+kIPDGY4VbyqZiB63sf+zD2ncJsiiRqAluYggrOqtilMGbTHBEwGaghbhD8xf236c88Ry7oXM9XM5FXhBIwAAcJ3X84qVf/E1VpSSnEebM9Rv3AMd
+  redis:
+    database: 2
+    host: 127.0.0.1
+    port: 6379
+    # Redis服务器链接密码（默认为空）
+    password:
+    timeout: 30000
+    pool:
+      # 链接池最大链接数（使用负值表示没有限制）
+      max-active: 8
+      # 链接池最大阻塞等待时间（使用负值表示没有限制）
+      max-wait: -1
+      # 链接池中的最大空闲链接
+      max-idle: 8
+      # 链接池中的最小空闲链接
+      min-idle: 0
+      # 链接超时时间（毫秒）
+      timeout: 0
+  mvc:
+    static-path-pattern: /images/**
+  resources:
+    static-locations: file:c:\efuav\UavSystem
+  servlet:
+    multipart:
+      max-file-size: 3072MB # 单个文件大小
+      max-request-size: 3072MB # 设置总上传的数据大小
+      enabled: true #开启
+app:
+  version: '@project.version@'
+  buildtime: '@timestamp@'
+minio:
+  AccessKey: efsoft
+  SecretKey: efuavminio76832gysc4s23324dsdsa
+  BucketName: efuav
+  BucketNameKmz: efuavkmz
+  BucketNameWord: efuavword
+  Endpoint: http://1.14.109.186:29000
+TxyTrtc:
+  TxyTrtcSdkAppId: 1400739024
+  TxyTrtcExpireTime: 604800
+  TxyTrtcSecretKey: e364909a702f53e1702412a4e130d98187f66a2ecca22dd4f382de1e2e6c276d
+GfMqtt:
+  GfMqttHost: tcp://127.0.0.5:5835
+  GfUsername: whwrj
+  GfPassword: whwrj
+  GfClientId_pub: gf_publish
+  GfTopic1: gfb/dangerStatistics
+  GfTopic2: gfb/dangerDetails
+
+# root日志级别
+logging:
+  config: classpath:logback.xml
+  log_path: D:/logs/water
+  level:
+    # root日志级别设置  trace/debug/info/warn/error
+    root: info
+    org:
+      hibernate: error
+      springframework:
+        web: info
+        security: info
