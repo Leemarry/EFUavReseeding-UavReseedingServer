@@ -24,7 +24,7 @@ import javax.servlet.http.HttpServletRequest;
  * @Description: null
  */
 @Component
-@ControllerAdvice(basePackages = "com.efuav.parkingapron.controller")
+@ControllerAdvice(basePackages = "com.bear.reseeding.controller")
 public class EncryResponseBodyAdvice implements ResponseBodyAdvice<Object> {
 
     /**

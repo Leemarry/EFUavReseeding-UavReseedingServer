@@ -27,6 +27,14 @@
         <result property="uLimitDate" column="u_limit_date" jdbcType="TIMESTAMP"/>
     </resultMap>
 
+    <!--登录-->
+    <select id="login" resultMap="EfUserMap">
+        select
+          id, u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email, u_sex, u_create_date, u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id, u_c_id, u_parent_id, u_limit_uav, u_limit_hive, u_limit_date
+        from ef_reseeding.ef_user
+        where u_login_name = #{userId} and u_login_password = #{userPwd}
+    </select>
+
     <!--查询单个-->
     <select id="queryById" resultMap="EfUserMap">
         select

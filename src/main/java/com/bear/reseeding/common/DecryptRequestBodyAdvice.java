@@ -25,7 +25,7 @@ import java.util.Objects;
  * @Description: null
  */
 @Component
-@ControllerAdvice(basePackages = "com.efuav.parkingapron.controller")
+@ControllerAdvice(basePackages = "com.bear.reseeding.controller")
 public class DecryptRequestBodyAdvice implements RequestBodyAdvice {
 
     /**

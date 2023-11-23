@@ -13,6 +13,64 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class AppConfig {
 
+    /**
+     * 获取MQTT服务地址
+     * tcp://119.45.227.52:1883
+     *
+     * @return
+     */
+    public String getHostAddress() {
+        return protocol + "://" + host + ":" + port;
+    }
+
+    /**
+     * 主机IP地址
+     */
+    @Value("${spring.mqtt.host:127.0.0.1}")
+    private String host;
+    /**
+     * 端口
+     */
+    @Value("${spring.mqtt.port:1883}")
+    private Integer port;
+
+
+    /**
+     * Mqtt连接密码
+     */
+    @Value("${spring.mqtt.pwd:123456}")
+    private String mqttpwd;
+    /**
+     * 订阅机巢主题
+     */
+    @Value("${spring.mqtt.subscribeTopicHive:efuav/HiveC/#}")
+    private String subscribeTopicHive;
+    /**
+     * 订阅翼飞无人机主题
+     */
+    @Value("${spring.mqtt.subscribeTopicEfuav:efuav/uavappC/#}")
+    private String subscribeTopicEfuav;
+    /**
+     * 订阅大疆无人机主题
+     */
+    @Value("${spring.mqtt.subscribeTopicDjiUav:efuav/djiappC/#}")
+    private String subscribeTopicDjiUav;
+    /**
+     * 发布公共机巢主题
+     */
+    @Value("${spring.mqtt.publishTopicHive:efuav/HiveS/#}")
+    private String publishTopicHive;
+    /**
+     * 发布公共翼飞无人机主题
+     */
+    @Value("${spring.mqtt.publishTopicEfuav:efuav/uavappS/#}")
+    private String publishTopicEfuav;
+    /**
+     * 发布公共大疆无人机主题
+     */
+    @Value("${spring.mqtt.publishTopicDjiUav:efuav/djiappS/#}")
+    private String publishTopicDjiUav;
+
     @Value("${server.port:8080}")
     public String servicePort;
 
@@ -91,7 +149,7 @@ public class AppConfig {
     @Value("${tencent.SMSSECREID}")
     private String SMSSECREID;
     /**
-     *  腾讯云短信 陶沙账户秘钥
+     * 腾讯云短信 陶沙账户秘钥
      */
     @Value("${tencent.SMSSECREKEY}")
     private String SMSSECREKEY;
@@ -106,7 +164,7 @@ public class AppConfig {
     @Value("${tencent.TEMPLATEID}")
     private String TEMPLATEID;
     /**
-     *短信注册ID
+     * 短信注册ID
      */
     @Value("${tencent.SMSREGISTERID}")
     private String SMSREGISTERID;
@@ -229,6 +287,47 @@ public class AppConfig {
     public void setTxyPlayName(String txyPlayName) {
         TxyPlayName = txyPlayName;
     }
+
+    public String getMqttpwd() {
+        return mqttpwd;
+    }
+
+    public void setMqttpwd(String mqttpwd) {
+        this.mqttpwd = mqttpwd;
+    }
+
+    public String getSubscribeTopicEfuav() {
+        return subscribeTopicEfuav;
+    }
+
+    public void setSubscribeTopicEfuav(String subscribeTopicEfuav) {
+        this.subscribeTopicEfuav = subscribeTopicEfuav;
+    }
+
+    public String getSubscribeTopicDjiUav() {
+        return subscribeTopicDjiUav;
+    }
+
+    public void setSubscribeTopicDjiUav(String subscribeTopicDjiUav) {
+        this.subscribeTopicDjiUav = subscribeTopicDjiUav;
+    }
+
+    public String getPublishTopicDjiUav() {
+        return publishTopicDjiUav;
+    }
+
+    public void setPublishTopicDjiUav(String publishTopicDjiUav) {
+        this.publishTopicDjiUav = publishTopicDjiUav;
+    }
+
+    public String getPublishTopicEfuav() {
+        return publishTopicEfuav;
+    }
+
+    public void setPublishTopicEfuav(String publishTopicEfuav) {
+        this.publishTopicEfuav = publishTopicEfuav;
+    }
+
 
     public boolean isDatabaseStorage() {
         return DatabaseStorage;

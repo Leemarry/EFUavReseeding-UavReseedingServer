@@ -3,6 +3,8 @@ package com.bear.reseeding;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.bear.reseeding.config.AppConfig;
+import com.bear.reseeding.datalink.MqttUtil;
+import com.bear.reseeding.model.MqttItem;
 import com.bear.reseeding.utils.LogUtil;
 import com.bear.reseeding.utils.RSAUtil;
 import com.ulisesbocchio.jasyptspringboot.annotation.EnableEncryptableProperties;
@@ -24,6 +26,9 @@ import java.security.KeyPair;
 @EnableScheduling
 @EnableEncryptableProperties
 public class MyApplication extends SpringBootServletInitializer {
+
+    private static MqttItem mqttDji;
+    private static MqttItem mqttEf;
 
     public static void main(String[] args) {
 //        test();
@@ -80,6 +85,7 @@ public class MyApplication extends SpringBootServletInitializer {
     static void Init() {
         InitRsa();
         InitFastJsonParm();
+        InitMqtt();
     }
 
     static void InitRsa() {
@@ -90,6 +96,28 @@ public class MyApplication extends SpringBootServletInitializer {
             LogUtil.logError("生成 RSA 密匙失败：" + e.getMessage());
         }
     }
+
+     //初始化 mqtt 连接
+    public static void InitMqtt() {
+        try {
+            String hostAddress = appConfig.getHostAddress();
+            String mqttpwd = appConfig.getMqttpwd();
+            String version = appConfig.serviceVersion;
+
+            mqttDji.init(hostAddress, "reseeding_dji_v" + version, mqttpwd, appConfig.getSubscribeTopicDjiUav(), appConfig.getPublishTopicDjiUav(), MqttUtil.Tag_Djiapp);
+            mqttDji.StartMqtt();
+
+            mqttEf.init(hostAddress, "reseeding_ef_v" + version, mqttpwd, appConfig.getSubscribeTopicEfuav(), appConfig.getPublishTopicEfuav(), MqttUtil.Tag_efuavapp);
+            mqttEf.StartMqtt();
+
+            MqttUtil.MapMqttItem.clear();
+            MqttUtil.MapMqttItem.put(MqttUtil.Tag_Djiapp, mqttDji);
+            MqttUtil.MapMqttItem.put(MqttUtil.Tag_efuavapp, mqttEf);
+        } catch (Exception e) {
+            LogUtil.logError("初始化Mqtt连接失败：" + e.toString());
+        }
+    }
+
 
 
     //初始化 fastjson 参数

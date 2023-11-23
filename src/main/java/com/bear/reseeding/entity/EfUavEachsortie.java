@@ -10,11 +10,11 @@ import java.io.Serializable;
  * @since 2023-11-23 18:59:58
  */
 public class EfUavEachsortie implements Serializable {
-    private static final long serialVersionUID = -31137681681879270L;
+    private static final long serialVersionUID = 474442800636219329L;
     /**
      * 主键
      */
-    private Integer id;
+    private String id;
     /**
      * 无人机编号
      */
@@ -38,15 +38,15 @@ public class EfUavEachsortie implements Serializable {
     /**
      * 飞行时长，秒
      */
-    private Integer flyingTime;
+    private String flyingTime;
     /**
      * 在线时长，秒
      */
-    private Integer onlineTime;
+    private String onlineTime;
     /**
      * 飞行航程，米
      */
-    private Double airRange;
+    private Float airRange;
     /**
      * 锁定时间
      */
@@ -63,33 +63,20 @@ public class EfUavEachsortie implements Serializable {
      * 飞行视频路径
      */
     private String flyVideoPath;
-    /**
-     * 测绘地址
-     */
-    private String place;
-    /**
-     * 当前架次挂载的种子总数
-     */
-    private Integer seedNumberAll;
-    /**
-     * 当前架次已经投放的种子总数
-     */
-    private Integer seedNumberUsed;
+
+    private String mission;
+
     /**
      * 外键：飞行时的航线信息，可空
      */
-    private Integer flyWpsId;
-    /**
-     * 任务信息
-     */
-    private String mission;
+    private int flyWpsId;
 
 
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 
@@ -133,27 +120,27 @@ public class EfUavEachsortie implements Serializable {
         this.aremdVoltage = aremdVoltage;
     }
 
-    public Integer getFlyingTime() {
+    public String getFlyingTime() {
         return flyingTime;
     }
 
-    public void setFlyingTime(Integer flyingTime) {
+    public void setFlyingTime(String flyingTime) {
         this.flyingTime = flyingTime;
     }
 
-    public Integer getOnlineTime() {
+    public String getOnlineTime() {
         return onlineTime;
     }
 
-    public void setOnlineTime(Integer onlineTime) {
+    public void setOnlineTime(String onlineTime) {
         this.onlineTime = onlineTime;
     }
 
-    public Double getAirRange() {
+    public Float getAirRange() {
         return airRange;
     }
 
-    public void setAirRange(Double airRange) {
+    public void setAirRange(Float airRange) {
         this.airRange = airRange;
     }
 
@@ -189,38 +176,6 @@ public class EfUavEachsortie implements Serializable {
         this.flyVideoPath = flyVideoPath;
     }
 
-    public String getPlace() {
-        return place;
-    }
-
-    public void setPlace(String place) {
-        this.place = place;
-    }
-
-    public Integer getSeedNumberAll() {
-        return seedNumberAll;
-    }
-
-    public void setSeedNumberAll(Integer seedNumberAll) {
-        this.seedNumberAll = seedNumberAll;
-    }
-
-    public Integer getSeedNumberUsed() {
-        return seedNumberUsed;
-    }
-
-    public void setSeedNumberUsed(Integer seedNumberUsed) {
-        this.seedNumberUsed = seedNumberUsed;
-    }
-
-    public Integer getFlyWpsId() {
-        return flyWpsId;
-    }
-
-    public void setFlyWpsId(Integer flyWpsId) {
-        this.flyWpsId = flyWpsId;
-    }
-
     public String getMission() {
         return mission;
     }
@@ -229,4 +184,32 @@ public class EfUavEachsortie implements Serializable {
         this.mission = mission;
     }
 
+    public int getFlyWpsId() {
+        return flyWpsId;
+    }
+
+    public void setFlyWpsId(int flyWpsId) {
+        this.flyWpsId = flyWpsId;
+    }
+
+
+    @Override
+    public String toString() {
+        return "EfUavEachsortie{" +
+                "id='" + id + '\'' +
+                ", uavId='" + uavId + '\'' +
+                ", connectTime=" + connectTime +
+                ", lastVoltage=" + lastVoltage +
+                ", aremdTime=" + aremdTime +
+                ", aremdVoltage=" + aremdVoltage +
+                ", flyingTime='" + flyingTime + '\'' +
+                ", onlineTime='" + onlineTime + '\'' +
+                ", airRange=" + airRange +
+                ", lockedTime=" + lockedTime +
+                ", lockedVoltage=" + lockedVoltage +
+                ", flyLogPath='" + flyLogPath + '\'' +
+                ", flyVideoPath='" + flyVideoPath + '\'' +
+                ", mission='" + mission + '\'' +
+                '}';
+    }
 }

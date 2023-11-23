@@ -62,8 +62,11 @@ public class EfUavEachsortieServiceImpl implements EfUavEachsortieService {
      */
     @Override
     public EfUavEachsortie update(EfUavEachsortie efUavEachsortie) {
-        this.efUavEachsortieDao.update(efUavEachsortie);
-        return this.queryById(efUavEachsortie.getId());
+        if (this.efUavEachsortieDao.update(efUavEachsortie) >= 0) {
+            return efUavEachsortie;
+        } else {
+            return null;
+        }
     }
 
     /**

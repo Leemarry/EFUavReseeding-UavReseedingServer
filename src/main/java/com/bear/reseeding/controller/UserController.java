@@ -66,6 +66,15 @@ public class UserController {
             } else {
                 LogUtil.logMessage(ipWww + "(" + ipLocal + ")账户: " + userId + " - " + userPwd + " 登录成功。");
             }
+            if (user.getUStatus() != null) {
+                if (user.getUStatus() == -1) {
+                    return ResultUtil.error("账号已删除!");
+                } else if (user.getUStatus() == -2) {
+                    return ResultUtil.error("账号已冻结");
+                } else if (user.getUStatus() == -3) {
+                    return ResultUtil.error("账号已失效!");
+                }
+            }
             String token = TokenUtil.sign(user);
             return ResultUtil.success(token);
         } catch (Exception e) {

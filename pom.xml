@@ -47,6 +47,18 @@
             <artifactId>spring-boot-starter-redis</artifactId>
             <version>1.4.1.RELEASE</version>
         </dependency>
+        <!-- MQTT -->
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+        <!--MQTT依赖包-->
+        <dependency>
+            <groupId>org.fusesource.mqtt-client</groupId>
+            <artifactId>mqtt-client</artifactId>
+            <version>1.14</version>
+        </dependency>
         <!-- websocket -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
