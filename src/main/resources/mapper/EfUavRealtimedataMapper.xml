@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUavRealtimedataDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUavRealtimedata" id="EfUavRealtimedataMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="dataDate" column="data_date" jdbcType="TIMESTAMP"/>
+        <result property="flightMode" column="flight_mode" jdbcType="VARCHAR"/>
+        <result property="lat" column="lat" jdbcType="NUMERIC"/>
+        <result property="lng" column="lng" jdbcType="NUMERIC"/>
+        <result property="alt" column="alt" jdbcType="NUMERIC"/>
+        <result property="altabs" column="altabs" jdbcType="NUMERIC"/>
+        <result property="roll" column="roll" jdbcType="NUMERIC"/>
+        <result property="pitch" column="pitch" jdbcType="NUMERIC"/>
+        <result property="yaw" column="yaw" jdbcType="NUMERIC"/>
+        <result property="xySpeed" column="xy_speed" jdbcType="NUMERIC"/>
+        <result property="zSpeed" column="z_speed" jdbcType="NUMERIC"/>
+        <result property="gpsStatus" column="gps_status" jdbcType="NUMERIC"/>
+        <result property="satecount" column="satecount" jdbcType="INTEGER"/>
+        <result property="batteryValue" column="battery_value" jdbcType="NUMERIC"/>
+        <result property="batteryPert" column="battery_pert" jdbcType="INTEGER"/>
+        <result property="uavStatus" column="uav_status" jdbcType="NUMERIC"/>
+        <result property="uavAbnormal" column="uav_abnormal" jdbcType="NUMERIC"/>
+        <result property="linkAirDownload" column="link_air_download" jdbcType="INTEGER"/>
+        <result property="linkAirUpload" column="link_air_Upload" jdbcType="INTEGER"/>
+        <result property="aremd" column="aremd" jdbcType="INTEGER"/>
+        <result property="systemStatus" column="system_status" jdbcType="INTEGER"/>
+        <result property="uavCurentHive" column="uav_curent_hive" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUavRealtimedataMap">
+        select
+          id, uav_id, data_date, flight_mode, lat, lng, alt, altabs, roll, pitch, yaw, xy_speed, z_speed, gps_status, satecount, battery_value, battery_pert, uav_status, uav_abnormal, link_air_download, link_air_Upload, aremd, system_status, uav_curent_hive
+        from ef_reseeding.ef_uav_realtimedata
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUavRealtimedataMap">
+        select
+          id, uav_id, data_date, flight_mode, lat, lng, alt, altabs, roll, pitch, yaw, xy_speed, z_speed, gps_status, satecount, battery_value, battery_pert, uav_status, uav_abnormal, link_air_download, link_air_Upload, aremd, system_status, uav_curent_hive
+        from ef_reseeding.ef_uav_realtimedata
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUavRealtimedataMap">
+        select
+        id, uav_id, data_date, flight_mode, lat, lng, alt, altabs, roll, pitch, yaw, xy_speed, z_speed, gps_status,
+        satecount, battery_value, battery_pert, uav_status, uav_abnormal, link_air_download, link_air_Upload, aremd,
+        system_status, uav_curent_hive
+        from ef_reseeding.ef_uav_realtimedata
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="uavId != null and uavId != ''">
+                and uav_id = #{uavId}
+            </if>
+            <if test="dataDate != null">
+                and data_date = #{dataDate}
+            </if>
+            <if test="flightMode != null and flightMode != ''">
+                and flight_mode = #{flightMode}
+            </if>
+            <if test="lat != null">
+                and lat = #{lat}
+            </if>
+            <if test="lng != null">
+                and lng = #{lng}
+            </if>
+            <if test="alt != null">
+                and alt = #{alt}
+            </if>
+            <if test="altabs != null">
+                and altabs = #{altabs}
+            </if>
+            <if test="roll != null">
+                and roll = #{roll}
+            </if>
+            <if test="pitch != null">
+                and pitch = #{pitch}
+            </if>
+            <if test="yaw != null">
+                and yaw = #{yaw}
+            </if>
+            <if test="xySpeed != null">
+                and xy_speed = #{xySpeed}
+            </if>
+            <if test="zSpeed != null">
+                and z_speed = #{zSpeed}
+            </if>
+            <if test="gpsStatus != null">
+                and gps_status = #{gpsStatus}
+            </if>
+            <if test="satecount != null">
+                and satecount = #{satecount}
+            </if>
+            <if test="batteryValue != null">
+                and battery_value = #{batteryValue}
+            </if>
+            <if test="batteryPert != null">
+                and battery_pert = #{batteryPert}
+            </if>
+            <if test="uavStatus != null">
+                and uav_status = #{uavStatus}
+            </if>
+            <if test="uavAbnormal != null">
+                and uav_abnormal = #{uavAbnormal}
+            </if>
+            <if test="linkAirDownload != null">
+                and link_air_download = #{linkAirDownload}
+            </if>
+            <if test="linkAirUpload != null">
+                and link_air_Upload = #{linkAirUpload}
+            </if>
+            <if test="aremd != null">
+                and aremd = #{aremd}
+            </if>
+            <if test="systemStatus != null">
+                and system_status = #{systemStatus}
+            </if>
+            <if test="uavCurentHive != null and uavCurentHive != ''">
+                and uav_curent_hive = #{uavCurentHive}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_realtimedata(uav_id, data_date, flight_mode, lat, lng, alt, altabs, roll, pitch, yaw, xy_speed, z_speed, gps_status, satecount, battery_value, battery_pert, uav_status, uav_abnormal, link_air_download, link_air_Upload, aremd, system_status, uav_curent_hive)
+        values (#{uavId}, #{dataDate}, #{flightMode}, #{lat}, #{lng}, #{alt}, #{altabs}, #{roll}, #{pitch}, #{yaw}, #{xySpeed}, #{zSpeed}, #{gpsStatus}, #{satecount}, #{batteryValue}, #{batteryPert}, #{uavStatus}, #{uavAbnormal}, #{linkAirDownload}, #{linkAirUpload}, #{aremd}, #{systemStatus}, #{uavCurentHive})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_realtimedata(uav_id, data_date, flight_mode, lat, lng, alt, altabs, roll, pitch,
+        yaw, xy_speed, z_speed, gps_status, satecount, battery_value, battery_pert, uav_status, uav_abnormal,
+        link_air_download, link_air_Upload, aremd, system_status, uav_curent_hive)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uavId}, #{entity.dataDate}, #{entity.flightMode}, #{entity.lat}, #{entity.lng}, #{entity.alt},
+            #{entity.altabs}, #{entity.roll}, #{entity.pitch}, #{entity.yaw}, #{entity.xySpeed}, #{entity.zSpeed},
+            #{entity.gpsStatus}, #{entity.satecount}, #{entity.batteryValue}, #{entity.batteryPert},
+            #{entity.uavStatus}, #{entity.uavAbnormal}, #{entity.linkAirDownload}, #{entity.linkAirUpload},
+            #{entity.aremd}, #{entity.systemStatus}, #{entity.uavCurentHive})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_realtimedata(uav_id, data_date, flight_mode, lat, lng, alt, altabs, roll, pitch,
+        yaw, xy_speed, z_speed, gps_status, satecount, battery_value, battery_pert, uav_status, uav_abnormal,
+        link_air_download, link_air_Upload, aremd, system_status, uav_curent_hive)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uavId}, #{entity.dataDate}, #{entity.flightMode}, #{entity.lat}, #{entity.lng}, #{entity.alt},
+            #{entity.altabs}, #{entity.roll}, #{entity.pitch}, #{entity.yaw}, #{entity.xySpeed}, #{entity.zSpeed},
+            #{entity.gpsStatus}, #{entity.satecount}, #{entity.batteryValue}, #{entity.batteryPert},
+            #{entity.uavStatus}, #{entity.uavAbnormal}, #{entity.linkAirDownload}, #{entity.linkAirUpload},
+            #{entity.aremd}, #{entity.systemStatus}, #{entity.uavCurentHive})
+        </foreach>
+        on duplicate key update
+        uav_id = values(uav_id) , data_date = values(data_date) , flight_mode = values(flight_mode) , lat = values(lat)
+        , lng = values(lng) , alt = values(alt) , altabs = values(altabs) , roll = values(roll) , pitch = values(pitch)
+        , yaw = values(yaw) , xy_speed = values(xy_speed) , z_speed = values(z_speed) , gps_status = values(gps_status)
+        , satecount = values(satecount) , battery_value = values(battery_value) , battery_pert = values(battery_pert) ,
+        uav_status = values(uav_status) , uav_abnormal = values(uav_abnormal) , link_air_download =
+        values(link_air_download) , link_air_Upload = values(link_air_Upload) , aremd = values(aremd) , system_status =
+        values(system_status) , uav_curent_hive = values(uav_curent_hive)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_uav_realtimedata
+        <set>
+            <if test="uavId != null and uavId != ''">
+                uav_id = #{uavId},
+            </if>
+            <if test="dataDate != null">
+                data_date = #{dataDate},
+            </if>
+            <if test="flightMode != null and flightMode != ''">
+                flight_mode = #{flightMode},
+            </if>
+            <if test="lat != null">
+                lat = #{lat},
+            </if>
+            <if test="lng != null">
+                lng = #{lng},
+            </if>
+            <if test="alt != null">
+                alt = #{alt},
+            </if>
+            <if test="altabs != null">
+                altabs = #{altabs},
+            </if>
+            <if test="roll != null">
+                roll = #{roll},
+            </if>
+            <if test="pitch != null">
+                pitch = #{pitch},
+            </if>
+            <if test="yaw != null">
+                yaw = #{yaw},
+            </if>
+            <if test="xySpeed != null">
+                xy_speed = #{xySpeed},
+            </if>
+            <if test="zSpeed != null">
+                z_speed = #{zSpeed},
+            </if>
+            <if test="gpsStatus != null">
+                gps_status = #{gpsStatus},
+            </if>
+            <if test="satecount != null">
+                satecount = #{satecount},
+            </if>
+            <if test="batteryValue != null">
+                battery_value = #{batteryValue},
+            </if>
+            <if test="batteryPert != null">
+                battery_pert = #{batteryPert},
+            </if>
+            <if test="uavStatus != null">
+                uav_status = #{uavStatus},
+            </if>
+            <if test="uavAbnormal != null">
+                uav_abnormal = #{uavAbnormal},
+            </if>
+            <if test="linkAirDownload != null">
+                link_air_download = #{linkAirDownload},
+            </if>
+            <if test="linkAirUpload != null">
+                link_air_Upload = #{linkAirUpload},
+            </if>
+            <if test="aremd != null">
+                aremd = #{aremd},
+            </if>
+            <if test="systemStatus != null">
+                system_status = #{systemStatus},
+            </if>
+            <if test="uavCurentHive != null and uavCurentHive != ''">
+                uav_curent_hive = #{uavCurentHive},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_uav_realtimedata where id = #{id}
+    </delete>
+
+</mapper>
+

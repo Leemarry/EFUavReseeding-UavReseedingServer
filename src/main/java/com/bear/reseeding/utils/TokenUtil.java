@@ -5,7 +5,7 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import com.bear.reseeding.entity.TUser;
+import com.bear.reseeding.entity.EfUser;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
@@ -50,7 +50,7 @@ public class TokenUtil {
      * @param user 用户信息
      * @return
      */
-    public static String sign(TUser user) {
+    public static String sign(EfUser user) {
         try {
             //过期时间
             Date date = new Date(System.currentTimeMillis() + timeOut);
@@ -64,8 +64,8 @@ public class TokenUtil {
             return JWT.create()
                     .withHeader(header)
                     .withClaim("userId", user.getId())
-                    .withClaim("userLoginName", user.getUserLoginId())
-                    .withClaim("userName", user.getUserName())
+                    .withClaim("userLoginName", user.getULoginName())
+                    .withClaim("userName", user.getUName())
                     .withExpiresAt(date)
                     .sign(algorithm);
         } catch (Exception e) {
@@ -80,14 +80,13 @@ public class TokenUtil {
      * @param token
      * @return
      */
-    public static TUser getUser(String token) {
+    public static EfUser getUser(String token) {
         try {
             DecodedJWT jwt = JWT.decode(token);
-            TUser user = new TUser();
+            EfUser user = new EfUser();
             user.setId(jwt.getClaim("userId").asInt());
-//            user.setULoginName(jwt.getClaim("ipLocal").asString());
-//            user.setULoginName(jwt.getClaim("ipWww").asString());
-//            user.setULoginName(jwt.getClaim("sessionId").asString());
+            user.setULoginName(jwt.getClaim("userLoginName").asString());
+            user.setUName(jwt.getClaim("userName").asString());
             return user;
         } catch (JWTDecodeException e) {
             return null;

@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfMediaPhotoDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfMediaPhoto" id="EfMediaPhotoMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="createDate" column="create_date" jdbcType="TIMESTAMP"/>
+        <result property="deviceid" column="deviceId" jdbcType="VARCHAR"/>
+        <result property="imageTag" column="image_tag" jdbcType="VARCHAR"/>
+        <result property="imageGroup" column="image_group" jdbcType="VARCHAR"/>
+        <result property="type" column="type" jdbcType="INTEGER"/>
+        <result property="sourceId" column="source_id" jdbcType="INTEGER"/>
+        <result property="cameraVideoStreamSource" column="camera_video_stream_source" jdbcType="VARCHAR"/>
+        <result property="pathImage" column="path_image" jdbcType="VARCHAR"/>
+        <result property="sizeImage" column="size_image" jdbcType="NUMERIC"/>
+        <result property="pathThumbnail" column="path_thumbnail" jdbcType="VARCHAR"/>
+        <result property="sizeThumbnail" column="size_thumbnail" jdbcType="NUMERIC"/>
+        <result property="pathImageAnalysis" column="path_image_analysis" jdbcType="VARCHAR"/>
+        <result property="sizeImageAnalysis" column="size_image_analysis" jdbcType="NUMERIC"/>
+        <result property="lat" column="lat" jdbcType="NUMERIC"/>
+        <result property="lng" column="lng" jdbcType="NUMERIC"/>
+        <result property="alt" column="alt" jdbcType="NUMERIC"/>
+        <result property="altabs" column="altabs" jdbcType="NUMERIC"/>
+        <result property="roll" column="roll" jdbcType="VARCHAR"/>
+        <result property="pitch" column="pitch" jdbcType="VARCHAR"/>
+        <result property="yaw" column="yaw" jdbcType="VARCHAR"/>
+        <result property="focalLength" column="focal_length" jdbcType="NUMERIC"/>
+        <result property="gimbalRoll" column="gimbal_roll" jdbcType="VARCHAR"/>
+        <result property="gimbalPitch" column="gimbal_pitch" jdbcType="VARCHAR"/>
+        <result property="gimbalYaw" column="gimbal_yaw" jdbcType="VARCHAR"/>
+        <result property="place" column="place" jdbcType="VARCHAR"/>
+        <result property="cavityCount" column="cavity_count" jdbcType="INTEGER"/>
+        <result property="eachsortieId" column="eachsortie_id" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfMediaPhotoMap">
+        select
+        id, create_date, deviceId, image_tag, image_group, type, source_id, camera_video_stream_source, path_image,
+        size_image, path_thumbnail, size_thumbnail, path_image_analysis, size_image_analysis, lat, lng, alt, altabs,
+        roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch, gimbal_yaw, place, cavity_count, eachsortie_id
+        from ef_reseeding.ef_media_photo
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfMediaPhotoMap">
+        select
+        id, create_date, deviceId, image_tag, image_group, type, source_id, camera_video_stream_source, path_image,
+        size_image, path_thumbnail, size_thumbnail, path_image_analysis, size_image_analysis, lat, lng, alt, altabs,
+        roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch, gimbal_yaw, place, cavity_count, eachsortie_id
+        from ef_reseeding.ef_media_photo
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfMediaPhotoMap">
+        select
+        id, create_date, deviceId, image_tag, image_group, type, source_id, camera_video_stream_source, path_image,
+        size_image, path_thumbnail, size_thumbnail, path_image_analysis, size_image_analysis, lat, lng, alt, altabs,
+        roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch, gimbal_yaw, place, cavity_count, eachsortie_id
+        from ef_reseeding.ef_media_photo
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="createDate != null">
+                and create_date = #{createDate}
+            </if>
+            <if test="deviceid != null and deviceid != ''">
+                and deviceId = #{deviceid}
+            </if>
+            <if test="imageTag != null and imageTag != ''">
+                and image_tag = #{imageTag}
+            </if>
+            <if test="imageGroup != null and imageGroup != ''">
+                and image_group = #{imageGroup}
+            </if>
+            <if test="type != null">
+                and type = #{type}
+            </if>
+            <if test="sourceId != null">
+                and source_id = #{sourceId}
+            </if>
+            <if test="cameraVideoStreamSource != null and cameraVideoStreamSource != ''">
+                and camera_video_stream_source = #{cameraVideoStreamSource}
+            </if>
+            <if test="pathImage != null and pathImage != ''">
+                and path_image = #{pathImage}
+            </if>
+            <if test="sizeImage != null">
+                and size_image = #{sizeImage}
+            </if>
+            <if test="pathThumbnail != null and pathThumbnail != ''">
+                and path_thumbnail = #{pathThumbnail}
+            </if>
+            <if test="sizeThumbnail != null">
+                and size_thumbnail = #{sizeThumbnail}
+            </if>
+            <if test="pathImageAnalysis != null and pathImageAnalysis != ''">
+                and path_image_analysis = #{pathImageAnalysis}
+            </if>
+            <if test="sizeImageAnalysis != null">
+                and size_image_analysis = #{sizeImageAnalysis}
+            </if>
+            <if test="lat != null">
+                and lat = #{lat}
+            </if>
+            <if test="lng != null">
+                and lng = #{lng}
+            </if>
+            <if test="alt != null">
+                and alt = #{alt}
+            </if>
+            <if test="altabs != null">
+                and altabs = #{altabs}
+            </if>
+            <if test="roll != null">
+                and roll = #{roll}
+            </if>
+            <if test="pitch != null">
+                and pitch = #{pitch}
+            </if>
+            <if test="yaw != null">
+                and yaw = #{yaw}
+            </if>
+            <if test="focalLength != null">
+                and focal_length = #{focalLength}
+            </if>
+            <if test="gimbalRoll != null">
+                and gimbal_roll = #{gimbalRoll}
+            </if>
+            <if test="gimbalPitch != null">
+                and gimbal_pitch = #{gimbalPitch}
+            </if>
+            <if test="gimbalYaw != null">
+                and gimbal_yaw = #{gimbalYaw}
+            </if>
+            <if test="place != null and place != ''">
+                and place = #{place}
+            </if>
+            <if test="cavityCount != null">
+                and cavity_count = #{cavityCount}
+            </if>
+            <if test="eachsortieId != null">
+                and eachsortie_id = #{eachsortieId}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_media_photo(create_date, deviceId, image_tag, image_group, type, source_id,
+        camera_video_stream_source, path_image, size_image, path_thumbnail, size_thumbnail, path_image_analysis,
+        size_image_analysis, lat, lng, alt, altabs, roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch,
+        gimbal_yaw, place, cavity_count, eachsortie_id)
+        values (#{createDate}, #{deviceid}, #{imageTag}, #{imageGroup}, #{type}, #{sourceId},
+        #{cameraVideoStreamSource}, #{pathImage}, #{sizeImage}, #{pathThumbnail}, #{sizeThumbnail},
+        #{pathImageAnalysis}, #{sizeImageAnalysis}, #{lat}, #{lng}, #{alt}, #{altabs}, #{roll}, #{pitch}, #{yaw},
+        #{focalLength}, #{gimbalRoll}, #{gimbalPitch}, #{gimbalYaw}, #{place}, #{cavityCount}, #{eachsortieId})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_media_photo(create_date, deviceId, image_tag, image_group, type, source_id,
+        camera_video_stream_source, path_image, size_image, path_thumbnail, size_thumbnail, path_image_analysis,
+        size_image_analysis, lat, lng, alt, altabs, roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch,
+        gimbal_yaw, place, cavity_count, eachsortie_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.createDate}, #{entity.deviceid}, #{entity.imageTag}, #{entity.imageGroup}, #{entity.type},
+            #{entity.sourceId}, #{entity.cameraVideoStreamSource}, #{entity.pathImage}, #{entity.sizeImage},
+            #{entity.pathThumbnail}, #{entity.sizeThumbnail}, #{entity.pathImageAnalysis}, #{entity.sizeImageAnalysis},
+            #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.altabs}, #{entity.roll}, #{entity.pitch},
+            #{entity.yaw}, #{entity.focalLength}, #{entity.gimbalRoll}, #{entity.gimbalPitch}, #{entity.gimbalYaw},
+            #{entity.place}, #{entity.cavityCount}, #{entity.eachsortieId})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_media_photo(create_date, deviceId, image_tag, image_group, type, source_id,
+        camera_video_stream_source, path_image, size_image, path_thumbnail, size_thumbnail, path_image_analysis,
+        size_image_analysis, lat, lng, alt, altabs, roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch,
+        gimbal_yaw, place, cavity_count, eachsortie_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.createDate}, #{entity.deviceid}, #{entity.imageTag}, #{entity.imageGroup}, #{entity.type},
+            #{entity.sourceId}, #{entity.cameraVideoStreamSource}, #{entity.pathImage}, #{entity.sizeImage},
+            #{entity.pathThumbnail}, #{entity.sizeThumbnail}, #{entity.pathImageAnalysis}, #{entity.sizeImageAnalysis},
+            #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.altabs}, #{entity.roll}, #{entity.pitch},
+            #{entity.yaw}, #{entity.focalLength}, #{entity.gimbalRoll}, #{entity.gimbalPitch}, #{entity.gimbalYaw},
+            #{entity.place}, #{entity.cavityCount}, #{entity.eachsortieId})
+        </foreach>
+        on duplicate key update
+        create_date = values(create_date) , deviceId = values(deviceId) , image_tag = values(image_tag) , image_group =
+        values(image_group) , type = values(type) , source_id = values(source_id) , camera_video_stream_source =
+        values(camera_video_stream_source) , path_image = values(path_image) , size_image = values(size_image) ,
+        path_thumbnail = values(path_thumbnail) , size_thumbnail = values(size_thumbnail) , path_image_analysis =
+        values(path_image_analysis) , size_image_analysis = values(size_image_analysis) , lat = values(lat) , lng =
+        values(lng) , alt = values(alt) , altabs = values(altabs) , roll = values(roll) , pitch = values(pitch) , yaw =
+        values(yaw) , focal_length = values(focal_length) , gimbal_roll = values(gimbal_roll) , gimbal_pitch =
+        values(gimbal_pitch) , gimbal_yaw = values(gimbal_yaw) , place = values(place) , cavity_count =
+        values(cavity_count) , eachsortie_id = values(eachsortie_id)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_media_photo
+        <set>
+            <if test="createDate != null">
+                create_date = #{createDate},
+            </if>
+            <if test="deviceid != null and deviceid != ''">
+                deviceId = #{deviceid},
+            </if>
+            <if test="imageTag != null and imageTag != ''">
+                image_tag = #{imageTag},
+            </if>
+            <if test="imageGroup != null and imageGroup != ''">
+                image_group = #{imageGroup},
+            </if>
+            <if test="type != null">
+                type = #{type},
+            </if>
+            <if test="sourceId != null">
+                source_id = #{sourceId},
+            </if>
+            <if test="cameraVideoStreamSource != null and cameraVideoStreamSource != ''">
+                camera_video_stream_source = #{cameraVideoStreamSource},
+            </if>
+            <if test="pathImage != null and pathImage != ''">
+                path_image = #{pathImage},
+            </if>
+            <if test="sizeImage != null">
+                size_image = #{sizeImage},
+            </if>
+            <if test="pathThumbnail != null and pathThumbnail != ''">
+                path_thumbnail = #{pathThumbnail},
+            </if>
+            <if test="sizeThumbnail != null">
+                size_thumbnail = #{sizeThumbnail},
+            </if>
+            <if test="pathImageAnalysis != null and pathImageAnalysis != ''">
+                path_image_analysis = #{pathImageAnalysis},
+            </if>
+            <if test="sizeImageAnalysis != null">
+                size_image_analysis = #{sizeImageAnalysis},
+            </if>
+            <if test="lat != null">
+                lat = #{lat},
+            </if>
+            <if test="lng != null">
+                lng = #{lng},
+            </if>
+            <if test="alt != null">
+                alt = #{alt},
+            </if>
+            <if test="altabs != null">
+                altabs = #{altabs},
+            </if>
+            <if test="roll != null">
+                roll = #{roll},
+            </if>
+            <if test="pitch != null">
+                pitch = #{pitch},
+            </if>
+            <if test="yaw != null">
+                yaw = #{yaw},
+            </if>
+            <if test="focalLength != null">
+                focal_length = #{focalLength},
+            </if>
+            <if test="gimbalRoll != null">
+                gimbal_roll = #{gimbalRoll},
+            </if>
+            <if test="gimbalPitch != null">
+                gimbal_pitch = #{gimbalPitch},
+            </if>
+            <if test="gimbalYaw != null">
+                gimbal_yaw = #{gimbalYaw},
+            </if>
+            <if test="place != null and place != ''">
+                place = #{place},
+            </if>
+            <if test="cavityCount != null">
+                cavity_count = #{cavityCount},
+            </if>
+            <if test="eachsortieId != null">
+                eachsortie_id = #{eachsortieId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_media_photo where id = #{id}
+    </delete>
+
+</mapper>
+

@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUserDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUser" id="EfUserMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="uLoginName" column="u_login_name" jdbcType="VARCHAR"/>
+        <result property="uLoginPassword" column="u_login_password" jdbcType="VARCHAR"/>
+        <result property="uName" column="u_name" jdbcType="VARCHAR"/>
+        <result property="uAge" column="u_age" jdbcType="VARCHAR"/>
+        <result property="uPhone" column="u_phone" jdbcType="VARCHAR"/>
+        <result property="uAddress" column="u_address" jdbcType="VARCHAR"/>
+        <result property="uEmail" column="u_email" jdbcType="VARCHAR"/>
+        <result property="uSex" column="u_sex" jdbcType="BOOLEAN"/>
+        <result property="uCreateDate" column="u_create_date" jdbcType="TIMESTAMP"/>
+        <result property="uCreateByUser" column="u_create_by_user" jdbcType="VARCHAR"/>
+        <result property="uUpdateDate" column="u_update_date" jdbcType="TIMESTAMP"/>
+        <result property="uUpdateByUser" column="u_update_by_user" jdbcType="VARCHAR"/>
+        <result property="uIco" column="u_ico" jdbcType="VARCHAR"/>
+        <result property="uDescription" column="u_description" jdbcType="VARCHAR"/>
+        <result property="uStatus" column="u_status" jdbcType="INTEGER"/>
+        <result property="uRId" column="u_r_id" jdbcType="INTEGER"/>
+        <result property="uCId" column="u_c_id" jdbcType="INTEGER"/>
+        <result property="uParentId" column="u_parent_id" jdbcType="INTEGER"/>
+        <result property="uLimitUav" column="u_limit_uav" jdbcType="INTEGER"/>
+        <result property="uLimitHive" column="u_limit_hive" jdbcType="INTEGER"/>
+        <result property="uLimitDate" column="u_limit_date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUserMap">
+        select
+          id, u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email, u_sex, u_create_date, u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id, u_c_id, u_parent_id, u_limit_uav, u_limit_hive, u_limit_date
+        from ef_reseeding.ef_user
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUserMap">
+        select
+          id, u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email, u_sex, u_create_date, u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id, u_c_id, u_parent_id, u_limit_uav, u_limit_hive, u_limit_date
+        from ef_reseeding.ef_user
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUserMap">
+        select
+        id, u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email, u_sex, u_create_date,
+        u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id, u_c_id, u_parent_id,
+        u_limit_uav, u_limit_hive, u_limit_date
+        from ef_reseeding.ef_user
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="uLoginName != null and uLoginName != ''">
+                and u_login_name = #{uLoginName}
+            </if>
+            <if test="uLoginPassword != null and uLoginPassword != ''">
+                and u_login_password = #{uLoginPassword}
+            </if>
+            <if test="uName != null and uName != ''">
+                and u_name = #{uName}
+            </if>
+            <if test="uAge != null and uAge != ''">
+                and u_age = #{uAge}
+            </if>
+            <if test="uPhone != null and uPhone != ''">
+                and u_phone = #{uPhone}
+            </if>
+            <if test="uAddress != null and uAddress != ''">
+                and u_address = #{uAddress}
+            </if>
+            <if test="uEmail != null and uEmail != ''">
+                and u_email = #{uEmail}
+            </if>
+            <if test="uSex != null">
+                and u_sex = #{uSex}
+            </if>
+            <if test="uCreateDate != null">
+                and u_create_date = #{uCreateDate}
+            </if>
+            <if test="uCreateByUser != null and uCreateByUser != ''">
+                and u_create_by_user = #{uCreateByUser}
+            </if>
+            <if test="uUpdateDate != null">
+                and u_update_date = #{uUpdateDate}
+            </if>
+            <if test="uUpdateByUser != null and uUpdateByUser != ''">
+                and u_update_by_user = #{uUpdateByUser}
+            </if>
+            <if test="uIco != null and uIco != ''">
+                and u_ico = #{uIco}
+            </if>
+            <if test="uDescription != null and uDescription != ''">
+                and u_description = #{uDescription}
+            </if>
+            <if test="uStatus != null">
+                and u_status = #{uStatus}
+            </if>
+            <if test="uRId != null">
+                and u_r_id = #{uRId}
+            </if>
+            <if test="uCId != null">
+                and u_c_id = #{uCId}
+            </if>
+            <if test="uParentId != null">
+                and u_parent_id = #{uParentId}
+            </if>
+            <if test="uLimitUav != null">
+                and u_limit_uav = #{uLimitUav}
+            </if>
+            <if test="uLimitHive != null">
+                and u_limit_hive = #{uLimitHive}
+            </if>
+            <if test="uLimitDate != null">
+                and u_limit_date = #{uLimitDate}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user(u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email, u_sex, u_create_date, u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id, u_c_id, u_parent_id, u_limit_uav, u_limit_hive, u_limit_date)
+        values (#{uLoginName}, #{uLoginPassword}, #{uName}, #{uAge}, #{uPhone}, #{uAddress}, #{uEmail}, #{uSex}, #{uCreateDate}, #{uCreateByUser}, #{uUpdateDate}, #{uUpdateByUser}, #{uIco}, #{uDescription}, #{uStatus}, #{uRId}, #{uCId}, #{uParentId}, #{uLimitUav}, #{uLimitHive}, #{uLimitDate})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user(u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email,
+        u_sex, u_create_date, u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id,
+        u_c_id, u_parent_id, u_limit_uav, u_limit_hive, u_limit_date)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uLoginName}, #{entity.uLoginPassword}, #{entity.uName}, #{entity.uAge}, #{entity.uPhone},
+            #{entity.uAddress}, #{entity.uEmail}, #{entity.uSex}, #{entity.uCreateDate}, #{entity.uCreateByUser},
+            #{entity.uUpdateDate}, #{entity.uUpdateByUser}, #{entity.uIco}, #{entity.uDescription}, #{entity.uStatus},
+            #{entity.uRId}, #{entity.uCId}, #{entity.uParentId}, #{entity.uLimitUav}, #{entity.uLimitHive},
+            #{entity.uLimitDate})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user(u_login_name, u_login_password, u_name, u_age, u_phone, u_address, u_email,
+        u_sex, u_create_date, u_create_by_user, u_update_date, u_update_by_user, u_ico, u_description, u_status, u_r_id,
+        u_c_id, u_parent_id, u_limit_uav, u_limit_hive, u_limit_date)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uLoginName}, #{entity.uLoginPassword}, #{entity.uName}, #{entity.uAge}, #{entity.uPhone},
+            #{entity.uAddress}, #{entity.uEmail}, #{entity.uSex}, #{entity.uCreateDate}, #{entity.uCreateByUser},
+            #{entity.uUpdateDate}, #{entity.uUpdateByUser}, #{entity.uIco}, #{entity.uDescription}, #{entity.uStatus},
+            #{entity.uRId}, #{entity.uCId}, #{entity.uParentId}, #{entity.uLimitUav}, #{entity.uLimitHive},
+            #{entity.uLimitDate})
+        </foreach>
+        on duplicate key update
+        u_login_name = values(u_login_name) , u_login_password = values(u_login_password) , u_name = values(u_name) ,
+        u_age = values(u_age) , u_phone = values(u_phone) , u_address = values(u_address) , u_email = values(u_email) ,
+        u_sex = values(u_sex) , u_create_date = values(u_create_date) , u_create_by_user = values(u_create_by_user) ,
+        u_update_date = values(u_update_date) , u_update_by_user = values(u_update_by_user) , u_ico = values(u_ico) ,
+        u_description = values(u_description) , u_status = values(u_status) , u_r_id = values(u_r_id) , u_c_id =
+        values(u_c_id) , u_parent_id = values(u_parent_id) , u_limit_uav = values(u_limit_uav) , u_limit_hive =
+        values(u_limit_hive) , u_limit_date = values(u_limit_date)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_user
+        <set>
+            <if test="uLoginName != null and uLoginName != ''">
+                u_login_name = #{uLoginName},
+            </if>
+            <if test="uLoginPassword != null and uLoginPassword != ''">
+                u_login_password = #{uLoginPassword},
+            </if>
+            <if test="uName != null and uName != ''">
+                u_name = #{uName},
+            </if>
+            <if test="uAge != null and uAge != ''">
+                u_age = #{uAge},
+            </if>
+            <if test="uPhone != null and uPhone != ''">
+                u_phone = #{uPhone},
+            </if>
+            <if test="uAddress != null and uAddress != ''">
+                u_address = #{uAddress},
+            </if>
+            <if test="uEmail != null and uEmail != ''">
+                u_email = #{uEmail},
+            </if>
+            <if test="uSex != null">
+                u_sex = #{uSex},
+            </if>
+            <if test="uCreateDate != null">
+                u_create_date = #{uCreateDate},
+            </if>
+            <if test="uCreateByUser != null and uCreateByUser != ''">
+                u_create_by_user = #{uCreateByUser},
+            </if>
+            <if test="uUpdateDate != null">
+                u_update_date = #{uUpdateDate},
+            </if>
+            <if test="uUpdateByUser != null and uUpdateByUser != ''">
+                u_update_by_user = #{uUpdateByUser},
+            </if>
+            <if test="uIco != null and uIco != ''">
+                u_ico = #{uIco},
+            </if>
+            <if test="uDescription != null and uDescription != ''">
+                u_description = #{uDescription},
+            </if>
+            <if test="uStatus != null">
+                u_status = #{uStatus},
+            </if>
+            <if test="uRId != null">
+                u_r_id = #{uRId},
+            </if>
+            <if test="uCId != null">
+                u_c_id = #{uCId},
+            </if>
+            <if test="uParentId != null">
+                u_parent_id = #{uParentId},
+            </if>
+            <if test="uLimitUav != null">
+                u_limit_uav = #{uLimitUav},
+            </if>
+            <if test="uLimitHive != null">
+                u_limit_hive = #{uLimitHive},
+            </if>
+            <if test="uLimitDate != null">
+                u_limit_date = #{uLimitDate},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_user where id = #{id}
+    </delete>
+
+</mapper>
+

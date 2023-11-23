@@ -1,17 +1,17 @@
 package com.bear.reseeding.service;
 
-import com.bear.reseeding.entity.TUser;
+import com.bear.reseeding.entity.EfUser;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 /**
- * 用户表，用户属于部门或区域，可不关联表示未分配部门或区域(TUser)表服务接口
+ * (EfUser)表服务接口
  *
  * @author makejava
- * @since 2023-11-10 15:51:16
+ * @since 2023-11-23 19:00:08
  */
-public interface TUserService {
+public interface EfUserService {
 
     /**
      * 通过ID查询单条数据
@@ -19,7 +19,7 @@ public interface TUserService {
      * @param id 主键
      * @return 实例对象
      */
-    TUser queryById(Integer id);
+    EfUser queryById(Integer id);
 
     /**
      * 查询多条数据
@@ -28,23 +28,23 @@ public interface TUserService {
      * @param limit  查询条数
      * @return 对象列表
      */
-    List<TUser> queryAllByLimit(int offset, int limit);
+    List<EfUser> queryAllByLimit(int offset, int limit);
 
     /**
      * 新增数据
      *
-     * @param tUser 实例对象
+     * @param efUser 实例对象
      * @return 实例对象
      */
-    TUser insert(TUser tUser);
+    EfUser insert(EfUser efUser);
 
     /**
      * 修改数据
      *
-     * @param tUser 实例对象
+     * @param efUser 实例对象
      * @return 实例对象
      */
-    TUser update(TUser tUser);
+    EfUser update(EfUser efUser);
 
     /**
      * 通过主键删除数据
@@ -59,11 +59,10 @@ public interface TUserService {
     /**
      * 登录
      *
-     * @param userId 登录名
+     * @param userId  登录名
      * @param userPwd 密码
      * @return
      */
-    TUser login(@Param("userId") String userId, @Param("userPwd") String userPwd);
-
+    EfUser login(@Param("userId") String userId, @Param("userPwd") String userPwd);
     //endregion
 }

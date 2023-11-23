@@ -1,7 +1,7 @@
 package com.bear.reseeding.datalink;
 
 import com.alibaba.fastjson.JSONObject;
-import com.bear.reseeding.entity.TUser;
+import com.bear.reseeding.entity.EfUser;
 import com.bear.reseeding.utils.LogUtil;
 import com.bear.reseeding.utils.RedisUtils;
 import com.bear.reseeding.utils.TokenUtil;
@@ -86,14 +86,14 @@ public class WebSocketLink {
             return;
         }
         try {
-            TUser user = TokenUtil.getUser(token);
+            EfUser user = TokenUtil.getUser(token);
             String userid = "-1";
             String username = "unknown";
             if (user != null) {
                 if (user.getId() != null) {
                     userid = user.getId().toString();
                 }
-                username = user.getUserName();
+                username = user.getUName();
             }
 
             synchronized (objectLock) {
@@ -155,14 +155,14 @@ public class WebSocketLink {
                 }
                 return;
             }
-            TUser user = TokenUtil.getUser(token);
+            EfUser user = TokenUtil.getUser(token);
             String userid = "-1";
             String username = "unknown";
             if (user != null) {
                 if (user.getId() != null) {
                     userid = user.getId().toString();
                 }
-                username = user.getUserName();
+                username = user.getUName();
             }
             removeClient(session.getId(), userid, username);
         } catch (Exception e) {
@@ -183,14 +183,14 @@ public class WebSocketLink {
             LogUtil.logError("接收Webcoket消息失败，应用标识验证失败!");
             return;
         }
-        TUser user = TokenUtil.getUser(token);
+        EfUser user = TokenUtil.getUser(token);
         String userid = "-1";
         String username = "unknown";
         if (user != null) {
             if (user.getId() != null) {
                 userid = user.getId().toString();
             }
-            username = user.getUserName();
+            username = user.getUName();
         }
         //对消息进行处理，主要针对摇杆操作数据
         JSONObject param = null;

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUserOperationDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUserOperation" id="EfUserOperationMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="ipLocal" column="ip_local" jdbcType="VARCHAR"/>
+        <result property="ipWww" column="ip_www" jdbcType="VARCHAR"/>
+        <result property="description" column="description" jdbcType="VARCHAR"/>
+        <result property="optdate" column="optdate" jdbcType="TIMESTAMP"/>
+        <result property="userid" column="userid" jdbcType="VARCHAR"/>
+        <result property="level" column="level" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUserOperationMap">
+        select
+          id, ip_local, ip_www, description, optdate, userid, level
+        from ef_reseeding.ef_user_operation
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUserOperationMap">
+        select
+          id, ip_local, ip_www, description, optdate, userid, level
+        from ef_reseeding.ef_user_operation
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUserOperationMap">
+        select
+        id, ip_local, ip_www, description, optdate, userid, level
+        from ef_reseeding.ef_user_operation
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="ipLocal != null and ipLocal != ''">
+                and ip_local = #{ipLocal}
+            </if>
+            <if test="ipWww != null and ipWww != ''">
+                and ip_www = #{ipWww}
+            </if>
+            <if test="description != null and description != ''">
+                and description = #{description}
+            </if>
+            <if test="optdate != null">
+                and optdate = #{optdate}
+            </if>
+            <if test="userid != null and userid != ''">
+                and userid = #{userid}
+            </if>
+            <if test="level != null">
+                and level = #{level}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user_operation(ip_local, ip_www, description, optdate, userid, level)
+        values (#{ipLocal}, #{ipWww}, #{description}, #{optdate}, #{userid}, #{level})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user_operation(ip_local, ip_www, description, optdate, userid, level)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.ipLocal}, #{entity.ipWww}, #{entity.description}, #{entity.optdate}, #{entity.userid},
+            #{entity.level})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user_operation(ip_local, ip_www, description, optdate, userid, level)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.ipLocal}, #{entity.ipWww}, #{entity.description}, #{entity.optdate}, #{entity.userid},
+            #{entity.level})
+        </foreach>
+        on duplicate key update
+        ip_local = values(ip_local) , ip_www = values(ip_www) , description = values(description) , optdate =
+        values(optdate) , userid = values(userid) , level = values(level)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_user_operation
+        <set>
+            <if test="ipLocal != null and ipLocal != ''">
+                ip_local = #{ipLocal},
+            </if>
+            <if test="ipWww != null and ipWww != ''">
+                ip_www = #{ipWww},
+            </if>
+            <if test="description != null and description != ''">
+                description = #{description},
+            </if>
+            <if test="optdate != null">
+                optdate = #{optdate},
+            </if>
+            <if test="userid != null and userid != ''">
+                userid = #{userid},
+            </if>
+            <if test="level != null">
+                level = #{level},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_user_operation where id = #{id}
+    </delete>
+
+</mapper>
+

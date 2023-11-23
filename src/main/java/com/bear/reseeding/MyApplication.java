@@ -43,6 +43,7 @@ public class MyApplication extends SpringBootServletInitializer {
         System.out.println("efuav_pv_server：" + encryptor.encrypt("efuav_pv_server"));
         System.out.println("gx13js!n34d5sd_a1xc：" + encryptor.encrypt("gx13js!n34d5sd_a1xc"));
         System.out.println("123456：" + encryptor.encrypt("123456"));
+
         // 加密数据库连接用户名
         System.out.println("数据库用户名 urc 加密：" + encryptor.encrypt("urc"));
         System.out.println("数据库用户名 root 加密：" + encryptor.encrypt("root"));

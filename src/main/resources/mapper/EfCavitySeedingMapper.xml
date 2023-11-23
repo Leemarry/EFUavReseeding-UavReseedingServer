@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfCavitySeedingDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfCavitySeeding" id="EfCavitySeedingMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="seedingTime" column="seeding_time" jdbcType="TIMESTAMP"/>
+        <result property="lat" column="lat" jdbcType="NUMERIC"/>
+        <result property="lng" column="lng" jdbcType="NUMERIC"/>
+        <result property="alt" column="alt" jdbcType="NUMERIC"/>
+        <result property="altabs" column="altabs" jdbcType="NUMERIC"/>
+        <result property="seedNumber" column="seed_number" jdbcType="INTEGER"/>
+        <result property="cavityId" column="cavity_id" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfCavitySeedingMap">
+        select
+        id, seeding_time, lat, lng, alt, altabs, seed_number, cavity_id
+        from ef_reseeding.ef_cavity_seeding
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfCavitySeedingMap">
+        select
+        id, seeding_time, lat, lng, alt, altabs, seed_number, cavity_id
+        from ef_reseeding.ef_cavity_seeding
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfCavitySeedingMap">
+        select
+        id, seeding_time, lat, lng, alt, altabs, seed_number, cavity_id
+        from ef_reseeding.ef_cavity_seeding
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="seedingTime != null">
+                and seeding_time = #{seedingTime}
+            </if>
+            <if test="lat != null">
+                and lat = #{lat}
+            </if>
+            <if test="lng != null">
+                and lng = #{lng}
+            </if>
+            <if test="alt != null">
+                and alt = #{alt}
+            </if>
+            <if test="altabs != null">
+                and altabs = #{altabs}
+            </if>
+            <if test="seedNumber != null">
+                and seed_number = #{seedNumber}
+            </if>
+            <if test="cavityId != null">
+                and cavity_id = #{cavityId}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_cavity_seeding(seeding_time, lat, lng, alt, altabs, seed_number, cavity_id)
+        values (#{seedingTime}, #{lat}, #{lng}, #{alt}, #{altabs}, #{seedNumber}, #{cavityId})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_cavity_seeding(seeding_time, lat, lng, alt, altabs, seed_number, cavity_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.seedingTime}, #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.altabs}, #{entity.seedNumber},
+            #{entity.cavityId})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_cavity_seeding(seeding_time, lat, lng, alt, altabs, seed_number, cavity_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.seedingTime}, #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.altabs}, #{entity.seedNumber},
+            #{entity.cavityId})
+        </foreach>
+        on duplicate key update
+        seeding_time = values(seeding_time) , lat = values(lat) , lng = values(lng) , alt = values(alt) , altabs =
+        values(altabs) , seed_number = values(seed_number) , cavity_id = values(cavity_id)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_cavity_seeding
+        <set>
+            <if test="seedingTime != null">
+                seeding_time = #{seedingTime},
+            </if>
+            <if test="lat != null">
+                lat = #{lat},
+            </if>
+            <if test="lng != null">
+                lng = #{lng},
+            </if>
+            <if test="alt != null">
+                alt = #{alt},
+            </if>
+            <if test="altabs != null">
+                altabs = #{altabs},
+            </if>
+            <if test="seedNumber != null">
+                seed_number = #{seedNumber},
+            </if>
+            <if test="cavityId != null">
+                cavity_id = #{cavityId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_cavity_seeding where id = #{id}
+    </delete>
+
+</mapper>
+

@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfCommandsDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfCommands" id="EfCommandsMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="cmdId" column="cmd_id" jdbcType="INTEGER"/>
+        <result property="cmdNameEn" column="cmd_name_en" jdbcType="VARCHAR"/>
+        <result property="cmdNameZh" column="cmd_name_zh" jdbcType="VARCHAR"/>
+        <result property="cmdDes" column="cmd_des" jdbcType="VARCHAR"/>
+        <result property="cmdP1Des" column="cmd_p1_des" jdbcType="VARCHAR"/>
+        <result property="cmdP2Des" column="cmd_p2_des" jdbcType="VARCHAR"/>
+        <result property="cmdP3Des" column="cmd_p3_des" jdbcType="VARCHAR"/>
+        <result property="cmdP4Des" column="cmd_p4_des" jdbcType="VARCHAR"/>
+        <result property="cmdXDes" column="cmd_x_des" jdbcType="VARCHAR"/>
+        <result property="cmdYDes" column="cmd_y_des" jdbcType="VARCHAR"/>
+        <result property="cmdZDes" column="cmd_z_des" jdbcType="VARCHAR"/>
+        <result property="cmdStatus" column="cmd_status" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfCommandsMap">
+        select
+        id, cmd_id, cmd_name_en, cmd_name_zh, cmd_des, cmd_p1_des, cmd_p2_des, cmd_p3_des, cmd_p4_des, cmd_x_des,
+        cmd_y_des, cmd_z_des, cmd_status
+        from ef_reseeding.ef_commands
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfCommandsMap">
+        select
+        id, cmd_id, cmd_name_en, cmd_name_zh, cmd_des, cmd_p1_des, cmd_p2_des, cmd_p3_des, cmd_p4_des, cmd_x_des,
+        cmd_y_des, cmd_z_des, cmd_status
+        from ef_reseeding.ef_commands
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfCommandsMap">
+        select
+        id, cmd_id, cmd_name_en, cmd_name_zh, cmd_des, cmd_p1_des, cmd_p2_des, cmd_p3_des, cmd_p4_des, cmd_x_des,
+        cmd_y_des, cmd_z_des, cmd_status
+        from ef_reseeding.ef_commands
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="cmdId != null">
+                and cmd_id = #{cmdId}
+            </if>
+            <if test="cmdNameEn != null and cmdNameEn != ''">
+                and cmd_name_en = #{cmdNameEn}
+            </if>
+            <if test="cmdNameZh != null and cmdNameZh != ''">
+                and cmd_name_zh = #{cmdNameZh}
+            </if>
+            <if test="cmdDes != null and cmdDes != ''">
+                and cmd_des = #{cmdDes}
+            </if>
+            <if test="cmdP1Des != null and cmdP1Des != ''">
+                and cmd_p1_des = #{cmdP1Des}
+            </if>
+            <if test="cmdP2Des != null and cmdP2Des != ''">
+                and cmd_p2_des = #{cmdP2Des}
+            </if>
+            <if test="cmdP3Des != null and cmdP3Des != ''">
+                and cmd_p3_des = #{cmdP3Des}
+            </if>
+            <if test="cmdP4Des != null and cmdP4Des != ''">
+                and cmd_p4_des = #{cmdP4Des}
+            </if>
+            <if test="cmdXDes != null and cmdXDes != ''">
+                and cmd_x_des = #{cmdXDes}
+            </if>
+            <if test="cmdYDes != null and cmdYDes != ''">
+                and cmd_y_des = #{cmdYDes}
+            </if>
+            <if test="cmdZDes != null and cmdZDes != ''">
+                and cmd_z_des = #{cmdZDes}
+            </if>
+            <if test="cmdStatus != null">
+                and cmd_status = #{cmdStatus}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_commands(cmd_id, cmd_name_en, cmd_name_zh, cmd_des, cmd_p1_des, cmd_p2_des,
+        cmd_p3_des, cmd_p4_des, cmd_x_des, cmd_y_des, cmd_z_des, cmd_status)
+        values (#{cmdId}, #{cmdNameEn}, #{cmdNameZh}, #{cmdDes}, #{cmdP1Des}, #{cmdP2Des}, #{cmdP3Des}, #{cmdP4Des},
+        #{cmdXDes}, #{cmdYDes}, #{cmdZDes}, #{cmdStatus})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_commands(cmd_id, cmd_name_en, cmd_name_zh, cmd_des, cmd_p1_des, cmd_p2_des,
+        cmd_p3_des, cmd_p4_des, cmd_x_des, cmd_y_des, cmd_z_des, cmd_status)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.cmdId}, #{entity.cmdNameEn}, #{entity.cmdNameZh}, #{entity.cmdDes}, #{entity.cmdP1Des},
+            #{entity.cmdP2Des}, #{entity.cmdP3Des}, #{entity.cmdP4Des}, #{entity.cmdXDes}, #{entity.cmdYDes},
+            #{entity.cmdZDes}, #{entity.cmdStatus})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_commands(cmd_id, cmd_name_en, cmd_name_zh, cmd_des, cmd_p1_des, cmd_p2_des,
+        cmd_p3_des, cmd_p4_des, cmd_x_des, cmd_y_des, cmd_z_des, cmd_status)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.cmdId}, #{entity.cmdNameEn}, #{entity.cmdNameZh}, #{entity.cmdDes}, #{entity.cmdP1Des},
+            #{entity.cmdP2Des}, #{entity.cmdP3Des}, #{entity.cmdP4Des}, #{entity.cmdXDes}, #{entity.cmdYDes},
+            #{entity.cmdZDes}, #{entity.cmdStatus})
+        </foreach>
+        on duplicate key update
+        cmd_id = values(cmd_id) , cmd_name_en = values(cmd_name_en) , cmd_name_zh = values(cmd_name_zh) , cmd_des =
+        values(cmd_des) , cmd_p1_des = values(cmd_p1_des) , cmd_p2_des = values(cmd_p2_des) , cmd_p3_des =
+        values(cmd_p3_des) , cmd_p4_des = values(cmd_p4_des) , cmd_x_des = values(cmd_x_des) , cmd_y_des =
+        values(cmd_y_des) , cmd_z_des = values(cmd_z_des) , cmd_status = values(cmd_status)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_commands
+        <set>
+            <if test="cmdId != null">
+                cmd_id = #{cmdId},
+            </if>
+            <if test="cmdNameEn != null and cmdNameEn != ''">
+                cmd_name_en = #{cmdNameEn},
+            </if>
+            <if test="cmdNameZh != null and cmdNameZh != ''">
+                cmd_name_zh = #{cmdNameZh},
+            </if>
+            <if test="cmdDes != null and cmdDes != ''">
+                cmd_des = #{cmdDes},
+            </if>
+            <if test="cmdP1Des != null and cmdP1Des != ''">
+                cmd_p1_des = #{cmdP1Des},
+            </if>
+            <if test="cmdP2Des != null and cmdP2Des != ''">
+                cmd_p2_des = #{cmdP2Des},
+            </if>
+            <if test="cmdP3Des != null and cmdP3Des != ''">
+                cmd_p3_des = #{cmdP3Des},
+            </if>
+            <if test="cmdP4Des != null and cmdP4Des != ''">
+                cmd_p4_des = #{cmdP4Des},
+            </if>
+            <if test="cmdXDes != null and cmdXDes != ''">
+                cmd_x_des = #{cmdXDes},
+            </if>
+            <if test="cmdYDes != null and cmdYDes != ''">
+                cmd_y_des = #{cmdYDes},
+            </if>
+            <if test="cmdZDes != null and cmdZDes != ''">
+                cmd_z_des = #{cmdZDes},
+            </if>
+            <if test="cmdStatus != null">
+                cmd_status = #{cmdStatus},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_commands where id = #{id}
+    </delete>
+
+</mapper>
+

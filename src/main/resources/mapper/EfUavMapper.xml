@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUavDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUav" id="EfUavMap">
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="uavName" column="uav_name" jdbcType="VARCHAR"/>
+        <result property="uavProductDate" column="uav_product_date" jdbcType="TIMESTAMP"/>
+        <result property="uavProductByUser" column="uav_product_by_user" jdbcType="VARCHAR"/>
+        <result property="uavSellDate" column="uav_sell_date" jdbcType="TIMESTAMP"/>
+        <result property="uavSellByUser" column="uav_sell_by_user" jdbcType="VARCHAR"/>
+        <result property="uavWheelbase" column="uav_wheelbase" jdbcType="VARCHAR"/>
+        <result property="uavMaxpayload" column="uav_maxpayload" jdbcType="VARCHAR"/>
+        <result property="uavEnduranceTime" column="uav_endurance_time" jdbcType="VARCHAR"/>
+        <result property="uavMaxspeed" column="uav_maxspeed" jdbcType="VARCHAR"/>
+        <result property="uavContractNo" column="uav_contract_no" jdbcType="VARCHAR"/>
+        <result property="uavTypeId" column="uav_type_id" jdbcType="INTEGER"/>
+        <result property="uavCurrentCamera" column="uav_current_camera" jdbcType="INTEGER"/>
+        <result property="uavStatus" column="uav_status" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUavMap">
+        select
+          uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status
+        from ef_reseeding.ef_uav
+        where uav_id = #{uavId}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUavMap">
+        select
+          uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status
+        from ef_reseeding.ef_uav
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUavMap">
+        select
+        uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase,
+        uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status
+        from ef_reseeding.ef_uav
+        <where>
+            <if test="uavId != null and uavId != ''">
+                and uav_id = #{uavId}
+            </if>
+            <if test="uavName != null and uavName != ''">
+                and uav_name = #{uavName}
+            </if>
+            <if test="uavProductDate != null">
+                and uav_product_date = #{uavProductDate}
+            </if>
+            <if test="uavProductByUser != null and uavProductByUser != ''">
+                and uav_product_by_user = #{uavProductByUser}
+            </if>
+            <if test="uavSellDate != null">
+                and uav_sell_date = #{uavSellDate}
+            </if>
+            <if test="uavSellByUser != null and uavSellByUser != ''">
+                and uav_sell_by_user = #{uavSellByUser}
+            </if>
+            <if test="uavWheelbase != null">
+                and uav_wheelbase = #{uavWheelbase}
+            </if>
+            <if test="uavMaxpayload != null">
+                and uav_maxpayload = #{uavMaxpayload}
+            </if>
+            <if test="uavEnduranceTime != null">
+                and uav_endurance_time = #{uavEnduranceTime}
+            </if>
+            <if test="uavMaxspeed != null">
+                and uav_maxspeed = #{uavMaxspeed}
+            </if>
+            <if test="uavContractNo != null and uavContractNo != ''">
+                and uav_contract_no = #{uavContractNo}
+            </if>
+            <if test="uavTypeId != null">
+                and uav_type_id = #{uavTypeId}
+            </if>
+            <if test="uavCurrentCamera != null">
+                and uav_current_camera = #{uavCurrentCamera}
+            </if>
+            <if test="uavStatus != null">
+                and uav_status = #{uavStatus}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="uavId" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav(uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status)
+        values (#{uavName}, #{uavProductDate}, #{uavProductByUser}, #{uavSellDate}, #{uavSellByUser}, #{uavWheelbase}, #{uavMaxpayload}, #{uavEnduranceTime}, #{uavMaxspeed}, #{uavContractNo}, #{uavTypeId}, #{uavCurrentCamera}, #{uavStatus})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="uavId" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav(uav_name, uav_product_date, uav_product_by_user, uav_sell_date,
+        uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id,
+        uav_current_camera, uav_status)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uavName}, #{entity.uavProductDate}, #{entity.uavProductByUser}, #{entity.uavSellDate},
+            #{entity.uavSellByUser}, #{entity.uavWheelbase}, #{entity.uavMaxpayload}, #{entity.uavEnduranceTime},
+            #{entity.uavMaxspeed}, #{entity.uavContractNo}, #{entity.uavTypeId}, #{entity.uavCurrentCamera},
+            #{entity.uavStatus})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="uavId" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav(uav_name, uav_product_date, uav_product_by_user, uav_sell_date,
+        uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id,
+        uav_current_camera, uav_status)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uavName}, #{entity.uavProductDate}, #{entity.uavProductByUser}, #{entity.uavSellDate},
+            #{entity.uavSellByUser}, #{entity.uavWheelbase}, #{entity.uavMaxpayload}, #{entity.uavEnduranceTime},
+            #{entity.uavMaxspeed}, #{entity.uavContractNo}, #{entity.uavTypeId}, #{entity.uavCurrentCamera},
+            #{entity.uavStatus})
+        </foreach>
+        on duplicate key update
+        uav_name = values(uav_name) , uav_product_date = values(uav_product_date) , uav_product_by_user =
+        values(uav_product_by_user) , uav_sell_date = values(uav_sell_date) , uav_sell_by_user =
+        values(uav_sell_by_user) , uav_wheelbase = values(uav_wheelbase) , uav_maxpayload = values(uav_maxpayload) ,
+        uav_endurance_time = values(uav_endurance_time) , uav_maxspeed = values(uav_maxspeed) , uav_contract_no =
+        values(uav_contract_no) , uav_type_id = values(uav_type_id) , uav_current_camera = values(uav_current_camera) ,
+        uav_status = values(uav_status)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_uav
+        <set>
+            <if test="uavName != null and uavName != ''">
+                uav_name = #{uavName},
+            </if>
+            <if test="uavProductDate != null">
+                uav_product_date = #{uavProductDate},
+            </if>
+            <if test="uavProductByUser != null and uavProductByUser != ''">
+                uav_product_by_user = #{uavProductByUser},
+            </if>
+            <if test="uavSellDate != null">
+                uav_sell_date = #{uavSellDate},
+            </if>
+            <if test="uavSellByUser != null and uavSellByUser != ''">
+                uav_sell_by_user = #{uavSellByUser},
+            </if>
+            <if test="uavWheelbase != null">
+                uav_wheelbase = #{uavWheelbase},
+            </if>
+            <if test="uavMaxpayload != null">
+                uav_maxpayload = #{uavMaxpayload},
+            </if>
+            <if test="uavEnduranceTime != null">
+                uav_endurance_time = #{uavEnduranceTime},
+            </if>
+            <if test="uavMaxspeed != null">
+                uav_maxspeed = #{uavMaxspeed},
+            </if>
+            <if test="uavContractNo != null and uavContractNo != ''">
+                uav_contract_no = #{uavContractNo},
+            </if>
+            <if test="uavTypeId != null">
+                uav_type_id = #{uavTypeId},
+            </if>
+            <if test="uavCurrentCamera != null">
+                uav_current_camera = #{uavCurrentCamera},
+            </if>
+            <if test="uavStatus != null">
+                uav_status = #{uavStatus},
+            </if>
+        </set>
+        where uav_id = #{uavId}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_uav where uav_id = #{uavId}
+    </delete>
+
+</mapper>
+

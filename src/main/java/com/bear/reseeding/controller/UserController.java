@@ -23,11 +23,12 @@ import javax.servlet.http.HttpServletRequest;
 public class UserController {
     @Autowired
     private RedisUtils redisUtils;
+
     /**
      * 服务对象
      */
     @Resource
-    private TUserService efUserService;
+    private EfUserService efUserService;
 
     /**
      * 加密
@@ -55,8 +56,8 @@ public class UserController {
             // String idSession = request.getSession().getId();
             String ipLocal = request.getRemoteAddr();
             String ipWww = NetworkUtil.getIpAddr(request);
-            TUser user = new TUser();
-            user.setUserLoginId(userId);
+            EfUser user = new EfUser();
+            user.setULoginName(userId);
             String userPwdMd5 = MD5Util.md5Encode(userPwd + encryptMd5Soft);
             user = efUserService.login(userId, userPwdMd5);
             if (user == null) {

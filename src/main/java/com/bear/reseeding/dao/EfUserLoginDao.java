@@ -1,17 +1,18 @@
 package com.bear.reseeding.dao;
 
-import com.bear.reseeding.entity.TUser;
+import com.bear.reseeding.entity.EfUserLogin;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
 /**
- * 用户表，用户属于部门或区域，可不关联表示未分配部门或区域(TUser)表数据库访问层
+ * 用户登录记录信息表
+ * (EfUserLogin)表数据库访问层
  *
  * @author makejava
- * @since 2023-11-10 15:51:16
+ * @since 2023-11-23 19:00:10
  */
-public interface TUserDao {
+public interface EfUserLoginDao {
 
     /**
      * 通过ID查询单条数据
@@ -19,7 +20,7 @@ public interface TUserDao {
      * @param id 主键
      * @return 实例对象
      */
-    TUser queryById(Integer id);
+    EfUserLogin queryById(Integer id);
 
     /**
      * 查询指定行数据
@@ -28,48 +29,48 @@ public interface TUserDao {
      * @param limit  查询条数
      * @return 对象列表
      */
-    List<TUser> queryAllByLimit(@Param("offset") int offset, @Param("limit") int limit);
+    List<EfUserLogin> queryAllByLimit(@Param("offset") int offset, @Param("limit") int limit);
 
 
     /**
      * 通过实体作为筛选条件查询
      *
-     * @param tUser 实例对象
+     * @param efUserLogin 实例对象
      * @return 对象列表
      */
-    List<TUser> queryAll(TUser tUser);
+    List<EfUserLogin> queryAll(EfUserLogin efUserLogin);
 
     /**
      * 新增数据
      *
-     * @param tUser 实例对象
+     * @param efUserLogin 实例对象
      * @return 影响行数
      */
-    int insert(TUser tUser);
+    int insert(EfUserLogin efUserLogin);
 
     /**
      * 批量新增数据（MyBatis原生foreach方法）
      *
-     * @param entities List<TUser> 实例对象列表
+     * @param entities List<EfUserLogin> 实例对象列表
      * @return 影响行数
      */
-    int insertBatch(@Param("entities") List<TUser> entities);
+    int insertBatch(@Param("entities") List<EfUserLogin> entities);
 
     /**
      * 批量新增或按主键更新数据（MyBatis原生foreach方法）
      *
-     * @param entities List<TUser> 实例对象列表
+     * @param entities List<EfUserLogin> 实例对象列表
      * @return 影响行数
      */
-    int insertOrUpdateBatch(@Param("entities") List<TUser> entities);
+    int insertOrUpdateBatch(@Param("entities") List<EfUserLogin> entities);
 
     /**
      * 修改数据
      *
-     * @param tUser 实例对象
+     * @param efUserLogin 实例对象
      * @return 影响行数
      */
-    int update(TUser tUser);
+    int update(EfUserLogin efUserLogin);
 
     /**
      * 通过主键删除数据
@@ -79,17 +80,5 @@ public interface TUserDao {
      */
     int deleteById(Integer id);
 
-    //region 新增
-
-    /**
-     * 登录
-     *
-     * @param userId  登录名
-     * @param userPwd 密码
-     * @return
-     */
-    TUser login(@Param("userId") String userId, @Param("userPwd") String userPwd);
-
-    //endregion
 }
 

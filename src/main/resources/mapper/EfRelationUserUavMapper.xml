@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfRelationUserUavDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfRelationUserUav" id="EfRelationUserUavMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="limitDate" column="limit_date" jdbcType="TIMESTAMP"/>
+        <result property="operAuth" column="oper_auth" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfRelationUserUavMap">
+        select
+        id, user_id, uav_id, limit_date, oper_auth
+        from ef_reseeding.ef_relation_user_uav
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfRelationUserUavMap">
+        select
+        id, user_id, uav_id, limit_date, oper_auth
+        from ef_reseeding.ef_relation_user_uav
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfRelationUserUavMap">
+        select
+        id, user_id, uav_id, limit_date, oper_auth
+        from ef_reseeding.ef_relation_user_uav
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="userId != null">
+                and user_id = #{userId}
+            </if>
+            <if test="uavId != null and uavId != ''">
+                and uav_id = #{uavId}
+            </if>
+            <if test="limitDate != null">
+                and limit_date = #{limitDate}
+            </if>
+            <if test="operAuth != null">
+                and oper_auth = #{operAuth}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_relation_user_uav(user_id, uav_id, limit_date, oper_auth)
+        values (#{userId}, #{uavId}, #{limitDate}, #{operAuth})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_relation_user_uav(user_id, uav_id, limit_date, oper_auth)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.userId}, #{entity.uavId}, #{entity.limitDate}, #{entity.operAuth})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_relation_user_uav(user_id, uav_id, limit_date, oper_auth)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.userId}, #{entity.uavId}, #{entity.limitDate}, #{entity.operAuth})
+        </foreach>
+        on duplicate key update
+        user_id = values(user_id) , uav_id = values(uav_id) , limit_date = values(limit_date) , oper_auth =
+        values(oper_auth)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_relation_user_uav
+        <set>
+            <if test="userId != null">
+                user_id = #{userId},
+            </if>
+            <if test="uavId != null and uavId != ''">
+                uav_id = #{uavId},
+            </if>
+            <if test="limitDate != null">
+                limit_date = #{limitDate},
+            </if>
+            <if test="operAuth != null">
+                oper_auth = #{operAuth},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_relation_user_uav where id = #{id}
+    </delete>
+
+</mapper>
+

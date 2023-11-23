@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfCompanyDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfCompany" id="EfCompanyMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="cName" column="c_name" jdbcType="VARCHAR"/>
+        <result property="cNameZh" column="c_name_zh" jdbcType="VARCHAR"/>
+        <result property="cHomePage" column="c_home_page" jdbcType="VARCHAR"/>
+        <result property="cLogoIco" column="c_logo_ico" jdbcType="VARCHAR"/>
+        <result property="cAddress" column="c_address" jdbcType="VARCHAR"/>
+        <result property="cPhone" column="c_phone" jdbcType="VARCHAR"/>
+        <result property="cTelephone" column="c_telephone" jdbcType="VARCHAR"/>
+        <result property="cCreateDate" column="c_create_date" jdbcType="TIMESTAMP"/>
+        <result property="cSystemId" column="c_system_id" jdbcType="INTEGER"/>
+        <result property="cParentId" column="c_parent_id" jdbcType="INTEGER"/>
+        <result property="cLimitUav" column="c_limit_uav" jdbcType="INTEGER"/>
+        <result property="cLimitHive" column="c_limit_hive" jdbcType="INTEGER"/>
+        <result property="cLimitDate" column="c_limit_date" jdbcType="TIMESTAMP"/>
+        <result property="cFunction" column="c_function" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfCompanyMap">
+        select
+        id, c_name, c_name_zh, c_home_page, c_logo_ico, c_address, c_phone, c_telephone, c_create_date, c_system_id,
+        c_parent_id, c_limit_uav, c_limit_hive, c_limit_date, c_function
+        from ef_reseeding.ef_company
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfCompanyMap">
+        select
+        id, c_name, c_name_zh, c_home_page, c_logo_ico, c_address, c_phone, c_telephone, c_create_date, c_system_id,
+        c_parent_id, c_limit_uav, c_limit_hive, c_limit_date, c_function
+        from ef_reseeding.ef_company
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfCompanyMap">
+        select
+        id, c_name, c_name_zh, c_home_page, c_logo_ico, c_address, c_phone, c_telephone, c_create_date, c_system_id,
+        c_parent_id, c_limit_uav, c_limit_hive, c_limit_date, c_function
+        from ef_reseeding.ef_company
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="cName != null and cName != ''">
+                and c_name = #{cName}
+            </if>
+            <if test="cNameZh != null and cNameZh != ''">
+                and c_name_zh = #{cNameZh}
+            </if>
+            <if test="cHomePage != null and cHomePage != ''">
+                and c_home_page = #{cHomePage}
+            </if>
+            <if test="cLogoIco != null and cLogoIco != ''">
+                and c_logo_ico = #{cLogoIco}
+            </if>
+            <if test="cAddress != null and cAddress != ''">
+                and c_address = #{cAddress}
+            </if>
+            <if test="cPhone != null and cPhone != ''">
+                and c_phone = #{cPhone}
+            </if>
+            <if test="cTelephone != null and cTelephone != ''">
+                and c_telephone = #{cTelephone}
+            </if>
+            <if test="cCreateDate != null">
+                and c_create_date = #{cCreateDate}
+            </if>
+            <if test="cSystemId != null">
+                and c_system_id = #{cSystemId}
+            </if>
+            <if test="cParentId != null">
+                and c_parent_id = #{cParentId}
+            </if>
+            <if test="cLimitUav != null">
+                and c_limit_uav = #{cLimitUav}
+            </if>
+            <if test="cLimitHive != null">
+                and c_limit_hive = #{cLimitHive}
+            </if>
+            <if test="cLimitDate != null">
+                and c_limit_date = #{cLimitDate}
+            </if>
+            <if test="cFunction != null and cFunction != ''">
+                and c_function = #{cFunction}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_company(c_name, c_name_zh, c_home_page, c_logo_ico, c_address, c_phone, c_telephone,
+        c_create_date, c_system_id, c_parent_id, c_limit_uav, c_limit_hive, c_limit_date, c_function)
+        values (#{cName}, #{cNameZh}, #{cHomePage}, #{cLogoIco}, #{cAddress}, #{cPhone}, #{cTelephone}, #{cCreateDate},
+        #{cSystemId}, #{cParentId}, #{cLimitUav}, #{cLimitHive}, #{cLimitDate}, #{cFunction})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_company(c_name, c_name_zh, c_home_page, c_logo_ico, c_address, c_phone, c_telephone,
+        c_create_date, c_system_id, c_parent_id, c_limit_uav, c_limit_hive, c_limit_date, c_function)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.cName}, #{entity.cNameZh}, #{entity.cHomePage}, #{entity.cLogoIco}, #{entity.cAddress},
+            #{entity.cPhone}, #{entity.cTelephone}, #{entity.cCreateDate}, #{entity.cSystemId}, #{entity.cParentId},
+            #{entity.cLimitUav}, #{entity.cLimitHive}, #{entity.cLimitDate}, #{entity.cFunction})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_company(c_name, c_name_zh, c_home_page, c_logo_ico, c_address, c_phone, c_telephone,
+        c_create_date, c_system_id, c_parent_id, c_limit_uav, c_limit_hive, c_limit_date, c_function)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.cName}, #{entity.cNameZh}, #{entity.cHomePage}, #{entity.cLogoIco}, #{entity.cAddress},
+            #{entity.cPhone}, #{entity.cTelephone}, #{entity.cCreateDate}, #{entity.cSystemId}, #{entity.cParentId},
+            #{entity.cLimitUav}, #{entity.cLimitHive}, #{entity.cLimitDate}, #{entity.cFunction})
+        </foreach>
+        on duplicate key update
+        c_name = values(c_name) , c_name_zh = values(c_name_zh) , c_home_page = values(c_home_page) , c_logo_ico =
+        values(c_logo_ico) , c_address = values(c_address) , c_phone = values(c_phone) , c_telephone =
+        values(c_telephone) , c_create_date = values(c_create_date) , c_system_id = values(c_system_id) , c_parent_id =
+        values(c_parent_id) , c_limit_uav = values(c_limit_uav) , c_limit_hive = values(c_limit_hive) , c_limit_date =
+        values(c_limit_date) , c_function = values(c_function)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_company
+        <set>
+            <if test="cName != null and cName != ''">
+                c_name = #{cName},
+            </if>
+            <if test="cNameZh != null and cNameZh != ''">
+                c_name_zh = #{cNameZh},
+            </if>
+            <if test="cHomePage != null and cHomePage != ''">
+                c_home_page = #{cHomePage},
+            </if>
+            <if test="cLogoIco != null and cLogoIco != ''">
+                c_logo_ico = #{cLogoIco},
+            </if>
+            <if test="cAddress != null and cAddress != ''">
+                c_address = #{cAddress},
+            </if>
+            <if test="cPhone != null and cPhone != ''">
+                c_phone = #{cPhone},
+            </if>
+            <if test="cTelephone != null and cTelephone != ''">
+                c_telephone = #{cTelephone},
+            </if>
+            <if test="cCreateDate != null">
+                c_create_date = #{cCreateDate},
+            </if>
+            <if test="cSystemId != null">
+                c_system_id = #{cSystemId},
+            </if>
+            <if test="cParentId != null">
+                c_parent_id = #{cParentId},
+            </if>
+            <if test="cLimitUav != null">
+                c_limit_uav = #{cLimitUav},
+            </if>
+            <if test="cLimitHive != null">
+                c_limit_hive = #{cLimitHive},
+            </if>
+            <if test="cLimitDate != null">
+                c_limit_date = #{cLimitDate},
+            </if>
+            <if test="cFunction != null and cFunction != ''">
+                c_function = #{cFunction},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_company where id = #{id}
+    </delete>
+
+</mapper>
+

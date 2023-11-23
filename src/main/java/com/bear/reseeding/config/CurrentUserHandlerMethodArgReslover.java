@@ -1,6 +1,6 @@
 package com.bear.reseeding.config;
 
-import com.bear.reseeding.entity.TUser;
+import com.bear.reseeding.entity.EfUser;
 import com.bear.reseeding.model.CurrentUser;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -26,7 +26,7 @@ public class CurrentUserHandlerMethodArgReslover implements HandlerMethodArgumen
     @Override
     public boolean supportsParameter(MethodParameter methodParameter) {
         //如果该参数注解有@CurrentUser且参数类型是User
-        return methodParameter.getParameterAnnotation(CurrentUser.class) != null && methodParameter.getParameterType() == TUser.class;
+        return methodParameter.getParameterAnnotation(CurrentUser.class) != null && methodParameter.getParameterType() == EfUser.class;
     }
 
     @Override

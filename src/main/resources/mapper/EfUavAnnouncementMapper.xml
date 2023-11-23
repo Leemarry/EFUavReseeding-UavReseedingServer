@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUavAnnouncementDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUavAnnouncement" id="EfUavAnnouncementMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="title" column="title" jdbcType="VARCHAR"/>
+        <result property="content" column="content" jdbcType="VARCHAR"/>
+        <result property="newsTime" column="news_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="type" column="type" jdbcType="VARCHAR"/>
+        <result property="region" column="region" jdbcType="VARCHAR"/>
+        <result property="source" column="source" jdbcType="VARCHAR"/>
+        <result property="company" column="company" jdbcType="VARCHAR"/>
+        <result property="startTime" column="start_time" jdbcType="TIMESTAMP"/>
+        <result property="stopTime" column="stop_time" jdbcType="TIMESTAMP"/>
+        <result property="companyId" column="company_id" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUavAnnouncementMap">
+        select
+          id, title, content, news_time, update_time, type, region, source, company, start_time, stop_time, company_id
+        from ef_reseeding.ef_uav_announcement
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUavAnnouncementMap">
+        select
+          id, title, content, news_time, update_time, type, region, source, company, start_time, stop_time, company_id
+        from ef_reseeding.ef_uav_announcement
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUavAnnouncementMap">
+        select
+        id, title, content, news_time, update_time, type, region, source, company, start_time, stop_time, company_id
+        from ef_reseeding.ef_uav_announcement
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="title != null and title != ''">
+                and title = #{title}
+            </if>
+            <if test="content != null and content != ''">
+                and content = #{content}
+            </if>
+            <if test="newsTime != null">
+                and news_time = #{newsTime}
+            </if>
+            <if test="updateTime != null">
+                and update_time = #{updateTime}
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="region != null and region != ''">
+                and region = #{region}
+            </if>
+            <if test="source != null and source != ''">
+                and source = #{source}
+            </if>
+            <if test="company != null and company != ''">
+                and company = #{company}
+            </if>
+            <if test="startTime != null">
+                and start_time = #{startTime}
+            </if>
+            <if test="stopTime != null">
+                and stop_time = #{stopTime}
+            </if>
+            <if test="companyId != null">
+                and company_id = #{companyId}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_announcement(title, content, news_time, update_time, type, region, source, company, start_time, stop_time, company_id)
+        values (#{title}, #{content}, #{newsTime}, #{updateTime}, #{type}, #{region}, #{source}, #{company}, #{startTime}, #{stopTime}, #{companyId})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_announcement(title, content, news_time, update_time, type, region, source,
+        company, start_time, stop_time, company_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.title}, #{entity.content}, #{entity.newsTime}, #{entity.updateTime}, #{entity.type},
+            #{entity.region}, #{entity.source}, #{entity.company}, #{entity.startTime}, #{entity.stopTime},
+            #{entity.companyId})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_announcement(title, content, news_time, update_time, type, region, source,
+        company, start_time, stop_time, company_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.title}, #{entity.content}, #{entity.newsTime}, #{entity.updateTime}, #{entity.type},
+            #{entity.region}, #{entity.source}, #{entity.company}, #{entity.startTime}, #{entity.stopTime},
+            #{entity.companyId})
+        </foreach>
+        on duplicate key update
+        title = values(title) , content = values(content) , news_time = values(news_time) , update_time =
+        values(update_time) , type = values(type) , region = values(region) , source = values(source) , company =
+        values(company) , start_time = values(start_time) , stop_time = values(stop_time) , company_id =
+        values(company_id)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_uav_announcement
+        <set>
+            <if test="title != null and title != ''">
+                title = #{title},
+            </if>
+            <if test="content != null and content != ''">
+                content = #{content},
+            </if>
+            <if test="newsTime != null">
+                news_time = #{newsTime},
+            </if>
+            <if test="updateTime != null">
+                update_time = #{updateTime},
+            </if>
+            <if test="type != null and type != ''">
+                type = #{type},
+            </if>
+            <if test="region != null and region != ''">
+                region = #{region},
+            </if>
+            <if test="source != null and source != ''">
+                source = #{source},
+            </if>
+            <if test="company != null and company != ''">
+                company = #{company},
+            </if>
+            <if test="startTime != null">
+                start_time = #{startTime},
+            </if>
+            <if test="stopTime != null">
+                stop_time = #{stopTime},
+            </if>
+            <if test="companyId != null">
+                company_id = #{companyId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_uav_announcement where id = #{id}
+    </delete>
+
+</mapper>
+

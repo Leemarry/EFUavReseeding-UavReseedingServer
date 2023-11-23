@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfRoleDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfRole" id="EfRoleMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="roleId" column="role_id" jdbcType="INTEGER"/>
+        <result property="roleName" column="role_name" jdbcType="VARCHAR"/>
+        <result property="roleDescription" column="role_description" jdbcType="VARCHAR"/>
+        <result property="roleCreateDate" column="role_create_date" jdbcType="TIMESTAMP"/>
+        <result property="roleCreateByUser" column="role_create_by_user" jdbcType="VARCHAR"/>
+        <result property="roleUpdateDate" column="role_update_date" jdbcType="TIMESTAMP"/>
+        <result property="roleUpdateByUser" column="role_update_by_user" jdbcType="VARCHAR"/>
+        <result property="roleDes" column="role_des" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfRoleMap">
+        select
+        id, role_id, role_name, role_description, role_create_date, role_create_by_user, role_update_date,
+        role_update_by_user, role_des
+        from ef_reseeding.ef_role
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfRoleMap">
+        select
+        id, role_id, role_name, role_description, role_create_date, role_create_by_user, role_update_date,
+        role_update_by_user, role_des
+        from ef_reseeding.ef_role
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfRoleMap">
+        select
+        id, role_id, role_name, role_description, role_create_date, role_create_by_user, role_update_date,
+        role_update_by_user, role_des
+        from ef_reseeding.ef_role
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="roleId != null">
+                and role_id = #{roleId}
+            </if>
+            <if test="roleName != null and roleName != ''">
+                and role_name = #{roleName}
+            </if>
+            <if test="roleDescription != null and roleDescription != ''">
+                and role_description = #{roleDescription}
+            </if>
+            <if test="roleCreateDate != null">
+                and role_create_date = #{roleCreateDate}
+            </if>
+            <if test="roleCreateByUser != null and roleCreateByUser != ''">
+                and role_create_by_user = #{roleCreateByUser}
+            </if>
+            <if test="roleUpdateDate != null">
+                and role_update_date = #{roleUpdateDate}
+            </if>
+            <if test="roleUpdateByUser != null and roleUpdateByUser != ''">
+                and role_update_by_user = #{roleUpdateByUser}
+            </if>
+            <if test="roleDes != null and roleDes != ''">
+                and role_des = #{roleDes}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_role(role_id, role_name, role_description, role_create_date, role_create_by_user,
+        role_update_date, role_update_by_user, role_des)
+        values (#{roleId}, #{roleName}, #{roleDescription}, #{roleCreateDate}, #{roleCreateByUser}, #{roleUpdateDate},
+        #{roleUpdateByUser}, #{roleDes})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_role(role_id, role_name, role_description, role_create_date, role_create_by_user,
+        role_update_date, role_update_by_user, role_des)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.roleId}, #{entity.roleName}, #{entity.roleDescription}, #{entity.roleCreateDate},
+            #{entity.roleCreateByUser}, #{entity.roleUpdateDate}, #{entity.roleUpdateByUser}, #{entity.roleDes})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_role(role_id, role_name, role_description, role_create_date, role_create_by_user,
+        role_update_date, role_update_by_user, role_des)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.roleId}, #{entity.roleName}, #{entity.roleDescription}, #{entity.roleCreateDate},
+            #{entity.roleCreateByUser}, #{entity.roleUpdateDate}, #{entity.roleUpdateByUser}, #{entity.roleDes})
+        </foreach>
+        on duplicate key update
+        role_id = values(role_id) , role_name = values(role_name) , role_description = values(role_description) ,
+        role_create_date = values(role_create_date) , role_create_by_user = values(role_create_by_user) ,
+        role_update_date = values(role_update_date) , role_update_by_user = values(role_update_by_user) , role_des =
+        values(role_des)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_role
+        <set>
+            <if test="roleId != null">
+                role_id = #{roleId},
+            </if>
+            <if test="roleName != null and roleName != ''">
+                role_name = #{roleName},
+            </if>
+            <if test="roleDescription != null and roleDescription != ''">
+                role_description = #{roleDescription},
+            </if>
+            <if test="roleCreateDate != null">
+                role_create_date = #{roleCreateDate},
+            </if>
+            <if test="roleCreateByUser != null and roleCreateByUser != ''">
+                role_create_by_user = #{roleCreateByUser},
+            </if>
+            <if test="roleUpdateDate != null">
+                role_update_date = #{roleUpdateDate},
+            </if>
+            <if test="roleUpdateByUser != null and roleUpdateByUser != ''">
+                role_update_by_user = #{roleUpdateByUser},
+            </if>
+            <if test="roleDes != null and roleDes != ''">
+                role_des = #{roleDes},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_role where id = #{id}
+    </delete>
+
+</mapper>
+

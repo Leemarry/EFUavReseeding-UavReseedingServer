@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUavEachsortieDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUavEachsortie" id="EfUavEachsortieMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="connectTime" column="connect_time" jdbcType="TIMESTAMP"/>
+        <result property="lastVoltage" column="last_voltage" jdbcType="NUMERIC"/>
+        <result property="aremdTime" column="aremd_time" jdbcType="TIMESTAMP"/>
+        <result property="aremdVoltage" column="aremd_voltage" jdbcType="NUMERIC"/>
+        <result property="flyingTime" column="flying_time" jdbcType="INTEGER"/>
+        <result property="onlineTime" column="online_time" jdbcType="INTEGER"/>
+        <result property="airRange" column="air_range" jdbcType="NUMERIC"/>
+        <result property="lockedTime" column="locked_time" jdbcType="TIMESTAMP"/>
+        <result property="lockedVoltage" column="locked_voltage" jdbcType="NUMERIC"/>
+        <result property="flyLogPath" column="fly_log_path" jdbcType="VARCHAR"/>
+        <result property="flyVideoPath" column="fly_video_path" jdbcType="VARCHAR"/>
+        <result property="place" column="place" jdbcType="VARCHAR"/>
+        <result property="seedNumberAll" column="seed_number_all" jdbcType="INTEGER"/>
+        <result property="seedNumberUsed" column="seed_number_used" jdbcType="INTEGER"/>
+        <result property="flyWpsId" column="fly_wps_id" jdbcType="INTEGER"/>
+        <result property="mission" column="mission" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUavEachsortieMap">
+        select
+          id, uav_id, connect_time, last_voltage, aremd_time, aremd_voltage, flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place, seed_number_all, seed_number_used, fly_wps_id, mission
+        from ef_reseeding.ef_uav_eachsortie
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUavEachsortieMap">
+        select
+          id, uav_id, connect_time, last_voltage, aremd_time, aremd_voltage, flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place, seed_number_all, seed_number_used, fly_wps_id, mission
+        from ef_reseeding.ef_uav_eachsortie
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUavEachsortieMap">
+        select
+        id, uav_id, connect_time, last_voltage, aremd_time, aremd_voltage, flying_time, online_time, air_range,
+        locked_time, locked_voltage, fly_log_path, fly_video_path, place, seed_number_all, seed_number_used, fly_wps_id,
+        mission
+        from ef_reseeding.ef_uav_eachsortie
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="uavId != null and uavId != ''">
+                and uav_id = #{uavId}
+            </if>
+            <if test="connectTime != null">
+                and connect_time = #{connectTime}
+            </if>
+            <if test="lastVoltage != null">
+                and last_voltage = #{lastVoltage}
+            </if>
+            <if test="aremdTime != null">
+                and aremd_time = #{aremdTime}
+            </if>
+            <if test="aremdVoltage != null">
+                and aremd_voltage = #{aremdVoltage}
+            </if>
+            <if test="flyingTime != null">
+                and flying_time = #{flyingTime}
+            </if>
+            <if test="onlineTime != null">
+                and online_time = #{onlineTime}
+            </if>
+            <if test="airRange != null">
+                and air_range = #{airRange}
+            </if>
+            <if test="lockedTime != null">
+                and locked_time = #{lockedTime}
+            </if>
+            <if test="lockedVoltage != null">
+                and locked_voltage = #{lockedVoltage}
+            </if>
+            <if test="flyLogPath != null and flyLogPath != ''">
+                and fly_log_path = #{flyLogPath}
+            </if>
+            <if test="flyVideoPath != null and flyVideoPath != ''">
+                and fly_video_path = #{flyVideoPath}
+            </if>
+            <if test="place != null and place != ''">
+                and place = #{place}
+            </if>
+            <if test="seedNumberAll != null">
+                and seed_number_all = #{seedNumberAll}
+            </if>
+            <if test="seedNumberUsed != null">
+                and seed_number_used = #{seedNumberUsed}
+            </if>
+            <if test="flyWpsId != null">
+                and fly_wps_id = #{flyWpsId}
+            </if>
+            <if test="mission != null and mission != ''">
+                and mission = #{mission}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_eachsortie(uav_id, connect_time, last_voltage, aremd_time, aremd_voltage, flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place, seed_number_all, seed_number_used, fly_wps_id, mission)
+        values (#{uavId}, #{connectTime}, #{lastVoltage}, #{aremdTime}, #{aremdVoltage}, #{flyingTime}, #{onlineTime}, #{airRange}, #{lockedTime}, #{lockedVoltage}, #{flyLogPath}, #{flyVideoPath}, #{place}, #{seedNumberAll}, #{seedNumberUsed}, #{flyWpsId}, #{mission})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_eachsortie(uav_id, connect_time, last_voltage, aremd_time, aremd_voltage,
+        flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place,
+        seed_number_all, seed_number_used, fly_wps_id, mission)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uavId}, #{entity.connectTime}, #{entity.lastVoltage}, #{entity.aremdTime}, #{entity.aremdVoltage},
+            #{entity.flyingTime}, #{entity.onlineTime}, #{entity.airRange}, #{entity.lockedTime},
+            #{entity.lockedVoltage}, #{entity.flyLogPath}, #{entity.flyVideoPath}, #{entity.place},
+            #{entity.seedNumberAll}, #{entity.seedNumberUsed}, #{entity.flyWpsId}, #{entity.mission})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_eachsortie(uav_id, connect_time, last_voltage, aremd_time, aremd_voltage,
+        flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place,
+        seed_number_all, seed_number_used, fly_wps_id, mission)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uavId}, #{entity.connectTime}, #{entity.lastVoltage}, #{entity.aremdTime}, #{entity.aremdVoltage},
+            #{entity.flyingTime}, #{entity.onlineTime}, #{entity.airRange}, #{entity.lockedTime},
+            #{entity.lockedVoltage}, #{entity.flyLogPath}, #{entity.flyVideoPath}, #{entity.place},
+            #{entity.seedNumberAll}, #{entity.seedNumberUsed}, #{entity.flyWpsId}, #{entity.mission})
+        </foreach>
+        on duplicate key update
+        uav_id = values(uav_id) , connect_time = values(connect_time) , last_voltage = values(last_voltage) , aremd_time
+        = values(aremd_time) , aremd_voltage = values(aremd_voltage) , flying_time = values(flying_time) , online_time =
+        values(online_time) , air_range = values(air_range) , locked_time = values(locked_time) , locked_voltage =
+        values(locked_voltage) , fly_log_path = values(fly_log_path) , fly_video_path = values(fly_video_path) , place =
+        values(place) , seed_number_all = values(seed_number_all) , seed_number_used = values(seed_number_used) ,
+        fly_wps_id = values(fly_wps_id) , mission = values(mission)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_uav_eachsortie
+        <set>
+            <if test="uavId != null and uavId != ''">
+                uav_id = #{uavId},
+            </if>
+            <if test="connectTime != null">
+                connect_time = #{connectTime},
+            </if>
+            <if test="lastVoltage != null">
+                last_voltage = #{lastVoltage},
+            </if>
+            <if test="aremdTime != null">
+                aremd_time = #{aremdTime},
+            </if>
+            <if test="aremdVoltage != null">
+                aremd_voltage = #{aremdVoltage},
+            </if>
+            <if test="flyingTime != null">
+                flying_time = #{flyingTime},
+            </if>
+            <if test="onlineTime != null">
+                online_time = #{onlineTime},
+            </if>
+            <if test="airRange != null">
+                air_range = #{airRange},
+            </if>
+            <if test="lockedTime != null">
+                locked_time = #{lockedTime},
+            </if>
+            <if test="lockedVoltage != null">
+                locked_voltage = #{lockedVoltage},
+            </if>
+            <if test="flyLogPath != null and flyLogPath != ''">
+                fly_log_path = #{flyLogPath},
+            </if>
+            <if test="flyVideoPath != null and flyVideoPath != ''">
+                fly_video_path = #{flyVideoPath},
+            </if>
+            <if test="place != null and place != ''">
+                place = #{place},
+            </if>
+            <if test="seedNumberAll != null">
+                seed_number_all = #{seedNumberAll},
+            </if>
+            <if test="seedNumberUsed != null">
+                seed_number_used = #{seedNumberUsed},
+            </if>
+            <if test="flyWpsId != null">
+                fly_wps_id = #{flyWpsId},
+            </if>
+            <if test="mission != null and mission != ''">
+                mission = #{mission},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_uav_eachsortie where id = #{id}
+    </delete>
+
+</mapper>
+

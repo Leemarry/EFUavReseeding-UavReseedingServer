@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfCavityDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfCavity" id="EfCavityMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="cavityName" column="cavity_name" jdbcType="VARCHAR"/>
+        <result property="lat" column="lat" jdbcType="NUMERIC"/>
+        <result property="lng" column="lng" jdbcType="NUMERIC"/>
+        <result property="alt" column="alt" jdbcType="NUMERIC"/>
+        <result property="altabs" column="altabs" jdbcType="NUMERIC"/>
+        <result property="size" column="size" jdbcType="NUMERIC"/>
+        <result property="level" column="level" jdbcType="INTEGER"/>
+        <result property="seedingCount" column="seeding_count" jdbcType="INTEGER"/>
+        <result property="eachsortieId" column="eachsortie_id" jdbcType="INTEGER"/>
+        <result property="photoId" column="photo_id" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfCavityMap">
+        select
+        id, cavity_name, lat, lng, alt, altabs, size, level, seeding_count, eachsortie_id, photo_id
+        from ef_reseeding.ef_cavity
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfCavityMap">
+        select
+        id, cavity_name, lat, lng, alt, altabs, size, level, seeding_count, eachsortie_id, photo_id
+        from ef_reseeding.ef_cavity
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfCavityMap">
+        select
+        id, cavity_name, lat, lng, alt, altabs, size, level, seeding_count, eachsortie_id, photo_id
+        from ef_reseeding.ef_cavity
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="cavityName != null and cavityName != ''">
+                and cavity_name = #{cavityName}
+            </if>
+            <if test="lat != null">
+                and lat = #{lat}
+            </if>
+            <if test="lng != null">
+                and lng = #{lng}
+            </if>
+            <if test="alt != null">
+                and alt = #{alt}
+            </if>
+            <if test="altabs != null">
+                and altabs = #{altabs}
+            </if>
+            <if test="size != null">
+                and size = #{size}
+            </if>
+            <if test="level != null">
+                and level = #{level}
+            </if>
+            <if test="seedingCount != null">
+                and seeding_count = #{seedingCount}
+            </if>
+            <if test="eachsortieId != null">
+                and eachsortie_id = #{eachsortieId}
+            </if>
+            <if test="photoId != null">
+                and photo_id = #{photoId}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_cavity(cavity_name, lat, lng, alt, altabs, size, level, seeding_count,
+        eachsortie_id, photo_id)
+        values (#{cavityName}, #{lat}, #{lng}, #{alt}, #{altabs}, #{size}, #{level}, #{seedingCount}, #{eachsortieId},
+        #{photoId})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_cavity(cavity_name, lat, lng, alt, altabs, size, level, seeding_count,
+        eachsortie_id, photo_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.cavityName}, #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.altabs}, #{entity.size},
+            #{entity.level}, #{entity.seedingCount}, #{entity.eachsortieId}, #{entity.photoId})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_cavity(cavity_name, lat, lng, alt, altabs, size, level, seeding_count,
+        eachsortie_id, photo_id)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.cavityName}, #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.altabs}, #{entity.size},
+            #{entity.level}, #{entity.seedingCount}, #{entity.eachsortieId}, #{entity.photoId})
+        </foreach>
+        on duplicate key update
+        cavity_name = values(cavity_name) , lat = values(lat) , lng = values(lng) , alt = values(alt) , altabs =
+        values(altabs) , size = values(size) , level = values(level) , seeding_count = values(seeding_count) ,
+        eachsortie_id = values(eachsortie_id) , photo_id = values(photo_id)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_cavity
+        <set>
+            <if test="cavityName != null and cavityName != ''">
+                cavity_name = #{cavityName},
+            </if>
+            <if test="lat != null">
+                lat = #{lat},
+            </if>
+            <if test="lng != null">
+                lng = #{lng},
+            </if>
+            <if test="alt != null">
+                alt = #{alt},
+            </if>
+            <if test="altabs != null">
+                altabs = #{altabs},
+            </if>
+            <if test="size != null">
+                size = #{size},
+            </if>
+            <if test="level != null">
+                level = #{level},
+            </if>
+            <if test="seedingCount != null">
+                seeding_count = #{seedingCount},
+            </if>
+            <if test="eachsortieId != null">
+                eachsortie_id = #{eachsortieId},
+            </if>
+            <if test="photoId != null">
+                photo_id = #{photoId},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_cavity where id = #{id}
+    </delete>
+
+</mapper>
+

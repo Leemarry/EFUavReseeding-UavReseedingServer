@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUavTypeDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUavType" id="EfUavTypeMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="typeName" column="type_name" jdbcType="VARCHAR"/>
+        <result property="typeNo" column="type_no" jdbcType="VARCHAR"/>
+        <result property="typeImage" column="type_image" jdbcType="VARCHAR"/>
+        <result property="typeProtocol" column="type_protocol" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUavTypeMap">
+        select
+          id, type_name, type_no, type_image, type_protocol
+        from ef_reseeding.ef_uav_type
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUavTypeMap">
+        select
+          id, type_name, type_no, type_image, type_protocol
+        from ef_reseeding.ef_uav_type
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUavTypeMap">
+        select
+        id, type_name, type_no, type_image, type_protocol
+        from ef_reseeding.ef_uav_type
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="typeName != null and typeName != ''">
+                and type_name = #{typeName}
+            </if>
+            <if test="typeNo != null and typeNo != ''">
+                and type_no = #{typeNo}
+            </if>
+            <if test="typeImage != null and typeImage != ''">
+                and type_image = #{typeImage}
+            </if>
+            <if test="typeProtocol != null">
+                and type_protocol = #{typeProtocol}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_type(type_name, type_no, type_image, type_protocol)
+        values (#{typeName}, #{typeNo}, #{typeImage}, #{typeProtocol})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_type(type_name, type_no, type_image, type_protocol)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.typeName}, #{entity.typeNo}, #{entity.typeImage}, #{entity.typeProtocol})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_uav_type(type_name, type_no, type_image, type_protocol)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.typeName}, #{entity.typeNo}, #{entity.typeImage}, #{entity.typeProtocol})
+        </foreach>
+        on duplicate key update
+        type_name = values(type_name) , type_no = values(type_no) , type_image = values(type_image) , type_protocol =
+        values(type_protocol)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_uav_type
+        <set>
+            <if test="typeName != null and typeName != ''">
+                type_name = #{typeName},
+            </if>
+            <if test="typeNo != null and typeNo != ''">
+                type_no = #{typeNo},
+            </if>
+            <if test="typeImage != null and typeImage != ''">
+                type_image = #{typeImage},
+            </if>
+            <if test="typeProtocol != null">
+                type_protocol = #{typeProtocol},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_uav_type where id = #{id}
+    </delete>
+
+</mapper>
+

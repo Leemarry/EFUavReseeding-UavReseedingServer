@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfUserLoginDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfUserLogin" id="EfUserLoginMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="uUserId" column="u_user_id" jdbcType="INTEGER"/>
+        <result property="uLoginName" column="u_login_name" jdbcType="VARCHAR"/>
+        <result property="uName" column="u_name" jdbcType="VARCHAR"/>
+        <result property="uLoginTime" column="u_login_time" jdbcType="TIMESTAMP"/>
+        <result property="uAgent" column="u_agent" jdbcType="VARCHAR"/>
+        <result property="uIpWww" column="u_ip_www" jdbcType="VARCHAR"/>
+        <result property="uIpLocal" column="u_ip_local" jdbcType="VARCHAR"/>
+        <result property="uMachineCode" column="u_machine_code" jdbcType="VARCHAR"/>
+        <result property="uLoginOutTime" column="u_login_out_time" jdbcType="TIMESTAMP"/>
+        <result property="uOnlineTime" column="u_online_time" jdbcType="INTEGER"/>
+        <result property="uDescription" column="u_description" jdbcType="VARCHAR"/>
+        <result property="uStatus" column="u_status" jdbcType="INTEGER"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfUserLoginMap">
+        select
+          id, u_user_id, u_login_name, u_name, u_login_time, u_agent, u_ip_www, u_ip_local, u_machine_code, u_login_out_time, u_online_time, u_description, u_status
+        from ef_reseeding.ef_user_login
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfUserLoginMap">
+        select
+          id, u_user_id, u_login_name, u_name, u_login_time, u_agent, u_ip_www, u_ip_local, u_machine_code, u_login_out_time, u_online_time, u_description, u_status
+        from ef_reseeding.ef_user_login
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfUserLoginMap">
+        select
+        id, u_user_id, u_login_name, u_name, u_login_time, u_agent, u_ip_www, u_ip_local, u_machine_code,
+        u_login_out_time, u_online_time, u_description, u_status
+        from ef_reseeding.ef_user_login
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="uUserId != null">
+                and u_user_id = #{uUserId}
+            </if>
+            <if test="uLoginName != null and uLoginName != ''">
+                and u_login_name = #{uLoginName}
+            </if>
+            <if test="uName != null and uName != ''">
+                and u_name = #{uName}
+            </if>
+            <if test="uLoginTime != null">
+                and u_login_time = #{uLoginTime}
+            </if>
+            <if test="uAgent != null and uAgent != ''">
+                and u_agent = #{uAgent}
+            </if>
+            <if test="uIpWww != null and uIpWww != ''">
+                and u_ip_www = #{uIpWww}
+            </if>
+            <if test="uIpLocal != null and uIpLocal != ''">
+                and u_ip_local = #{uIpLocal}
+            </if>
+            <if test="uMachineCode != null and uMachineCode != ''">
+                and u_machine_code = #{uMachineCode}
+            </if>
+            <if test="uLoginOutTime != null">
+                and u_login_out_time = #{uLoginOutTime}
+            </if>
+            <if test="uOnlineTime != null">
+                and u_online_time = #{uOnlineTime}
+            </if>
+            <if test="uDescription != null and uDescription != ''">
+                and u_description = #{uDescription}
+            </if>
+            <if test="uStatus != null">
+                and u_status = #{uStatus}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user_login(u_user_id, u_login_name, u_name, u_login_time, u_agent, u_ip_www, u_ip_local, u_machine_code, u_login_out_time, u_online_time, u_description, u_status)
+        values (#{uUserId}, #{uLoginName}, #{uName}, #{uLoginTime}, #{uAgent}, #{uIpWww}, #{uIpLocal}, #{uMachineCode}, #{uLoginOutTime}, #{uOnlineTime}, #{uDescription}, #{uStatus})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user_login(u_user_id, u_login_name, u_name, u_login_time, u_agent, u_ip_www,
+        u_ip_local, u_machine_code, u_login_out_time, u_online_time, u_description, u_status)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uUserId}, #{entity.uLoginName}, #{entity.uName}, #{entity.uLoginTime}, #{entity.uAgent},
+            #{entity.uIpWww}, #{entity.uIpLocal}, #{entity.uMachineCode}, #{entity.uLoginOutTime},
+            #{entity.uOnlineTime}, #{entity.uDescription}, #{entity.uStatus})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_user_login(u_user_id, u_login_name, u_name, u_login_time, u_agent, u_ip_www,
+        u_ip_local, u_machine_code, u_login_out_time, u_online_time, u_description, u_status)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.uUserId}, #{entity.uLoginName}, #{entity.uName}, #{entity.uLoginTime}, #{entity.uAgent},
+            #{entity.uIpWww}, #{entity.uIpLocal}, #{entity.uMachineCode}, #{entity.uLoginOutTime},
+            #{entity.uOnlineTime}, #{entity.uDescription}, #{entity.uStatus})
+        </foreach>
+        on duplicate key update
+        u_user_id = values(u_user_id) , u_login_name = values(u_login_name) , u_name = values(u_name) , u_login_time =
+        values(u_login_time) , u_agent = values(u_agent) , u_ip_www = values(u_ip_www) , u_ip_local = values(u_ip_local)
+        , u_machine_code = values(u_machine_code) , u_login_out_time = values(u_login_out_time) , u_online_time =
+        values(u_online_time) , u_description = values(u_description) , u_status = values(u_status)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_user_login
+        <set>
+            <if test="uUserId != null">
+                u_user_id = #{uUserId},
+            </if>
+            <if test="uLoginName != null and uLoginName != ''">
+                u_login_name = #{uLoginName},
+            </if>
+            <if test="uName != null and uName != ''">
+                u_name = #{uName},
+            </if>
+            <if test="uLoginTime != null">
+                u_login_time = #{uLoginTime},
+            </if>
+            <if test="uAgent != null and uAgent != ''">
+                u_agent = #{uAgent},
+            </if>
+            <if test="uIpWww != null and uIpWww != ''">
+                u_ip_www = #{uIpWww},
+            </if>
+            <if test="uIpLocal != null and uIpLocal != ''">
+                u_ip_local = #{uIpLocal},
+            </if>
+            <if test="uMachineCode != null and uMachineCode != ''">
+                u_machine_code = #{uMachineCode},
+            </if>
+            <if test="uLoginOutTime != null">
+                u_login_out_time = #{uLoginOutTime},
+            </if>
+            <if test="uOnlineTime != null">
+                u_online_time = #{uOnlineTime},
+            </if>
+            <if test="uDescription != null and uDescription != ''">
+                u_description = #{uDescription},
+            </if>
+            <if test="uStatus != null">
+                u_status = #{uStatus},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_user_login where id = #{id}
+    </delete>
+
+</mapper>
+

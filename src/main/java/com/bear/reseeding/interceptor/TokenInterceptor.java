@@ -3,7 +3,7 @@ package com.bear.reseeding.interceptor;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.bear.reseeding.common.ResultUtil;
-import com.bear.reseeding.entity.TUser;
+import com.bear.reseeding.entity.EfUser;
 import com.bear.reseeding.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -74,7 +74,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             boolean result = TokenUtil.verify(token);
             redisUtils.set(token + "_LastOpterTime", System.currentTimeMillis(), 1L, TimeUnit.HOURS); //上次操作时间
             if (result) {
-                TUser user = TokenUtil.getUser(token);
+                EfUser user = TokenUtil.getUser(token);
                 request.getSession().setAttribute("currentUser", user);
                 return true;
             }

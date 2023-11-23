@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfRelationCompanyUavDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfRelationCompanyUav" id="EfRelationCompanyUavMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="companyId" column="company_id" jdbcType="INTEGER"/>
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="limitDate" column="limit_date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfRelationCompanyUavMap">
+        select
+        id, company_id, uav_id, limit_date
+        from ef_reseeding.ef_relation_company_uav
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfRelationCompanyUavMap">
+        select
+        id, company_id, uav_id, limit_date
+        from ef_reseeding.ef_relation_company_uav
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfRelationCompanyUavMap">
+        select
+        id, company_id, uav_id, limit_date
+        from ef_reseeding.ef_relation_company_uav
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="companyId != null">
+                and company_id = #{companyId}
+            </if>
+            <if test="uavId != null and uavId != ''">
+                and uav_id = #{uavId}
+            </if>
+            <if test="limitDate != null">
+                and limit_date = #{limitDate}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_relation_company_uav(company_id, uav_id, limit_date)
+        values (#{companyId}, #{uavId}, #{limitDate})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_relation_company_uav(company_id, uav_id, limit_date)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.companyId}, #{entity.uavId}, #{entity.limitDate})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_relation_company_uav(company_id, uav_id, limit_date)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.companyId}, #{entity.uavId}, #{entity.limitDate})
+        </foreach>
+        on duplicate key update
+        company_id = values(company_id) , uav_id = values(uav_id) , limit_date = values(limit_date)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_relation_company_uav
+        <set>
+            <if test="companyId != null">
+                company_id = #{companyId},
+            </if>
+            <if test="uavId != null and uavId != ''">
+                uav_id = #{uavId},
+            </if>
+            <if test="limitDate != null">
+                limit_date = #{limitDate},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_relation_company_uav where id = #{id}
+    </delete>
+
+</mapper>
+
