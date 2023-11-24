@@ -268,7 +268,6 @@ public class HandleMqttMessageDji {
                 LogUtil.logInfo("#" + msgid + "-->无人机编号：" + uavSn + ",全自动指令后续回复 推送到前台:" + msg3052.toString());
                 //endregion
                 break;
-
             case 3105:
                 //region 控制指令回复
                 tag = packet[Index] & 0xFF;  //标记
