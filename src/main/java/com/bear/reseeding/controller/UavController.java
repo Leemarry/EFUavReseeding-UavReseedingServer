@@ -1,6 +1,10 @@
 package com.bear.reseeding.controller;
 
+import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
+import com.bear.reseeding.datalink.EfLinkUtil;
+import com.bear.reseeding.datalink.MqttUtil;
+import com.bear.reseeding.eflink.EFLINK_MSG_3050;
 import com.bear.reseeding.model.Result;
 import com.bear.reseeding.service.EfUavService;
 import com.bear.reseeding.utils.*;
@@ -13,6 +17,10 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.plaf.synth.Region;
 import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * 无人机管理
@@ -58,8 +66,6 @@ public class UavController {
 
     //region 通用无人机控制
 
-    //endregion 通用无人机控制
-
     /**
      * TODO 起飞无人机
      *
@@ -74,6 +80,40 @@ public class UavController {
             // String idSession = request.getSession().getId();
             String ipLocal = request.getRemoteAddr();
             String ipWww = NetworkUtil.getIpAddr(request);
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机ID获取无人机SN
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            //1.打包3050上传等待
+            int tag = new Random().nextInt();
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(tag);
+            eflink_msg_3050.setCommand(11203);
+            eflink_msg_3050.setParm1((int) (alt * 100));
+            eflink_msg_3050.setParm2(0);
+            eflink_msg_3050.setParm3(0);
+            eflink_msg_3050.setParm4(0);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+            //2.推送到mqtt,返回3052判断
+            long startTime = System.currentTimeMillis();
+            String keyHive = null;
+            boolean goon = false;
+            String error = "未知错误！";
+            String key = uavId + "_" + 3051 + "_" + tag;
+            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            MyApplication.keyObj.put(key, key);
+            synchronized (MyApplication.keyObj) {
+                try {
+                    if (!MyApplication.keyObj.containsKey(key)) {
+                        MyApplication.keyObj.get(key).wait(10000); // 等待回复
+                    }
+                    // 有值之后，处理值
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            MyApplication.keyObj.remove(key);
 
             return ResultUtil.success();
         } catch (Exception e) {
@@ -210,6 +250,8 @@ public class UavController {
         }
     }
 
+    //endregion 通用无人机控制
+
     //region 测绘无人机控制
 
     /**
@@ -258,7 +300,6 @@ public class UavController {
     }
 
     //endregion
-
 
     //region 补种无人机控制
 

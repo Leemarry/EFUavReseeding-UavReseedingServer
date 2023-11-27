@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import java.security.KeyPair;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SpringBootApplication
 @MapperScan(value = "com.bear.reseeding.dao")
@@ -29,6 +30,7 @@ public class MyApplication extends SpringBootServletInitializer {
 
     private static MqttItem mqttDji;
     private static MqttItem mqttEf;
+    public static ConcurrentHashMap<String,Object> keyObj = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
 //        test();
@@ -97,7 +99,7 @@ public class MyApplication extends SpringBootServletInitializer {
         }
     }
 
-     //初始化 mqtt 连接
+    //初始化 mqtt 连接
     public static void InitMqtt() {
         try {
             String hostAddress = appConfig.getHostAddress();
@@ -117,7 +119,6 @@ public class MyApplication extends SpringBootServletInitializer {
             LogUtil.logError("初始化Mqtt连接失败：" + e.toString());
         }
     }
-
 
 
     //初始化 fastjson 参数

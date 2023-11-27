@@ -1,6 +1,7 @@
 package com.bear.reseeding.datalink;
 
 import com.alibaba.fastjson.JSONObject;
+import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.eflink.*;
 import com.bear.reseeding.eflink.enums.EF_PARKING_APRON_ACK;
@@ -252,6 +253,14 @@ public class HandleMqttMessageDji {
                 EFLINK_MSG_3051 msg3051 = new EFLINK_MSG_3051();
                 msg3051.unPacket(packet, Index);
                 redisUtils.set(uavSn + "_" + msgid + "_" + msg3051.getTag(), msg3051.getAck(), 30L, TimeUnit.SECONDS);
+                String key = uavSn + "_" + msgid + "_" + msg3051.getTag();
+                synchronized (MyApplication.keyObj) {
+                    try {
+                        MyApplication.keyObj.put(key, msg3051);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
                 //endregion
                 break;
             case 3052:
@@ -266,6 +275,7 @@ public class HandleMqttMessageDji {
                 }
                 WebSocketLink.push(ResultUtil.success(msgid, uavIdSystem, null, msg3052), owerUsers);
                 LogUtil.logInfo("#" + msgid + "-->无人机编号：" + uavSn + ",全自动指令后续回复 推送到前台:" + msg3052.toString());
+
                 //endregion
                 break;
             case 3105:
