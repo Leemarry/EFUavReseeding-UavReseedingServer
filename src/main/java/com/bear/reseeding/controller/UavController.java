@@ -574,6 +574,9 @@ public class UavController {
     @PostMapping(value = "/queryPhotoInfo")
     public Result queryPhotoInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
         try {
+            if(eachsortieId == null){
+                return  ResultUtil.error("架次id为空");
+            }
             // 查询 uavid eachsortieId 查询 实时拍摄照片表
            List<EfMediaPhoto> efMediaPhotoList=  efMediaPhotoService.queryByeachsortieIdOruavId(eachsortieId);
 
@@ -595,14 +598,16 @@ public class UavController {
     @PostMapping(value = "/queryHoleInfo")
     public Result queryHoleInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
         try {
+            if(eachsortieId == null){
+                return  ResultUtil.error("架次id为空");
+            }
             // 查询 uavid eachsortieId 查询 实时拍摄照片表
             List<EfCavity> efCavityList =efCavityService.queryByeachsortieIdOruavId(eachsortieId);
 
-            LogUtil.logError("查询飞行历史数据异常：");
-            return ResultUtil.error("查询飞行历史数据异常,请联系管理员！");
+            return  ResultUtil.success("查询飞行架次洞斑列表信息成功",efCavityList);
         } catch (Exception e) {
-            LogUtil.logError("查询：" + e.toString());
-            return ResultUtil.error("查询飞行历史数据异常,请联系管理员！");
+            LogUtil.logError("查询获取飞行架次洞斑列表数据异常：" + e.toString());
+            return ResultUtil.error("查询获取飞行洞斑列表数据异常,请联系管理员！");
         }
 
     }

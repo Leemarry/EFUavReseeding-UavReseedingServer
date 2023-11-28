@@ -59,13 +59,41 @@ public class EfUavEachsortie implements Serializable {
      * 飞行记录日志路径
      */
     private String flyLogPath;
+
+    public String getPlace() {
+        return place;
+    }
+
+    public void setPlace(String place) {
+        this.place = place;
+    }
+
+    public Integer getSeedNumberAll() {
+        return seedNumberAll;
+    }
+
+    public void setSeedNumberAll(Integer seedNumberAll) {
+        this.seedNumberAll = seedNumberAll;
+    }
+
+    public Integer getSeedNumberUsed() {
+        return seedNumberUsed;
+    }
+
+    public void setSeedNumberUsed(Integer seedNumberUsed) {
+        this.seedNumberUsed = seedNumberUsed;
+    }
+
     /**
      * 飞行视频路径
      */
     private String flyVideoPath;
 
     private String mission;
+    private  String place;
 
+private Integer seedNumberAll;
+ private Integer seedNumberUsed;
     /**
      * 外键：飞行时的航线信息，可空
      */
