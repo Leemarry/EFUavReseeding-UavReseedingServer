@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfSysteminfoDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfSysteminfo" id="EfSysteminfoMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="sysName" column="sys_name" jdbcType="VARCHAR"/>
+        <result property="sysNameZh" column="sys_name_zh" jdbcType="VARCHAR"/>
+        <result property="sysLanguage" column="sys_language" jdbcType="VARCHAR"/>
+        <result property="sysIco" column="sys_ico" jdbcType="VARCHAR"/>
+        <result property="sysInfo" column="sys_info" jdbcType="VARCHAR"/>
+        <result property="sysServerHost" column="sys_server_host" jdbcType="VARCHAR"/>
+        <result property="sysServerPort" column="sys_server_port" jdbcType="INTEGER"/>
+        <result property="sysMqttServer" column="sys_mqtt_server" jdbcType="VARCHAR"/>
+        <result property="sysMqttPort" column="sys_mqtt_port" jdbcType="INTEGER"/>
+        <result property="sysMqttUserName" column="sys_mqtt_user_name" jdbcType="VARCHAR"/>
+        <result property="sysMqttUserPwd" column="sys_mqtt_user_pwd" jdbcType="VARCHAR"/>
+        <result property="sysVideoPath" column="sys_video_path" jdbcType="VARCHAR"/>
+        <result property="sysVideoUserName" column="sys_video_user_name" jdbcType="VARCHAR"/>
+        <result property="sysVideoUserPwd" column="sys_video_user_pwd" jdbcType="VARCHAR"/>
+        <result property="sysUavPhotoStorage" column="sys_uav_photo_storage" jdbcType="VARCHAR"/>
+        <result property="sysUavVideoStorage" column="sys_uav_video_storage" jdbcType="VARCHAR"/>
+        <result property="sysApiEncryption" column="sys_api_encryption" jdbcType="BOOLEAN"/>
+        <result property="sysCreateDate" column="sys_create_date" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfSysteminfoMap">
+        select
+          id, sys_name, sys_name_zh, sys_language, sys_ico, sys_info, sys_server_host, sys_server_port, sys_mqtt_server, sys_mqtt_port, sys_mqtt_user_name, sys_mqtt_user_pwd, sys_video_path, sys_video_user_name, sys_video_user_pwd, sys_uav_photo_storage, sys_uav_video_storage, sys_api_encryption, sys_create_date
+        from ef_reseeding.ef_systeminfo
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfSysteminfoMap">
+        select
+          id, sys_name, sys_name_zh, sys_language, sys_ico, sys_info, sys_server_host, sys_server_port, sys_mqtt_server, sys_mqtt_port, sys_mqtt_user_name, sys_mqtt_user_pwd, sys_video_path, sys_video_user_name, sys_video_user_pwd, sys_uav_photo_storage, sys_uav_video_storage, sys_api_encryption, sys_create_date
+        from ef_reseeding.ef_systeminfo
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfSysteminfoMap">
+        select
+        id, sys_name, sys_name_zh, sys_language, sys_ico, sys_info, sys_server_host, sys_server_port, sys_mqtt_server,
+        sys_mqtt_port, sys_mqtt_user_name, sys_mqtt_user_pwd, sys_video_path, sys_video_user_name, sys_video_user_pwd,
+        sys_uav_photo_storage, sys_uav_video_storage, sys_api_encryption, sys_create_date
+        from ef_reseeding.ef_systeminfo
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="sysName != null and sysName != ''">
+                and sys_name = #{sysName}
+            </if>
+            <if test="sysNameZh != null and sysNameZh != ''">
+                and sys_name_zh = #{sysNameZh}
+            </if>
+            <if test="sysLanguage != null and sysLanguage != ''">
+                and sys_language = #{sysLanguage}
+            </if>
+            <if test="sysIco != null and sysIco != ''">
+                and sys_ico = #{sysIco}
+            </if>
+            <if test="sysInfo != null and sysInfo != ''">
+                and sys_info = #{sysInfo}
+            </if>
+            <if test="sysServerHost != null and sysServerHost != ''">
+                and sys_server_host = #{sysServerHost}
+            </if>
+            <if test="sysServerPort != null">
+                and sys_server_port = #{sysServerPort}
+            </if>
+            <if test="sysMqttServer != null and sysMqttServer != ''">
+                and sys_mqtt_server = #{sysMqttServer}
+            </if>
+            <if test="sysMqttPort != null">
+                and sys_mqtt_port = #{sysMqttPort}
+            </if>
+            <if test="sysMqttUserName != null and sysMqttUserName != ''">
+                and sys_mqtt_user_name = #{sysMqttUserName}
+            </if>
+            <if test="sysMqttUserPwd != null and sysMqttUserPwd != ''">
+                and sys_mqtt_user_pwd = #{sysMqttUserPwd}
+            </if>
+            <if test="sysVideoPath != null and sysVideoPath != ''">
+                and sys_video_path = #{sysVideoPath}
+            </if>
+            <if test="sysVideoUserName != null and sysVideoUserName != ''">
+                and sys_video_user_name = #{sysVideoUserName}
+            </if>
+            <if test="sysVideoUserPwd != null and sysVideoUserPwd != ''">
+                and sys_video_user_pwd = #{sysVideoUserPwd}
+            </if>
+            <if test="sysUavPhotoStorage != null and sysUavPhotoStorage != ''">
+                and sys_uav_photo_storage = #{sysUavPhotoStorage}
+            </if>
+            <if test="sysUavVideoStorage != null and sysUavVideoStorage != ''">
+                and sys_uav_video_storage = #{sysUavVideoStorage}
+            </if>
+            <if test="sysApiEncryption != null">
+                and sys_api_encryption = #{sysApiEncryption}
+            </if>
+            <if test="sysCreateDate != null">
+                and sys_create_date = #{sysCreateDate}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_systeminfo(sys_name, sys_name_zh, sys_language, sys_ico, sys_info, sys_server_host, sys_server_port, sys_mqtt_server, sys_mqtt_port, sys_mqtt_user_name, sys_mqtt_user_pwd, sys_video_path, sys_video_user_name, sys_video_user_pwd, sys_uav_photo_storage, sys_uav_video_storage, sys_api_encryption, sys_create_date)
+        values (#{sysName}, #{sysNameZh}, #{sysLanguage}, #{sysIco}, #{sysInfo}, #{sysServerHost}, #{sysServerPort}, #{sysMqttServer}, #{sysMqttPort}, #{sysMqttUserName}, #{sysMqttUserPwd}, #{sysVideoPath}, #{sysVideoUserName}, #{sysVideoUserPwd}, #{sysUavPhotoStorage}, #{sysUavVideoStorage}, #{sysApiEncryption}, #{sysCreateDate})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_systeminfo(sys_name, sys_name_zh, sys_language, sys_ico, sys_info, sys_server_host,
+        sys_server_port, sys_mqtt_server, sys_mqtt_port, sys_mqtt_user_name, sys_mqtt_user_pwd, sys_video_path,
+        sys_video_user_name, sys_video_user_pwd, sys_uav_photo_storage, sys_uav_video_storage, sys_api_encryption,
+        sys_create_date)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.sysName}, #{entity.sysNameZh}, #{entity.sysLanguage}, #{entity.sysIco}, #{entity.sysInfo},
+            #{entity.sysServerHost}, #{entity.sysServerPort}, #{entity.sysMqttServer}, #{entity.sysMqttPort},
+            #{entity.sysMqttUserName}, #{entity.sysMqttUserPwd}, #{entity.sysVideoPath}, #{entity.sysVideoUserName},
+            #{entity.sysVideoUserPwd}, #{entity.sysUavPhotoStorage}, #{entity.sysUavVideoStorage},
+            #{entity.sysApiEncryption}, #{entity.sysCreateDate})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_reseeding.ef_systeminfo(sys_name, sys_name_zh, sys_language, sys_ico, sys_info, sys_server_host,
+        sys_server_port, sys_mqtt_server, sys_mqtt_port, sys_mqtt_user_name, sys_mqtt_user_pwd, sys_video_path,
+        sys_video_user_name, sys_video_user_pwd, sys_uav_photo_storage, sys_uav_video_storage, sys_api_encryption,
+        sys_create_date)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.sysName}, #{entity.sysNameZh}, #{entity.sysLanguage}, #{entity.sysIco}, #{entity.sysInfo},
+            #{entity.sysServerHost}, #{entity.sysServerPort}, #{entity.sysMqttServer}, #{entity.sysMqttPort},
+            #{entity.sysMqttUserName}, #{entity.sysMqttUserPwd}, #{entity.sysVideoPath}, #{entity.sysVideoUserName},
+            #{entity.sysVideoUserPwd}, #{entity.sysUavPhotoStorage}, #{entity.sysUavVideoStorage},
+            #{entity.sysApiEncryption}, #{entity.sysCreateDate})
+        </foreach>
+        on duplicate key update
+        sys_name = values(sys_name) , sys_name_zh = values(sys_name_zh) , sys_language = values(sys_language) , sys_ico
+        = values(sys_ico) , sys_info = values(sys_info) , sys_server_host = values(sys_server_host) , sys_server_port =
+        values(sys_server_port) , sys_mqtt_server = values(sys_mqtt_server) , sys_mqtt_port = values(sys_mqtt_port) ,
+        sys_mqtt_user_name = values(sys_mqtt_user_name) , sys_mqtt_user_pwd = values(sys_mqtt_user_pwd) , sys_video_path
+        = values(sys_video_path) , sys_video_user_name = values(sys_video_user_name) , sys_video_user_pwd =
+        values(sys_video_user_pwd) , sys_uav_photo_storage = values(sys_uav_photo_storage) , sys_uav_video_storage =
+        values(sys_uav_video_storage) , sys_api_encryption = values(sys_api_encryption) , sys_create_date =
+        values(sys_create_date)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_reseeding.ef_systeminfo
+        <set>
+            <if test="sysName != null and sysName != ''">
+                sys_name = #{sysName},
+            </if>
+            <if test="sysNameZh != null and sysNameZh != ''">
+                sys_name_zh = #{sysNameZh},
+            </if>
+            <if test="sysLanguage != null and sysLanguage != ''">
+                sys_language = #{sysLanguage},
+            </if>
+            <if test="sysIco != null and sysIco != ''">
+                sys_ico = #{sysIco},
+            </if>
+            <if test="sysInfo != null and sysInfo != ''">
+                sys_info = #{sysInfo},
+            </if>
+            <if test="sysServerHost != null and sysServerHost != ''">
+                sys_server_host = #{sysServerHost},
+            </if>
+            <if test="sysServerPort != null">
+                sys_server_port = #{sysServerPort},
+            </if>
+            <if test="sysMqttServer != null and sysMqttServer != ''">
+                sys_mqtt_server = #{sysMqttServer},
+            </if>
+            <if test="sysMqttPort != null">
+                sys_mqtt_port = #{sysMqttPort},
+            </if>
+            <if test="sysMqttUserName != null and sysMqttUserName != ''">
+                sys_mqtt_user_name = #{sysMqttUserName},
+            </if>
+            <if test="sysMqttUserPwd != null and sysMqttUserPwd != ''">
+                sys_mqtt_user_pwd = #{sysMqttUserPwd},
+            </if>
+            <if test="sysVideoPath != null and sysVideoPath != ''">
+                sys_video_path = #{sysVideoPath},
+            </if>
+            <if test="sysVideoUserName != null and sysVideoUserName != ''">
+                sys_video_user_name = #{sysVideoUserName},
+            </if>
+            <if test="sysVideoUserPwd != null and sysVideoUserPwd != ''">
+                sys_video_user_pwd = #{sysVideoUserPwd},
+            </if>
+            <if test="sysUavPhotoStorage != null and sysUavPhotoStorage != ''">
+                sys_uav_photo_storage = #{sysUavPhotoStorage},
+            </if>
+            <if test="sysUavVideoStorage != null and sysUavVideoStorage != ''">
+                sys_uav_video_storage = #{sysUavVideoStorage},
+            </if>
+            <if test="sysApiEncryption != null">
+                sys_api_encryption = #{sysApiEncryption},
+            </if>
+            <if test="sysCreateDate != null">
+                sys_create_date = #{sysCreateDate},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_reseeding.ef_systeminfo where id = #{id}
+    </delete>
+
+</mapper>
+

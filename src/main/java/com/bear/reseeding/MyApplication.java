@@ -30,12 +30,22 @@ public class MyApplication extends SpringBootServletInitializer {
 
     private static MqttItem mqttDji;
     private static MqttItem mqttEf;
-    public static ConcurrentHashMap<String,Object> keyObj = new ConcurrentHashMap<>();
+    public static ConcurrentHashMap<String, Object> keyObj = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
 //        test();
         SpringApplication.run(MyApplication.class, args);
         Init();
+    }
+
+    @Autowired
+    public void setMqttItemDji(MqttItem mqtt) {
+        mqttDji = mqtt;
+    }
+
+    @Autowired
+    public void setMqttItemEf(MqttItem mqtt) {
+        mqttEf = mqtt;
     }
 
     @Autowired
@@ -106,10 +116,10 @@ public class MyApplication extends SpringBootServletInitializer {
             String mqttpwd = appConfig.getMqttpwd();
             String version = appConfig.serviceVersion;
 
-            mqttDji.init(hostAddress, "reseeding_dji_v" + version, mqttpwd, appConfig.getSubscribeTopicDjiUav(), appConfig.getPublishTopicDjiUav(), MqttUtil.Tag_Djiapp);
+            mqttDji.init(hostAddress, "reseeding", mqttpwd, appConfig.getSubscribeTopicDjiUav(), appConfig.getPublishTopicDjiUav(), MqttUtil.Tag_Djiapp);
             mqttDji.StartMqtt();
 
-            mqttEf.init(hostAddress, "reseeding_ef_v" + version, mqttpwd, appConfig.getSubscribeTopicEfuav(), appConfig.getPublishTopicEfuav(), MqttUtil.Tag_efuavapp);
+            mqttEf.init(hostAddress, "reseeding", mqttpwd, appConfig.getSubscribeTopicEfuav(), appConfig.getPublishTopicEfuav(), MqttUtil.Tag_efuavapp);
             mqttEf.StartMqtt();
 
             MqttUtil.MapMqttItem.clear();

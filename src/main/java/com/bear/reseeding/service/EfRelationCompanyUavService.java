@@ -53,4 +53,10 @@ public interface EfRelationCompanyUavService {
      */
     boolean deleteById(Integer id);
 
+        /**
+     * 查询所有
+     *
+     * @return
+     */
+    List<EfRelationCompanyUav> queryAll2();
 }

@@ -23,6 +23,15 @@
         where id = #{id}
     </select>
 
+    <!--查询单个-->
+    <select id="queryByRid" resultMap="EfRoleMap">
+       select
+        id, role_id, role_name, role_description, role_create_date, role_create_by_user, role_update_date,
+        role_update_by_user, role_des
+        from ef_reseeding.ef_role
+        where role_id = #{id}
+    </select>
+
     <!--查询指定行数据-->
     <select id="queryAllByLimit" resultMap="EfRoleMap">
         select

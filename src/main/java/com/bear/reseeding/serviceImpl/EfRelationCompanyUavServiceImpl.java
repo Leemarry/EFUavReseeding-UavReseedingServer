@@ -76,4 +76,14 @@ public class EfRelationCompanyUavServiceImpl implements EfRelationCompanyUavServ
     public boolean deleteById(Integer id) {
         return this.efRelationCompanyUavDao.deleteById(id) > 0;
     }
+
+    /**
+     * 查询所有
+     *
+     * @return
+     */
+    @Override
+    public List<EfRelationCompanyUav> queryAll2() {
+        return this.efRelationCompanyUavDao.queryAll2();
+    }
 }

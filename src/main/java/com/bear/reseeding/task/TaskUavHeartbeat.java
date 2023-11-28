@@ -90,12 +90,12 @@ public class TaskUavHeartbeat {
                         }
                         if (listTemp.size() > 30 || (pollTimeout && listTemp.size() > 0)) {
                             // 插入数据
-//                            int count = efUavRealtimedataService.insertBatch(listTemp);
-//                            if (count != listTemp.size()) {
-//                                LogUtil.logWarn("储存无人机实时数据失败。共 " + listTemp.size() + " 条，储存成功 " + count + " 条！");
-//                            } else {
-//                                LogUtil.logDebug("储存无人机实时数据成功，共 " + listTemp.size() + " 条储存成功。");
-//                            }
+                            int count = efUavRealtimedataService.insertBatch(listTemp);
+                            if (count != listTemp.size()) {
+                                LogUtil.logWarn("储存无人机实时数据失败。共 " + listTemp.size() + " 条，储存成功 " + count + " 条！");
+                            } else {
+                                LogUtil.logDebug("储存无人机实时数据成功，共 " + listTemp.size() + " 条储存成功。");
+                            }
                             listTemp.clear();
                         }
                         Thread.sleep(5);

@@ -39,23 +39,6 @@ public class HandleMqttMessageDji {
     @Resource
     TaskUavHeartbeat taskUavHeartbeat;
 
-//    public static String DatabaseStorage = null;
-//
-//    @Autowired
-//    public void setRealtimedataService(EfUavRealtimedataService efUavRealtimedata) {
-//        realtimedataService = efUavRealtimedata;
-//    }
-//
-//    @Autowired
-//    public void getEfUavEachsortieService(EfUavEachsortieService eachsortieService) {
-//        efUavEachsortieService = eachsortieService;
-//    }
-
-//    public static void TEST() {
-//        LogUtil.logError("测试注入：realtimedataService=" + realtimedataService);
-//        LogUtil.logError("测试注入：efUavEachsortieService=" + efUavEachsortieService);
-//    }
-
 
     public void unPacket(RedisUtils redisUtils, String topic, String deviceId, byte[] packet) {
         DoPacket(redisUtils, packet, "", deviceId);
@@ -88,7 +71,7 @@ public class HandleMqttMessageDji {
             return;
         }
         if (owerUsers.length <= 0) {
-            //LogUtil.logWarn("MQTT：无人机[" + uavid + "," + uavIdSystem + "]未绑定用户！");
+            LogUtil.logWarn("MQTT：无人机[" + uavSn + "," + uavIdSystem + "]未绑定用户！");
         }
         // 找到该设备所属公司
         Object obj = redisUtils.hmGet("rel_uavid_companyid", uavIdSystem);
@@ -358,6 +341,8 @@ public class HandleMqttMessageDji {
                 msg3210.InitPacket(packet, Index);
                 redisUtils.set(uavSn + "_" + msgid + "_" + msg3210.getTag(), msg3210, 30L, TimeUnit.SECONDS);
                 LogUtil.logInfo(msg3210.toString());
+                break;
+            default:
                 break;
         }
     }

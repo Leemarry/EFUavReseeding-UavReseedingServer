@@ -93,5 +93,15 @@ public class EfUserServiceImpl implements EfUserService {
         return this.efUserDao.login(userId, userPwd);
     }
 
+    /**
+     * 查询所有管理员账户，role=1,2,3
+     *
+     * @return 对象列表
+     */
+    @Override
+    public List<EfUser> queryAllAdmin() {
+        return efUserDao.queryAllAdmin();
+    }
+
     //endregion
 }

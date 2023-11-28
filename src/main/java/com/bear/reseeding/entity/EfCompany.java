@@ -71,7 +71,10 @@ public class EfCompany implements Serializable {
      * 值为 1&2&3。 其它功能(1: 秸秆功能 ， 2: 光伏)
      */
     private String cFunction;
-
+    /**
+     * 关联系统信息
+     */
+    private EfSysteminfo efSysteminfo;
 
     public Integer getId() {
         return id;
@@ -193,4 +196,11 @@ public class EfCompany implements Serializable {
         this.cFunction = cFunction;
     }
 
+    public EfSysteminfo getEfSysteminfo() {
+        return efSysteminfo;
+    }
+
+    public void setEfSysteminfo(EfSysteminfo efSysteminfo) {
+        this.efSysteminfo = efSysteminfo;
+    }
 }
