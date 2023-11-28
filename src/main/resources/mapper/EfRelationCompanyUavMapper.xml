@@ -9,6 +9,14 @@
         <result property="limitDate" column="limit_date" jdbcType="TIMESTAMP"/>
     </resultMap>
 
+    <!--查询全部-->
+    <select id="queryAll2" resultMap="EfRelationCompanyUavMap">
+        select
+          id, company_id, uav_id, limit_date
+        from ef_relation_company_uav
+    </select>
+
+
     <!--查询单个-->
     <select id="queryById" resultMap="EfRelationCompanyUavMap">
         select

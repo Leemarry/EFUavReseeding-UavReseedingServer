@@ -28,8 +28,6 @@ import java.util.concurrent.*;
  */
 @Component
 public class TaskAnsisPhoto {
-    @Value("${spring.config.pvUrl}")
-    private String pvUrl;
     @Autowired
     private RedisUtils redisUtils;
     @Autowired
@@ -82,10 +80,11 @@ public class TaskAnsisPhoto {
      * @param lng          经度
      * @param fileStream   文件流
      */
-    public void savePhoto(String companyId, Date date, String uavId, String fileName, String streamSource,
-                          double lat, double lng, byte[] fileStream, String FolderName, String type, String suffix,
-                          MultipartFile file, long sizeBig, CompletableFuture<String> urlBigFuture, float alt, float altAbs,
-                          double roll, double pitch, double yaw, double gimbalRoll, double gimbalPitch, double gimbalYaw) {
+    public void savePhoto(String companyId, Date date, String uavId, String fileName, String streamSource, String type, String suffix,
+                          byte[] fileStream, MultipartFile file, long sizeBig,
+                          double lat, double lng, float alt, float altAbs,
+                          double roll, double pitch, double yaw,
+                          double gimbalRoll, double gimbalPitch, double gimbalYaw) {
         if (threadPoolExecutorPhoto == null) {
             // 构造一个线程池
             threadPoolExecutorPhoto = new ThreadPoolExecutor(10, 200, 30,
@@ -102,8 +101,8 @@ public class TaskAnsisPhoto {
                 }
                 // 1.上传minio原图和缩略图
                 //region 保存照片到minio或者本地
-                String pathBigImage = ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/image/" + FolderName + "/" + fileName;
-                String pathMiniImage = ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/thumbnail/" + FolderName + "/" + fileName;
+                String pathBigImage = ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/image/xxxxx/" + fileName;
+                String pathMiniImage = ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/thumbnail/xxxxxxx/" + fileName;
                 String urlBig = "";  // 原图路径
                 String urlSmall = "";  // 缩略图路径
                 String place = ""; //拍摄地址
@@ -120,7 +119,7 @@ public class TaskAnsisPhoto {
                             if (!minioService.uploadImage("efuav", "photo/" + pathMiniImage, contentType, inputStream)) {
                                 LogUtil.logWarn("原图上传成功，缩略图储存失败！");
                             }
-                            urlBigFuture.complete(urlBig);
+//                            urlBigFuture.complete(urlBig);
                             inputStream.close();
                             urlSmall = "resourceminio/photo/" + pathMiniImage;
 //                            place = PhotoUtil.getPlace(lat, lng);
@@ -132,8 +131,8 @@ public class TaskAnsisPhoto {
                 } else {
                     urlBig = "resource/photo/" + pathBigImage;
                     urlSmall = "resource/photo/" + pathMiniImage;
-                    String pathParentBig = BasePath + "photo/" + ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/image/" + FolderName + "/";
-                    String pathParentSmall = BasePath + "photo/" + ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/thumbnail/" + FolderName + "/";
+                    String pathParentBig = BasePath + "photo/" + ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/image/11111/";
+                    String pathParentSmall = BasePath + "photo/" + ("0".equals(type) ? "uav" : "hive") + "/" + uavId + "/thumbnail/111111111/";
                     if (!FileUtil.saveFileAndThumbnail(fileStream, pathParentBig, pathParentSmall, fileName)) {
                         LogUtil.logError("上传图片失败！");
                     }

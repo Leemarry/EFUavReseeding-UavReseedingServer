@@ -79,5 +79,11 @@ public interface EfRelationCompanyUavDao {
      */
     int deleteById(Integer id);
 
+    /**
+     * 查询所有
+     *
+     * @return
+     */
+    List<EfRelationCompanyUav> queryAll2();
 }
 

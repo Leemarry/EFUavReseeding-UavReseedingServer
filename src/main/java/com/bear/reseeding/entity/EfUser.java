@@ -100,6 +100,15 @@ public class EfUser implements Serializable {
      */
     private Date uLimitDate;
 
+    /**
+     * 外键，用户所属公司
+     */
+    private EfCompany efCompany;
+
+    /**
+     * 角色外键
+     */
+    private EfRole efRole;
 
     public Integer getId() {
         return id;
@@ -277,4 +286,19 @@ public class EfUser implements Serializable {
         this.uLimitDate = uLimitDate;
     }
 
+    public EfCompany getEfCompany() {
+        return efCompany;
+    }
+
+    public void setEfCompany(EfCompany efCompany) {
+        this.efCompany = efCompany;
+    }
+
+    public EfRole getEfRole() {
+        return efRole;
+    }
+
+    public void setEfRole(EfRole efRole) {
+        this.efRole = efRole;
+    }
 }

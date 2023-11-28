@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.bear.reseeding.dao.EfUserDao">
 
-    <resultMap type="com.bear.reseeding.entity.EfUser" id="EfUserMap">
+    <resultMap type="com.bear.reseeding.entity.EfUser" id="EfUserMapSingle">
         <result property="id" column="id" jdbcType="INTEGER"/>
         <result property="uLoginName" column="u_login_name" jdbcType="VARCHAR"/>
         <result property="uLoginPassword" column="u_login_password" jdbcType="VARCHAR"/>
@@ -27,6 +27,38 @@
         <result property="uLimitDate" column="u_limit_date" jdbcType="TIMESTAMP"/>
     </resultMap>
 
+
+     <resultMap type="com.bear.reseeding.entity.EfUser" id="EfUserMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="uLoginName" column="u_login_name" jdbcType="VARCHAR"/>
+        <result property="uLoginPassword" column="u_login_password" jdbcType="VARCHAR"/>
+        <result property="uName" column="u_name" jdbcType="VARCHAR"/>
+        <result property="uAge" column="u_age" jdbcType="VARCHAR"/>
+        <result property="uPhone" column="u_phone" jdbcType="VARCHAR"/>
+        <result property="uAddress" column="u_address" jdbcType="VARCHAR"/>
+        <result property="uEmail" column="u_email" jdbcType="VARCHAR"/>
+        <result property="uSex" column="u_sex" jdbcType="BOOLEAN"/>
+        <result property="uCreateDate" column="u_create_date" jdbcType="TIMESTAMP"/>
+        <result property="uCreateByUser" column="u_create_by_user" jdbcType="VARCHAR"/>
+        <result property="uUpdateDate" column="u_update_date" jdbcType="TIMESTAMP"/>
+        <result property="uUpdateByUser" column="u_update_by_user" jdbcType="VARCHAR"/>
+        <result property="uIco" column="u_ico" jdbcType="VARCHAR"/>
+        <result property="uDescription" column="u_description" jdbcType="VARCHAR"/>
+        <result property="uStatus" column="u_status" jdbcType="INTEGER"/>
+        <result property="uRId" column="u_r_id" jdbcType="INTEGER"/>
+        <result property="uCId" column="u_c_id" jdbcType="INTEGER"/>
+        <result property="uParentId" column="u_parent_id" jdbcType="INTEGER"/>
+        <result property="uLimitUav" column="u_limit_uav" jdbcType="INTEGER"/>
+        <result property="uLimitHive" column="u_limit_hive" jdbcType="INTEGER"/>
+        <result property="uLimitDate" column="u_limit_date" jdbcType="TIMESTAMP"/>
+        <!-- 一对一关联映射：efCompany  -->
+        <association property="efCompany" column="u_c_id" select="com.bear.reseeding.dao.EfCompanyDao.queryById"
+                     javaType="com.bear.reseeding.entity.EfCompany"/>
+        <!-- 一对一关联映射：efRole  -->
+        <association property="efRole" column="u_r_id" select="com.bear.reseeding.dao.EfRoleDao.queryByRid"
+                     javaType="com.bear.reseeding.entity.EfRole"/>
+    </resultMap>
+
     <!--登录-->
     <select id="login" resultMap="EfUserMap">
         select
@@ -34,7 +66,10 @@
         from ef_reseeding.ef_user
         where u_login_name = #{userId} and u_login_password = #{userPwd}
     </select>
-
+  <!--查询所有管理员账户，role=1,2,3-->
+    <select id="queryAllAdmin" resultMap="EfUserMapSingle">
+        select * from ef_user where u_r_id &lt;= 3
+    </select>
     <!--查询单个-->
     <select id="queryById" resultMap="EfUserMap">
         select

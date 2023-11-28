@@ -90,6 +90,14 @@ public interface EfUserDao {
      * @return
      */
     EfUser login(@Param("userId") String userId, @Param("userPwd") String userPwd);
+
+
+    /**
+     * 查询所有管理员账户，role=1,2,3
+     *
+     * @return 对象列表
+     */
+    List<EfUser> queryAllAdmin();
     //endregion
 }
 

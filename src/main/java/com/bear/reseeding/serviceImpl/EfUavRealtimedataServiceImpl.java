@@ -76,4 +76,16 @@ public class EfUavRealtimedataServiceImpl implements EfUavRealtimedataService {
     public boolean deleteById(Integer id) {
         return this.efUavRealtimedataDao.deleteById(id) > 0;
     }
+
+
+    /**
+     * 批量新增数据（MyBatis原生foreach方法）
+     *
+     * @param entities List<EfUavRealtimedata> 实例对象列表
+     * @return 影响行数
+     */
+    @Override
+    public int insertBatch(List<EfUavRealtimedata> entities) {
+        return this.efUavRealtimedataDao.insertBatch(entities);
+    }
 }

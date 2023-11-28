@@ -47,6 +47,12 @@
             <artifactId>spring-boot-starter-redis</artifactId>
             <version>1.4.1.RELEASE</version>
         </dependency>
+        <!-- 腾讯云API 云直播 -->
+        <dependency>
+            <groupId>com.tencentcloudapi</groupId>
+            <artifactId>tencentcloud-sdk-java</artifactId>
+            <version>3.1.598</version>
+        </dependency>
         <!-- MQTT -->
         <dependency>
             <groupId>org.eclipse.paho</groupId>

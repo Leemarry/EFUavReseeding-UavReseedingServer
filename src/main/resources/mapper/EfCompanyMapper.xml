@@ -18,6 +18,11 @@
         <result property="cLimitHive" column="c_limit_hive" jdbcType="INTEGER"/>
         <result property="cLimitDate" column="c_limit_date" jdbcType="TIMESTAMP"/>
         <result property="cFunction" column="c_function" jdbcType="VARCHAR"/>
+
+          <!-- 一对一关联映射：系统信息  -->
+        <association property="efSysteminfo" column="c_system_id"
+                     select="com.bear.reseeding.dao.EfSysteminfoDao.queryById"
+                     javaType="com.bear.reseeding.entity.EfSysteminfo"/>
     </resultMap>
 
     <!--查询单个-->

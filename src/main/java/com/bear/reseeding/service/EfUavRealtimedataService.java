@@ -1,6 +1,7 @@
 package com.bear.reseeding.service;
 
 import com.bear.reseeding.entity.EfUavRealtimedata;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -53,4 +54,12 @@ public interface EfUavRealtimedataService {
      */
     boolean deleteById(Integer id);
 
+
+    /**
+     * 批量新增数据（MyBatis原生foreach方法）
+     *
+     * @param entities List<EfUavRealtimedata> 实例对象列表
+     * @return 影响行数
+     */
+    int insertBatch(@Param("entities") List<EfUavRealtimedata> entities);
 }

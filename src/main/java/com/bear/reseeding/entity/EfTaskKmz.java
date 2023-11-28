@@ -6,6 +6,9 @@ import java.util.Date;
 
 /**
  * 航点任务表(EfTaskKmz)实体类
+ *
+ * @author makejava
+ * @since 2022-11-18 09:29:45
  */
 public class EfTaskKmz implements Serializable {
 

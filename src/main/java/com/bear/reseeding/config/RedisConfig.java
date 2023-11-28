@@ -1,5 +1,7 @@
 package com.bear.reseeding.config;
+
 import java.lang.reflect.Method;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachingConfigurerSupport;
 import org.springframework.cache.annotation.EnableCaching;
@@ -23,11 +25,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 @Configuration
 @EnableCaching
-public class RedisConfig extends CachingConfigurerSupport{
+public class RedisConfig extends CachingConfigurerSupport {
     @Value("${spring.redis.host}")
     private String host;
     @Value("${spring.redis.port}")
     private int port;
+    @Value("${spring.redis.database}")
+    private int database;
     @Value("${spring.redis.timeout}")
     private int timeout;
     @Value("${spring.redis.password}")
@@ -64,6 +68,7 @@ public class RedisConfig extends CachingConfigurerSupport{
         factory.setPort(port);
         factory.setTimeout(timeout); //设置连接超时时间
         factory.setPassword(password);
+        factory.setDatabase(database);
         factory.getPoolConfig().setMaxIdle(maxIdle);
         factory.getPoolConfig().setMinIdle(minIdle);
         factory.getPoolConfig().setMaxTotal(maxActive);

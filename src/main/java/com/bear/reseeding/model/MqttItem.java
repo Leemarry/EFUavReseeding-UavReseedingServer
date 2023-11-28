@@ -94,8 +94,7 @@ public class MqttItem {
         String topic = this.topic_subscribe;
         try {
             long timenow = System.currentTimeMillis();
-            this.clientId_hive_sub = "uavserver_" + mqtttag + "_" + timenow;
-
+            this.clientId_hive_sub = "reseeding_" + mqtttag + "_" + timenow;
             // host为主机名，test为clientid即连接MQTT的客户端ID，一般以客户端唯一标识符表示，MemoryPersistence设置clientid的保存形式，默认为以内存保存
             mqttAsyncClient = new MqttClient(HOST, clientId_hive_sub, new MemoryPersistence());
             // MQTT的连接设置
