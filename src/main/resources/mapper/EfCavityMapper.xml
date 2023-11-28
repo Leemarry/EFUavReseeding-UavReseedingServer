@@ -32,6 +32,14 @@
         limit #{offset}, #{limit}
     </select>
 
+    <!--   queryByeachsortieIdOruavId -->
+    <select id="queryByeachsortieIdOruavId" resultMap="EfCavityMap">
+        select
+        id, cavity_name, lat, lng, alt, altabs, size, level, seeding_count, eachsortie_id, photo_id
+        from ef_reseeding.ef_cavity
+        where eachsortie_id =#{eachsortieId}
+    </select>
+
     <!--通过实体作为筛选条件查询-->
     <select id="queryAll" resultMap="EfCavityMap">
         select

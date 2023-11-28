@@ -6,9 +6,9 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    username: reseeding
-    password: cPCbtKjXmTc3r8KF
-    url: jdbc:mysql://175.178.237.52:3306/ef_reseeding?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    username: likai
+    password: likai123
+    url: jdbc:mysql://1.14.109.186:3306/ef_reseeding?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
 #    driver-class-name: com.mysql.jdbc.Driver
     #druid连接池配置
     type: com.alibaba.druid.pool.DruidDataSource
@@ -71,12 +71,19 @@ app:
   version: '@project.version@'
   buildtime: '@timestamp@'
 minio:
-  AccessKey: efsoft
-  SecretKey: efuavminio76832gysc4s23324dsdsa
-  BucketName: efuav
-  BucketNameKmz: efuavkmz
+#  AccessKey: efsoft
+#  SecretKey: efuavminio76832gysc4s23324dsdsa
+#  BucketName: efuav
+#  BucketNameKmz: efuavkmz
+#  BucketNameWord: efuavword
+#  Endpoint: http://1.14.109.186:29000
+  AccessKey: Dfkxm0rwlTp5Ww8yFOLz
+  SecretKey: 2Nrh7jddlw8FUWhQEiYet5mZReqH8kuyGOXQGf4j
+  BucketName: cheshi
+  BucketNameKmz: minioadmine
   BucketNameWord: efuavword
-  Endpoint: http://1.14.109.186:29000
+  BucketNameModel: efuavmodel
+  Endpoint: http://127.0.0.1:9090
 TxyTrtc:
   TxyTrtcSdkAppId: 1400739024
   TxyTrtcExpireTime: 604800

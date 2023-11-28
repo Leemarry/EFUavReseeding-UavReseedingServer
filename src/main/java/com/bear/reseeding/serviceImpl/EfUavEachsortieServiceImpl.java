@@ -3,6 +3,7 @@ package com.bear.reseeding.service.impl;
 import com.bear.reseeding.entity.EfUavEachsortie;
 import com.bear.reseeding.dao.EfUavEachsortieDao;
 import com.bear.reseeding.service.EfUavEachsortieService;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -78,5 +79,18 @@ public class EfUavEachsortieServiceImpl implements EfUavEachsortieService {
     @Override
     public boolean deleteById(Integer id) {
         return this.efUavEachsortieDao.deleteById(id) > 0;
+    }
+
+    /**
+     * 查询架次列表
+     *
+     * @param uavId 无人机id
+     * @param startTime 架次前时间
+     * @param endTime  架次后时间
+     * @return
+     */
+    @Override
+    public List<EfUavEachsortie> queryByIdOrTime(String uavId, @Param("startTime") String startTime, @Param("endTime") String endTime){
+        return  efUavEachsortieDao.queryByIdOrTime(uavId,startTime,endTime);
     }
 }

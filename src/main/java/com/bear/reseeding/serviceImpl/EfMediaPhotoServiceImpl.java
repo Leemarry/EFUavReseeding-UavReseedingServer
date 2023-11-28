@@ -76,4 +76,15 @@ public class EfMediaPhotoServiceImpl implements EfMediaPhotoService {
     public boolean deleteById(Integer id) {
         return this.efMediaPhotoDao.deleteById(id) > 0;
     }
+
+    /**
+     *  通过飞行架次
+     *
+     * @param eachsortieId 飞行架次id
+     * @return
+     */
+    @Override
+    public  List<EfMediaPhoto> queryByeachsortieIdOruavId(Integer eachsortieId){
+        return  efMediaPhotoDao.queryByeachsortieIdOruavId(eachsortieId);
+    }
 }

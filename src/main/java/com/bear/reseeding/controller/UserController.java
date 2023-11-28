@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Calendar;
 
 /**
  * 用户管理
@@ -58,7 +59,8 @@ public class UserController {
             String ipWww = NetworkUtil.getIpAddr(request);
             EfUser user = new EfUser();
             user.setULoginName(userId);
-            String userPwdMd5 = MD5Util.md5Encode(userPwd + encryptMd5Soft);
+            String userPwdMd5 = userPwd;
+//            String userPwdMd5 = MD5Util.md5Encode(userPwd + "water");
             user = efUserService.login(userId, userPwdMd5);
             if (user == null) {
                 LogUtil.logMessage(ipWww + "(" + ipLocal + ")账户: " + userId + " - " + userPwd + " 登录失败！");

@@ -53,4 +53,12 @@ public interface EfCavityService {
      */
     boolean deleteById(Integer id);
 
+    /**
+     * 通过飞行架次 查询 洞斑信息 queryByeachsortieIdOruavId
+     *
+     * @param eachsortieId 飞行架次id
+     * @return
+     */
+    List<EfCavity> queryByeachsortieIdOruavId(Integer eachsortieId);
+
 }

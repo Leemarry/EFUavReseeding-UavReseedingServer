@@ -53,6 +53,16 @@
         limit #{offset}, #{limit}
     </select>
 
+<!--queryByeachsortieIdOruavId-->
+    <select id="queryByeachsortieIdOruavId" resultMap="EfMediaPhotoMap">
+        select
+        id, create_date, deviceId, image_tag, image_group, type, source_id, camera_video_stream_source, path_image,
+        size_image, path_thumbnail, size_thumbnail, path_image_analysis, size_image_analysis, lat, lng, alt, altabs,
+        roll, pitch, yaw, focal_length, gimbal_roll, gimbal_pitch, gimbal_yaw, place, cavity_count, eachsortie_id
+        from ef_reseeding.ef_media_photo where eachsortie_id =#{eachsortieId}
+    </select>
+
+
     <!--通过实体作为筛选条件查询-->
     <select id="queryAll" resultMap="EfMediaPhotoMap">
         select

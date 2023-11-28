@@ -5,8 +5,18 @@ import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.EfLinkUtil;
 import com.bear.reseeding.datalink.MqttUtil;
 import com.bear.reseeding.eflink.EFLINK_MSG_3050;
+import com.bear.reseeding.eflink.EFLINK_MSG_3121;
+import com.bear.reseeding.eflink.EFLINK_MSG_3123;
+import com.bear.reseeding.entity.EfCavity;
+import com.bear.reseeding.entity.EfMediaPhoto;
+import com.bear.reseeding.entity.EfUavEachsortie;
+import com.bear.reseeding.entity.EfUavRealtimedata;
 import com.bear.reseeding.model.Result;
+import com.bear.reseeding.service.EfCavityService;
+import com.bear.reseeding.service.EfMediaPhotoService;
+import com.bear.reseeding.service.EfUavEachsortieService;
 import com.bear.reseeding.service.EfUavService;
+import com.bear.reseeding.task.MinioService;
 import com.bear.reseeding.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +26,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.plaf.synth.Region;
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.Calendar;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -38,6 +52,30 @@ public class UavController {
     @Resource
     private EfUavService efUavService;
 
+    @Resource
+    private EfUavEachsortieService efUavEachsortieService;
+
+    @Resource
+    private EfMediaPhotoService efMediaPhotoService;
+
+    @Resource
+    private EfCavityService efCavityService;
+
+    @Value("${BasePath:C://efuav/reseeding/}")
+    public String basePath;
+
+
+    /**
+     *minio
+     */
+    @Resource
+    private MinioService minioService;
+
+    @Value("${minio.BucketNameKmz}")
+    private String BucketNameKmz;
+
+    @Value("${spring.application.name}")
+    private String applicationName;
     /**
      * 加密
      */
@@ -253,21 +291,138 @@ public class UavController {
     //endregion 通用无人机控制
 
     //region 测绘无人机控制
-
+//    数组信息
     /**
-     * TODO 上传航点任务给无人机
      *
-     * @param uavId   无人机ID
-     * @param mission 任务航点集合
-     * @return 成功，失败
+     *  TODO 上传航点任务给无人机
+     *
+     * @param uavId 无人机编号
+     * @param mission 数组信息
+     * @param altType
+     * @param takeoffAlt
+     * @param homeAlt
+     * @param request
+     * @return
      */
     @ResponseBody
     @PostMapping(value = "/uploadMission")
-    public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody Object mission, HttpServletRequest request) {
+    public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody List<Map> mission,@RequestParam("altType") int altType,
+                                @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, HttpServletRequest request) {
         try {
+            for (Map<String, Double> entry : mission) {
+                double x = entry.get("x");
+                double y = entry.get("y");
+                double z = entry.get("z");
+                // 进行相应的操作...
+                System.out.println(x+","+y+""+z);
+            }
             // String idSession = request.getSession().getId();
             String ipLocal = request.getRemoteAddr();
             String ipWww = NetworkUtil.getIpAddr(request);
+            if (mission == null || mission.size() <= 0) {
+                return ResultUtil.error("航线为空!");
+            }
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机!");
+            }
+
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            String fileName = "temp_" + uavId + System.currentTimeMillis();
+            if (altType == 0) {
+                // 使用相对高度，获取飞机当前海拔
+                if (homeAlt == -1) {
+                    Object objalt = redisUtils.get(uavId + "_heart");
+                    if (objalt != null) {
+                        EfUavRealtimedata realtimedata = (EfUavRealtimedata) objalt;
+                        if (realtimedata.getAremd() == 1) {
+                            return ResultUtil.error("无人机已经起飞，请先降落无人机！");
+                        }
+                        if (realtimedata.getGpsStatus() == 10 || realtimedata.getGpsStatus() == 5) {
+                            homeAlt = realtimedata.getAltabs();
+                        } else {
+                            return ResultUtil.error("无人机未差分定位！");
+                        }
+                    } else {
+                        return ResultUtil.error("无人机已离线！");
+                    }
+                }
+            }
+            int uavType = 0;
+            //获取飞机类型
+            Object objtype = redisUtils.get(uavId + "_heart");
+            if (objtype != null) {
+                EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
+                uavType = realtimedata.getUavType();
+            }
+            // 生成kmz
+            boolean iscreate= true;
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType,basePath);
+            if (kmzFile==null) {
+                return ResultUtil.error("保存光伏巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+            }
+            // 上传minion
+            String url = applicationName  + "/" + kmzFile.getName();
+            if (!minioService.uploadImage("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+                if (kmzFile.exists()) {
+                    FileUtil.deleteDir(kmzFile.getParent());
+                }
+                return ResultUtil.error("保存光伏巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+            }
+
+            url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+            if ("".equals(url)) {
+                return ResultUtil.error("保存光伏巡检航线失败(错误码 4)！");
+            }
+            int size =0;
+            // EFLINK_MSG_3121 上传
+            int tag = ((byte) new Random().nextInt() & 0xFF);
+            EFLINK_MSG_3121 msg3121 = new EFLINK_MSG_3121();
+            msg3121.setTag(tag);
+            msg3121.setSize(size);
+            msg3121.setUrl(url);
+
+            // region 请求上传任务，等待无人机回复
+            EFLINK_MSG_3123 msg3123 = new EFLINK_MSG_3123();
+            byte[] packet = EfLinkUtil.Packet(msg3121.EFLINK_MSG_ID, msg3121.packet());
+            long timeout = System.currentTimeMillis();
+            String key = uavId + "_" + msg3123.EFLINK_MSG_ID + "_" + tag;
+            boolean goon = false;
+            String error = "未知错误！";
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (ack != null) {
+                    msg3123 = (EFLINK_MSG_3123) ack;
+                    if (msg3123.getResult() == 1) {
+                        goon = true;
+                    } else if (msg3123.getResult() == 2) {
+                        error = "下载航线任务文件失败，请重试！";
+                    } else {
+                        error = "无人机未准备好，请待会再传！";
+                    }
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (timeout + 20000 < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(200);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+
+
+            if(iscreate){
+                return ResultUtil.error("生成kmz文件失败！");
+            }
+
+
 
             return ResultUtil.success();
         } catch (Exception e) {
@@ -361,6 +516,98 @@ public class UavController {
             return ResultUtil.error("抛投异常,请联系管理员!");
         }
     }
+    //endregion
+
+    //region 数据增删查改
+    /**
+     * 查询飞行架次 queryFlightNumber
+     *
+     * @param uavId     无人机编号
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryFlightNumber")
+    public Result queryFlightNumber(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "startTime", required = false) long startTime,
+                                    @RequestParam(value = "endTime", required = false) long endTime) {
+        try {
+            if("".equals(uavId)){return  ResultUtil.error("无人机id为空");}
+
+            if (startTime == 0L) { // 检查开始时间是否为空
+                // 获取一个月前的时间戳
+                Calendar calendar = Calendar.getInstance();
+                calendar.add(Calendar.MONTH, -1);
+                startTime = calendar.getTimeInMillis();
+            }
+            if (endTime == 0L) { // 检查结束时间是否为空
+                // 获取当前时间的时间戳
+                Calendar calendar = Calendar.getInstance();
+                endTime = calendar.getTimeInMillis();
+            }
+            if (endTime < startTime) { // 检查结束时间是否小于开始时间
+                return ResultUtil.error("查询时间段异常!");
+            }
+//            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            String startTime1 = dateFormat.format(new Date(startTime));
+            // 将 startTime 和 endTime 转换成时间字符串并继续执行其他业务逻辑
+            String start = DateUtil.timeStamp2Date(startTime, "yyyy-MM-dd HH:mm:ss");
+            String end = DateUtil.timeStamp2Date(endTime, "yyyy-MM-dd HH:mm:ss");
+            // 查询 uavid start end 查询 飞行架次
+            List<EfUavEachsortie> efUavEachsortieList = efUavEachsortieService.queryByIdOrTime(uavId,start,end);
+
+            return  ResultUtil.success("查询飞行架次成功",efUavEachsortieList);
+        } catch (Exception e) {
+            LogUtil.logError("查询获取飞行架次数据异常：" + e.toString());
+            return ResultUtil.error("查询获取飞行架次数据异常,请联系管理员！");
+        }
+
+    }
+
+    /**
+     * 实时拍摄照片表 queryPhotoInfo
+     * @param uavId
+     * @param eachsortieId
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryPhotoInfo")
+    public Result queryPhotoInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+        try {
+            // 查询 uavid eachsortieId 查询 实时拍摄照片表
+           List<EfMediaPhoto> efMediaPhotoList=  efMediaPhotoService.queryByeachsortieIdOruavId(eachsortieId);
+
+            return  ResultUtil.success("查询飞行架次图片列表信息成功",efMediaPhotoList);
+        } catch (Exception e) {
+            LogUtil.logError("查询获取飞行架次图片列表数据异常：" + e.toString());
+            return ResultUtil.error("查询获取飞行架次图片列表数据异常,请联系管理员！");
+        }
+
+    }
+
+    /**
+     * 查询草原空洞表 queryHoleInfo
+     * @param uavId 无人机编号
+     * @param eachsortieId 飞行架次
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryHoleInfo")
+    public Result queryHoleInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+        try {
+            // 查询 uavid eachsortieId 查询 实时拍摄照片表
+            List<EfCavity> efCavityList =efCavityService.queryByeachsortieIdOruavId(eachsortieId);
+
+            LogUtil.logError("查询飞行历史数据异常：");
+            return ResultUtil.error("查询飞行历史数据异常,请联系管理员！");
+        } catch (Exception e) {
+            LogUtil.logError("查询：" + e.toString());
+            return ResultUtil.error("查询飞行历史数据异常,请联系管理员！");
+        }
+
+    }
+
+
     //endregion
 }
 

@@ -19,7 +19,7 @@ import java.util.concurrent.*;
  * @Description: null
  */
 @Component
-public class TaskAnsisPhoto {
+public class TaskAnsisPhotos {
     @Value("${spring.config.pvUrl}")
     private String pvUrl;
     @Autowired

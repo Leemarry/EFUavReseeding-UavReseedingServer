@@ -53,4 +53,12 @@ public interface EfMediaPhotoService {
      */
     boolean deleteById(Integer id);
 
+    /**
+     *  通过飞行架次
+     *
+     * @param eachsortieId 飞行架次id
+     * @return
+     */
+    List<EfMediaPhoto> queryByeachsortieIdOruavId (Integer eachsortieId);
+
 }

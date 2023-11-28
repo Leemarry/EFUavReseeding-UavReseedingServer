@@ -79,5 +79,18 @@ public interface EfUavEachsortieDao {
      */
     int deleteById(Integer id);
 
+    /**
+     * 查询架次列表
+     *
+     * @param uavId 无人机id
+     * @param startTime 架次前时间
+     * @param endTime  架次后时间
+     * @return
+     */
+    List<EfUavEachsortie> queryByIdOrTime(@Param("uavId") String uavId,@Param("startTime") String startTime, @Param("endTime") String endTime);
+
+
+
+
 }
 
