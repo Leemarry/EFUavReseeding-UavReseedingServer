@@ -1,5 +1,6 @@
 package com.bear.reseeding.entity;
 
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -181,5 +182,6 @@ public class EfTaskKmz implements Serializable {
     public void setKmzDes(String kmzDes) {
         this.kmzDes = kmzDes;
     }
+
 
 }

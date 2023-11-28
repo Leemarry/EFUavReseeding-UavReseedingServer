@@ -39,6 +39,20 @@
         limit #{offset}, #{limit}
     </select>
 
+
+
+    <!-- queryByIdOrTime 通过报告类型与时间查询工厂报告-->
+    <select id="queryByIdOrTime" resultMap="EfUavEachsortieMap">
+        select
+        id, uav_id, connect_time, last_voltage, aremd_time, aremd_voltage, flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place, seed_number_all, seed_number_used, fly_wps_id, mission
+        from ef_reseeding.ef_uav_eachsortie
+        where id = #{id}
+        <if test="time != null">
+            AND connect_time BETWEEN #{startTime} AND #{endTime}
+        </if>
+        ORDER BY connect_time DESC
+    </select>
+
     <!--通过实体作为筛选条件查询-->
     <select id="queryAll" resultMap="EfUavEachsortieMap">
         select

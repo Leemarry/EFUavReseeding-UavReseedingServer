@@ -79,5 +79,14 @@ public interface EfMediaPhotoDao {
      */
     int deleteById(Integer id);
 
+
+    /**
+     *  通过飞行架次
+     *
+     * @param eachsortieId 飞行架次id
+     * @return
+     */
+    List<EfMediaPhoto> queryByeachsortieIdOruavId(@Param("eachsortieId") Integer eachsortieId);
+
 }
 

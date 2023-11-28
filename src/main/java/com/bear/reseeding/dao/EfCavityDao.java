@@ -79,5 +79,13 @@ public interface EfCavityDao {
      */
     int deleteById(Integer id);
 
+    /**
+     * 通过飞行架次 查询 洞斑信息
+     *
+     * @param eachsortieId 飞行架次id
+     * @return
+     */
+    List<EfCavity> queryByeachsortieIdOruavId(@Param("eachsortieId") Integer eachsortieId);
+
 }
 

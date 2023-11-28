@@ -76,4 +76,14 @@ public class EfCavityServiceImpl implements EfCavityService {
     public boolean deleteById(Integer id) {
         return this.efCavityDao.deleteById(id) > 0;
     }
+
+    /**
+     * 通过飞行架次 查询 洞斑信息 queryByeachsortieIdOruavId
+     *
+     * @param eachsortieId 飞行架次id
+     * @return
+     */
+    public List<EfCavity> queryByeachsortieIdOruavId(Integer eachsortieId){
+        return  efCavityDao.queryByeachsortieIdOruavId(eachsortieId);
+    }
 }

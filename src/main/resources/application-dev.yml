@@ -71,12 +71,19 @@ app:
   version: '@project.version@'
   buildtime: '@timestamp@'
 minio:
-  AccessKey: efsoft
-  SecretKey: efuavminio76832gysc4s23324dsdsa
-  BucketName: efuav
-  BucketNameKmz: efuavkmz
+#  AccessKey: efsoft
+#  SecretKey: efuavminio76832gysc4s23324dsdsa
+#  BucketName: efuav
+#  BucketNameKmz: efuavkmz
+#  BucketNameWord: efuavword
+#  Endpoint: http://1.14.109.186:29000
+  AccessKey: Dfkxm0rwlTp5Ww8yFOLz
+  SecretKey: 2Nrh7jddlw8FUWhQEiYet5mZReqH8kuyGOXQGf4j
+  BucketName: cheshi
+  BucketNameKmz: minioadmine
   BucketNameWord: efuavword
-  Endpoint: http://1.14.109.186:29000
+  BucketNameModel: efuavmodel
+  Endpoint: http://127.0.0.1:9090
 TxyTrtc:
   TxyTrtcSdkAppId: 1400739024
   TxyTrtcExpireTime: 604800

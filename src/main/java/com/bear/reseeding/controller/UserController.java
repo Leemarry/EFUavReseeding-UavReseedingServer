@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.Calendar;
 
 /**
  * 用户管理
@@ -68,7 +69,8 @@ public class UserController {
             String ipWww = NetworkUtil.getIpAddr(request);
             EfUser user = new EfUser();
             user.setULoginName(userId);
-            String userPwdMd5 = MD5Util.md5Encode(userPwd + encryptMd5Soft);
+            String userPwdMd5 = userPwd;
+//            String userPwdMd5 = MD5Util.md5Encode(userPwd + "water");
             user = efUserService.login(userId, userPwdMd5);
             if (user == null) {
                 LogUtil.logMessage(ipWww + "(" + ipLocal + ")账户: " + userId + " - " + userPwd + " 登录失败！");
