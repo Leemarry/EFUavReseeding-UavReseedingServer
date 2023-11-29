@@ -69,8 +69,8 @@ public class UserController {
             String ipWww = NetworkUtil.getIpAddr(request);
             EfUser user = new EfUser();
             user.setULoginName(userId);
-            String userPwdMd5 = userPwd;
-//            String userPwdMd5 = MD5Util.md5Encode(userPwd + "water");
+//            String userPwdMd5 = userPwd;
+            String userPwdMd5 = MD5Util.md5Encode(userPwd + encryptMd5Soft);
             user = efUserService.login(userId, userPwdMd5);
             if (user == null) {
                 LogUtil.logMessage(ipWww + "(" + ipLocal + ")账户: " + userId + " - " + userPwd + " 登录失败！");
@@ -126,7 +126,6 @@ public class UserController {
                 return ResultUtil.error("请输入正确的账户信息!");
             }
             password = MD5Util.md5Encode(password + encryptMd5Soft);
-            password = "6db9fa3b3608a7be52a99b2c9e912e43";
             EfUser user = efUserService.login(loginName, password);
             if (user == null) {
                 return ResultUtil.error("账户信息错误!");

@@ -7,6 +7,7 @@ import com.bear.reseeding.utils.RedisUtils;
 import com.bear.reseeding.utils.TokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
 import javax.annotation.PostConstruct;
 import javax.websocket.*;
 import javax.websocket.server.PathParam;
@@ -77,6 +78,7 @@ public class WebSocketLink {
     @OnOpen
     public void onOpen(Session session, @PathParam("token") String token) {
 //        session.setMaxIdleTimeout(3600000);
+//        LogUtil.logMessage("websocket  token:" + token);
         if (!TokenUtil.verify(token)) {
             LogUtil.logError("尝试建立Webcoket连接失败，应用标识验证失败!");
             try {
