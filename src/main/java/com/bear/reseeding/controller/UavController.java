@@ -107,6 +107,7 @@ public class UavController {
             String ipLocal = request.getRemoteAddr();
             String ipWww = NetworkUtil.getIpAddr(request);
 
+
             return ResultUtil.success();
         } catch (Exception e) {
             LogUtil.logError("获取所有权限的无人机异常：" + e.toString());
