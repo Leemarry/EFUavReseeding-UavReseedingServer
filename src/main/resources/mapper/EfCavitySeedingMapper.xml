@@ -28,6 +28,13 @@
         from ef_reseeding.ef_cavity_seeding
         limit #{offset}, #{limit}
     </select>
+<!--    queryBycavityId-->
+    <select id="queryBycavityId" resultMap="EfCavitySeedingMap">
+        select
+        id, seeding_time, lat, lng, alt, altabs, seed_number, cavity_id
+        from ef_reseeding.ef_cavity_seeding
+        where cavity_id = #{cavityId}
+    </select>
 
     <!--通过实体作为筛选条件查询-->
     <select id="queryAll" resultMap="EfCavitySeedingMap">

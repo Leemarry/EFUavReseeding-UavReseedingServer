@@ -7,19 +7,12 @@ import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.EfLinkUtil;
 import com.bear.reseeding.datalink.MqttUtil;
 import com.bear.reseeding.eflink.EFLINK_MSG_3050;
-import com.bear.reseeding.entity.EfUser;
+import com.bear.reseeding.entity.*;
 import com.bear.reseeding.model.CurrentUser;
 import com.bear.reseeding.eflink.EFLINK_MSG_3121;
 import com.bear.reseeding.eflink.EFLINK_MSG_3123;
-import com.bear.reseeding.entity.EfCavity;
-import com.bear.reseeding.entity.EfMediaPhoto;
-import com.bear.reseeding.entity.EfUavEachsortie;
-import com.bear.reseeding.entity.EfUavRealtimedata;
 import com.bear.reseeding.model.Result;
-import com.bear.reseeding.service.EfCavityService;
-import com.bear.reseeding.service.EfMediaPhotoService;
-import com.bear.reseeding.service.EfUavEachsortieService;
-import com.bear.reseeding.service.EfUavService;
+import com.bear.reseeding.service.*;
 import com.bear.reseeding.task.TaskAnsisPhoto;
 import com.bear.reseeding.task.MinioService;
 import com.bear.reseeding.utils.*;
@@ -76,6 +69,9 @@ public class UavController {
 
     @Resource
     private EfCavityService efCavityService;
+
+    @Resource
+    private EfCavitySeedingService efCavitySeedingService;
 
     @Value("${BasePath:C://efuav/reseeding/}")
     public String basePath;
@@ -897,6 +893,31 @@ public class UavController {
         }
 
     }
+
+    /**
+     * 查询草原空洞播种记录表 queryHoleSeedingInfo
+
+     * @param cavityId 洞斑id
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryHoleSeedingInfo")
+    public Result queryHoleSeedingInfo(@RequestParam(value = "cavityId") Integer cavityId) {
+        try {
+            if(cavityId == null){
+                return  ResultUtil.error("架次id为空");
+            }
+            // 查询 uavid cavityId 查询 查询草原空洞播种记录表
+            List<EfCavitySeeding> efCavitySeedingList =efCavitySeedingService.queryBycavityId(cavityId);
+
+            return  ResultUtil.success("查询洞斑播种信息成功",efCavitySeedingList);
+        } catch (Exception e) {
+            LogUtil.logError("查询洞斑播种数据异常：" + e.toString());
+            return ResultUtil.error("查询洞斑播种数据异常,请联系管理员！");
+        }
+
+    }
+
 
 
     //endregion

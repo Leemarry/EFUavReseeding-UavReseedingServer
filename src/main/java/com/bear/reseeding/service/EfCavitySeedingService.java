@@ -53,4 +53,11 @@ public interface EfCavitySeedingService {
      */
     boolean deleteById(Integer id);
 
+    /**
+     * 通过洞斑id查询 该 洞斑播种信息
+     * @param cavityId
+     * @return
+     */
+    List<EfCavitySeeding> queryBycavityId(Integer cavityId);
+
 }

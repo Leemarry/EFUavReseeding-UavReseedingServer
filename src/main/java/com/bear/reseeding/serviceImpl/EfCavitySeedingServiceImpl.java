@@ -76,4 +76,16 @@ public class EfCavitySeedingServiceImpl implements EfCavitySeedingService {
     public boolean deleteById(Integer id) {
         return this.efCavitySeedingDao.deleteById(id) > 0;
     }
+
+
+    /**
+     * 通过洞斑id查询 该 洞斑播种信息queryBycavityId
+     * @param cavityId
+     * @return
+     */
+    @Override
+    public List<EfCavitySeeding> queryBycavityId(Integer cavityId){
+        return efCavitySeedingDao.queryBycavityId(cavityId);
+    }
+
 }

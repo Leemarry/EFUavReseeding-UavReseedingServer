@@ -79,5 +79,11 @@ public interface EfCavitySeedingDao {
      */
     int deleteById(Integer id);
 
+    /**
+     * 通过洞斑id查询 该 洞斑播种信息
+     * @param cavityId
+     * @return
+     */
+    List<EfCavitySeeding> queryBycavityId(@Param("cavityId") Integer cavityId);
 }
 
