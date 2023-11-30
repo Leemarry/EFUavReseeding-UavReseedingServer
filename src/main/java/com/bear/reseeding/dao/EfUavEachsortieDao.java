@@ -3,6 +3,7 @@ package com.bear.reseeding.dao;
 import com.bear.reseeding.entity.EfUavEachsortie;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -89,8 +90,14 @@ public interface EfUavEachsortieDao {
      */
     List<EfUavEachsortie> queryByIdOrTime(@Param("uavId") String uavId,@Param("startTime") String startTime, @Param("endTime") String endTime);
 
-
-
+       /**
+     * 根据拍照时间查询架次
+     *
+     * @param date
+     * @param uavId
+     * @return
+     */
+    EfUavEachsortie queryByPhotoTime(@Param("date") Date date, @Param("uavId") String uavId);
 
 }
 

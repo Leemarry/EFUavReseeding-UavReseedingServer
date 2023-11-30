@@ -87,4 +87,17 @@ public class EfMediaPhotoServiceImpl implements EfMediaPhotoService {
     public  List<EfMediaPhoto> queryByeachsortieIdOruavId(Integer eachsortieId){
         return  efMediaPhotoDao.queryByeachsortieIdOruavId(eachsortieId);
     }
+
+
+    /**
+     * 根据时间和编号查找图片
+     *
+     * @param newFileName 图片tag
+     * @param UavID       无人机编号
+     * @return
+     */
+    @Override
+    public EfMediaPhoto queryByCreatTime(String UavID, String newFileName) {
+        return efMediaPhotoDao.queryByCreatTime(UavID, newFileName);
+    }
 }

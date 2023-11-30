@@ -39,7 +39,14 @@
         limit #{offset}, #{limit}
     </select>
 
-
+     <!-- 根据拍照时间查询架次 -->
+    <select id="queryByPhotoTime" resultMap="EfUavEachsortieMap">
+        select
+          id, uav_id, connect_time, last_voltage, aremd_time, aremd_voltage, flying_time, online_time, air_range, locked_time, locked_voltage, fly_log_path, fly_video_path, place, seed_number_all, seed_number_used, fly_wps_id, mission
+        from ef_uav_eachsortie
+        WHERE uav_id = #{uavId} and aremd_time  &lt;= #{date} and locked_time >= #{date}
+        LIMIT 1
+    </select>
 
     <!-- queryByIdOrTime 通过报告类型与时间查询工厂报告-->
     <select id="queryByIdOrTime" resultMap="EfUavEachsortieMap">

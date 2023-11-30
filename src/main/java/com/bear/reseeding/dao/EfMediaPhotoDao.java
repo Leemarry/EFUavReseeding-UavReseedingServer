@@ -88,5 +88,15 @@ public interface EfMediaPhotoDao {
      */
     List<EfMediaPhoto> queryByeachsortieIdOruavId(@Param("eachsortieId") Integer eachsortieId);
 
+
+    /**
+     * 根据时间和编号查找图片
+     *
+     * @param newFileName 图片tag
+     * @param UavID       无人机编号
+     * @return
+     */
+    EfMediaPhoto queryByCreatTime(@Param("UavID") String UavID, @Param("newFileName") String newFileName);
+
 }
 

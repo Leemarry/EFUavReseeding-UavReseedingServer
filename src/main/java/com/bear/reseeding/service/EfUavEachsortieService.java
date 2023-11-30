@@ -3,6 +3,7 @@ package com.bear.reseeding.service;
 import com.bear.reseeding.entity.EfUavEachsortie;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -57,11 +58,19 @@ public interface EfUavEachsortieService {
     /**
      * 查询架次列表
      *
-     * @param uavId 无人机id
+     * @param uavId     无人机id
      * @param startTime 架次前时间
-     * @param endTime  架次后时间
+     * @param endTime   架次后时间
      * @return
      */
-    List<EfUavEachsortie> queryByIdOrTime (String uavId, @Param("startTime") String startTime, @Param("endTime") String endTime);
+    List<EfUavEachsortie> queryByIdOrTime(String uavId, @Param("startTime") String startTime, @Param("endTime") String endTime);
 
+    /**
+     * 根据拍照时间查询架次
+     *
+     * @param date
+     * @param uavId
+     * @return
+     */
+    EfUavEachsortie queryByPhotoTime(@Param("date") Date date, @Param("uavId") String uavId);
 }

@@ -33,6 +33,11 @@
         <result property="eachsortieId" column="eachsortie_id" jdbcType="INTEGER"/>
     </resultMap>
 
+    <!--根据创建时间查找-->
+    <select id="queryByCreatTime" resultMap="EfMediaPhotoMap">
+        SELECT * FROM  ef_media_photo WHERE deviceId=#{UavID} and image_tag=#{newFileName}
+    </select>
+
     <!--查询单个-->
     <select id="queryById" resultMap="EfMediaPhotoMap">
         select
@@ -53,7 +58,7 @@
         limit #{offset}, #{limit}
     </select>
 
-<!--queryByeachsortieIdOruavId-->
+    <!--queryByeachsortieIdOruavId-->
     <select id="queryByeachsortieIdOruavId" resultMap="EfMediaPhotoMap">
         select
         id, create_date, deviceId, image_tag, image_group, type, source_id, camera_video_stream_source, path_image,

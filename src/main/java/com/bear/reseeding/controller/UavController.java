@@ -78,7 +78,7 @@ public class UavController {
 
 
     /**
-     *minio
+     * minio
      */
     @Resource
     private MinioService minioService;
@@ -305,12 +305,12 @@ public class UavController {
 
     //region 测绘无人机控制
 //    数组信息
+
     /**
+     * TODO 上传航点任务给无人机
      *
-     *  TODO 上传航点任务给无人机
-     *
-     * @param uavId 无人机编号
-     * @param mission 数组信息
+     * @param uavId      无人机编号
+     * @param mission    数组信息
      * @param altType
      * @param takeoffAlt
      * @param homeAlt
@@ -319,7 +319,7 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMission")
-    public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody List<Map> mission,@RequestParam("altType") int altType,
+    public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody List<Map> mission, @RequestParam("altType") int altType,
                                 @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, HttpServletRequest request) {
         try {
             for (Map<String, Double> entry : mission) {
@@ -327,7 +327,7 @@ public class UavController {
                 double y = entry.get("y");
                 double z = entry.get("z");
                 // 进行相应的操作...
-                System.out.println(x+","+y+""+z);
+                System.out.println(x + "," + y + "" + z);
             }
             // String idSession = request.getSession().getId();
             String ipLocal = request.getRemoteAddr();
@@ -371,13 +371,13 @@ public class UavController {
                 uavType = realtimedata.getUavType();
             }
             // 生成kmz
-            boolean iscreate= true;
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType,basePath);
-            if (kmzFile==null) {
+            boolean iscreate = true;
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath);
+            if (kmzFile == null) {
                 return ResultUtil.error("保存光伏巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
             // 上传minion
-            String url = applicationName  + "/" + kmzFile.getName();
+            String url = applicationName + "/" + kmzFile.getName();
             if (!minioService.uploadImage("kmz", url, "kmz", new FileInputStream(kmzFile))) {
                 if (kmzFile.exists()) {
                     FileUtil.deleteDir(kmzFile.getParent());
@@ -389,7 +389,7 @@ public class UavController {
             if ("".equals(url)) {
                 return ResultUtil.error("保存光伏巡检航线失败(错误码 4)！");
             }
-            int size =0;
+            int size = 0;
             // EFLINK_MSG_3121 上传
             int tag = ((byte) new Random().nextInt() & 0xFF);
             EFLINK_MSG_3121 msg3121 = new EFLINK_MSG_3121();
@@ -431,10 +431,9 @@ public class UavController {
             }
 
 
-            if(iscreate){
+            if (iscreate) {
                 return ResultUtil.error("生成kmz文件失败！");
             }
-
 
 
             return ResultUtil.success();
@@ -468,7 +467,7 @@ public class UavController {
             String UavID = CommonUtil.getStrValueFromMap(map, "UavID");
             String uavIdTemp = UavID;
             UavID = redisUtils.getUavIdByUavSn(UavID);  //根据无人机SN获取无人机ID  2,1,
-            if (UavID == null) {
+            if (null == UavID || "".equals(UavID)) {
                 LogUtil.logWarn("无人机[" + uavIdTemp + "]未录入!");
                 return ResultUtil.error("无人机[" + uavIdTemp + "]未录入!");
             }
@@ -558,17 +557,9 @@ public class UavController {
 
             // 获取文件流字节数组
             byte[] fileStream = BytesUtil.inputStreamToByteArray(file.getInputStream());
-
-            //region 秸秆功能、光伏分析功能 等
-
             // 开启线程储存照片
-            if (!"".equals(UavID)) {
-//                taskAnsisPhoto.savePhoto(uCid, new Date(MediaCreatTime), UavID, newFileName, StreamSource,
-//                        lat, lng, alt, altAbs,
-//                        gimbalRoll, gimbalPitch, gimbalYaw,
-//                        exceptionType, fileStream);
-            }
-            //endregion
+            taskAnsisPhoto.savePhoto(new Date(MediaCreatTime), UavID, newFileName, StreamSource, lat, lng, fileStream,
+                    FolderName, type, suffix,  sizeBig,  alt, altAbs, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw);
             return ResultUtil.success("上传图片成功!");
         } catch (Exception e) {
             LogUtil.logError("上传图片出错：" + e.toString());
@@ -802,6 +793,7 @@ public class UavController {
     //endregion
 
     //region 数据增删查改
+
     /**
      * 查询飞行架次 queryFlightNumber
      *
@@ -815,7 +807,9 @@ public class UavController {
     public Result queryFlightNumber(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "startTime", required = false) long startTime,
                                     @RequestParam(value = "endTime", required = false) long endTime) {
         try {
-            if("".equals(uavId)){return  ResultUtil.error("无人机id为空");}
+            if ("".equals(uavId)) {
+                return ResultUtil.error("无人机id为空");
+            }
 
             if (startTime == 0L) { // 检查开始时间是否为空
                 // 获取一个月前的时间戳
@@ -837,9 +831,9 @@ public class UavController {
             String start = DateUtil.timeStamp2Date(startTime, "yyyy-MM-dd HH:mm:ss");
             String end = DateUtil.timeStamp2Date(endTime, "yyyy-MM-dd HH:mm:ss");
             // 查询 uavid start end 查询 飞行架次
-            List<EfUavEachsortie> efUavEachsortieList = efUavEachsortieService.queryByIdOrTime(uavId,start,end);
+            List<EfUavEachsortie> efUavEachsortieList = efUavEachsortieService.queryByIdOrTime(uavId, start, end);
 
-            return  ResultUtil.success("查询飞行架次成功",efUavEachsortieList);
+            return ResultUtil.success("查询飞行架次成功", efUavEachsortieList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行架次数据异常,请联系管理员！");
@@ -849,21 +843,22 @@ public class UavController {
 
     /**
      * 实时拍摄照片表 queryPhotoInfo
+     *
      * @param uavId
      * @param eachsortieId
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/queryPhotoInfo")
-    public Result queryPhotoInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+    public Result queryPhotoInfo(@RequestParam(value = "uavId", required = false) String uavId, @RequestParam(value = "eachsortieId") Integer eachsortieId) {
         try {
-            if(eachsortieId == null){
-                return  ResultUtil.error("架次id为空");
+            if (eachsortieId == null) {
+                return ResultUtil.error("架次id为空");
             }
             // 查询 uavid eachsortieId 查询 实时拍摄照片表
-           List<EfMediaPhoto> efMediaPhotoList=  efMediaPhotoService.queryByeachsortieIdOruavId(eachsortieId);
+            List<EfMediaPhoto> efMediaPhotoList = efMediaPhotoService.queryByeachsortieIdOruavId(eachsortieId);
 
-            return  ResultUtil.success("查询飞行架次图片列表信息成功",efMediaPhotoList);
+            return ResultUtil.success("查询飞行架次图片列表信息成功", efMediaPhotoList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次图片列表数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行架次图片列表数据异常,请联系管理员！");
@@ -873,21 +868,22 @@ public class UavController {
 
     /**
      * 查询草原空洞表 queryHoleInfo
-     * @param uavId 无人机编号
+     *
+     * @param uavId        无人机编号
      * @param eachsortieId 飞行架次
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/queryHoleInfo")
-    public Result queryHoleInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+    public Result queryHoleInfo(@RequestParam(value = "uavId", required = false) String uavId, @RequestParam(value = "eachsortieId") Integer eachsortieId) {
         try {
-            if(eachsortieId == null){
-                return  ResultUtil.error("架次id为空");
+            if (eachsortieId == null) {
+                return ResultUtil.error("架次id为空");
             }
             // 查询 uavid eachsortieId 查询 实时拍摄照片表
-            List<EfCavity> efCavityList =efCavityService.queryByeachsortieIdOruavId(eachsortieId);
+            List<EfCavity> efCavityList = efCavityService.queryByeachsortieIdOruavId(eachsortieId);
 
-            return  ResultUtil.success("查询飞行架次洞斑列表信息成功",efCavityList);
+            return ResultUtil.success("查询飞行架次洞斑列表信息成功", efCavityList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次洞斑列表数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行洞斑列表数据异常,请联系管理员！");
@@ -897,7 +893,7 @@ public class UavController {
 
     /**
      * 查询草原空洞播种记录表 queryHoleSeedingInfo
-
+     *
      * @param cavityId 洞斑id
      * @return
      */
@@ -905,20 +901,19 @@ public class UavController {
     @PostMapping(value = "/queryHoleSeedingInfo")
     public Result queryHoleSeedingInfo(@RequestParam(value = "cavityId") Integer cavityId) {
         try {
-            if(cavityId == null){
-                return  ResultUtil.error("架次id为空");
+            if (cavityId == null) {
+                return ResultUtil.error("架次id为空");
             }
             // 查询 uavid cavityId 查询 查询草原空洞播种记录表
-            List<EfCavitySeeding> efCavitySeedingList =efCavitySeedingService.queryBycavityId(cavityId);
+            List<EfCavitySeeding> efCavitySeedingList = efCavitySeedingService.queryBycavityId(cavityId);
 
-            return  ResultUtil.success("查询洞斑播种信息成功",efCavitySeedingList);
+            return ResultUtil.success("查询洞斑播种信息成功", efCavitySeedingList);
         } catch (Exception e) {
             LogUtil.logError("查询洞斑播种数据异常：" + e.toString());
             return ResultUtil.error("查询洞斑播种数据异常,请联系管理员！");
         }
 
     }
-
 
 
     //endregion

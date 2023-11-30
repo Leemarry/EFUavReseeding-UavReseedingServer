@@ -1,6 +1,7 @@
 package com.bear.reseeding.service;
 
 import com.bear.reseeding.entity.EfMediaPhoto;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -54,11 +55,20 @@ public interface EfMediaPhotoService {
     boolean deleteById(Integer id);
 
     /**
-     *  通过飞行架次
+     * 通过飞行架次
      *
      * @param eachsortieId 飞行架次id
      * @return
      */
-    List<EfMediaPhoto> queryByeachsortieIdOruavId (Integer eachsortieId);
+    List<EfMediaPhoto> queryByeachsortieIdOruavId(Integer eachsortieId);
 
+
+    /**
+     * 根据时间和编号查找实时图片
+     *
+     * @param newFileName 图片tag
+     * @param UavID       无人机编号
+     * @return
+     */
+    EfMediaPhoto queryByCreatTime(@Param("UavID") String UavID, @Param("newFileName") String newFileName);
 }
