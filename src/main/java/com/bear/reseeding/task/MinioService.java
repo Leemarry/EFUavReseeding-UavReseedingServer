@@ -128,6 +128,60 @@ public class MinioService {
         return result;
     }
 
+    /**
+     * 上传文件到Mino储存桶
+     *
+     * @param bucketName  桶类型 kmz/word/其它
+     * @param path        储存路径含完整名称： photo/image/123.jpg
+     * @param contentType 文件类型：image/jpg
+     * @param stream      文件流
+     * @return
+     */
+    public boolean uploadfile(String bucketName, String path, String contentType, InputStream stream) {
+        boolean result = false;
+        try {
+                // 存云端
+                try {
+                    if ("kmz".equals(bucketName)) {
+                        bucketName = BucketNameKmz;
+                    } else if ("word".equals(bucketName)) {
+                        bucketName = BucketNameWord;
+                    } else {
+                        bucketName = BucketName;
+                    }
+                    MinioClient minioClient = MinioClient.builder()
+                            .endpoint(Endpoint)
+                            .credentials(AccessKey, SecretKey)
+                            .build();
+
+                    BucketExistsArgs exist = BucketExistsArgs.builder().bucket(bucketName).build();
+                    boolean isExist = minioClient.bucketExists(exist);
+                    if (!isExist) {
+                        MakeBucketArgs create = MakeBucketArgs.builder().bucket(bucketName).build();
+                        minioClient.makeBucket(create);
+                        LogUtil.logMessage("正在上传文件到Minio，创建储存桶 " + bucketName + "成功。");
+                    }
+                    minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream,stream.available(),-1).contentType(contentType).build());
+
+                    String fileUrl = minioClient.getPresignedObjectUrl(
+                            GetPresignedObjectUrlArgs.builder()
+                                    .method(Method.PUT)
+                                    .bucket(bucketName)
+                                    .object(path)
+                                    .build()
+                    );
+                    result = true;
+                    LogUtil.logInfo("上传文件 " + path + " 到Minio成功。");
+                } catch (Exception e) {
+                    LogUtil.logError("上传文件到MINIO失败：" + e.toString());
+                }
+
+        } catch (Exception e) {
+            LogUtil.logError("上传文件 " + path + " 到Minio异常：" + e.toString());
+        }
+        return result;
+    }
+
     public String getPresignedObjectUrl(String bucketName, String fileNam){
         String urlString =null;
         try{

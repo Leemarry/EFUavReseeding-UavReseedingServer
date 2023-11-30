@@ -66,6 +66,12 @@ public class TokenUtil {
                     .withClaim("userId", user.getId())
                     .withClaim("userLoginName", user.getULoginName())
                     .withClaim("userName", user.getUName())
+                    .withClaim("companyId", user.getUCId())
+                    .withClaim("roleId", user.getURId())
+//                    .withClaim("ipLocal", user.getIpLocal())
+//                    .withClaim("ipWww", user.getIpWww())
+//                    .withClaim("sessionId", user.getSessionId())
+
                     .withExpiresAt(date)
                     .sign(algorithm);
         } catch (Exception e) {
@@ -87,6 +93,11 @@ public class TokenUtil {
             user.setId(jwt.getClaim("userId").asInt());
             user.setULoginName(jwt.getClaim("userLoginName").asString());
             user.setUName(jwt.getClaim("userName").asString());
+            user.setUCId(jwt.getClaim("companyId").asInt());
+            user.setURId(jwt.getClaim("roleId").asInt());
+//            user.setULoginName(jwt.getClaim("ipLocal").asString());
+//            user.setULoginName(jwt.getClaim("ipWww").asString());
+//            user.setULoginName(jwt.getClaim("sessionId").asString());
             return user;
         } catch (JWTDecodeException e) {
             return null;

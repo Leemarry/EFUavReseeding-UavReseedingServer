@@ -34,6 +34,19 @@
         from ef_reseeding.ef_uav
         limit #{offset}, #{limit}
     </select>
+    <!-- queryAllUavByCIdOrUrId-->
+    <select id="queryAllUavByCIdOrUrId" resultMap="EfUavMap">
+        <if test="urid ==1">
+            SELECT * FROM  ef_relation_company_uav
+        </if>
+        <if test="urid ==2 ||urid ==3 ">
+            SELECT * FROM  ef_relation_company_uav  WHERE company_id=#{id}
+        </if>
+        select
+        uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status
+        from ef_reseeding.ef_uav
+        limit #{offset}, #{limit}
+    </select>
 
     <!--通过实体作为筛选条件查询-->
     <select id="queryAll" resultMap="EfUavMap">

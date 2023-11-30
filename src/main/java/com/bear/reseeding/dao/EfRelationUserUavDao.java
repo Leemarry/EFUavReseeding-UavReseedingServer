@@ -79,5 +79,12 @@ public interface EfRelationUserUavDao {
      */
     int deleteById(Integer id);
 
+    /**
+     * 根据用户角色查询无人机信息
+     * @param urId
+     * @return
+     */
+    List<EfRelationUserUav> queryByUrid (@Param("urId") Integer urId);
+
 }
 

@@ -32,6 +32,19 @@ public class EfRelationUserUav implements Serializable {
      */
     private Integer operAuth;
 
+    /**
+     *公司关联无人机信息
+     */
+    private  EfUav efUav;
+
+    public EfUav getEfUav() {
+        return efUav;
+    }
+
+    public void setEfUav(EfUav efUav) {
+        this.efUav = efUav;
+    }
+
 
     public Integer getId() {
         return id;

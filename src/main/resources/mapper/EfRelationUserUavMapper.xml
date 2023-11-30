@@ -10,6 +10,18 @@
         <result property="operAuth" column="oper_auth" jdbcType="INTEGER"/>
     </resultMap>
 
+    <resultMap type="com.bear.reseeding.entity.EfRelationUserUav" id="EfRelationUserUavsMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="userId" column="user_id" jdbcType="INTEGER"/>
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="limitDate" column="limit_date" jdbcType="TIMESTAMP"/>
+        <result property="operAuth" column="oper_auth" jdbcType="INTEGER"/>
+
+        <!-- 一对一关联映射：uav  -->
+        <association property="efUav" column="uav_id" select="com.bear.reseeding.dao.EfUavDao.queryById"
+                     javaType="com.bear.reseeding.entity.EfUav"/>
+    </resultMap>
+
     <!--查询单个-->
     <select id="queryById" resultMap="EfRelationUserUavMap">
         select
@@ -24,6 +36,12 @@
         id, user_id, uav_id, limit_date, oper_auth
         from ef_reseeding.ef_relation_user_uav
         limit #{offset}, #{limit}
+    </select>
+<!--    queryByUrid-->
+    <select id="queryByUrid" resultMap="EfRelationUserUavsMap">
+        select
+        id, user_id, uav_id, limit_date, oper_auth
+        from ef_reseeding.ef_relation_user_uav
     </select>
 
     <!--通过实体作为筛选条件查询-->

@@ -1,6 +1,7 @@
 package com.bear.reseeding.dao;
 
 import com.bear.reseeding.entity.EfRelationCompanyUav;
+import com.bear.reseeding.entity.EfUav;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -85,5 +86,13 @@ public interface EfRelationCompanyUavDao {
      * @return
      */
     List<EfRelationCompanyUav> queryAll2();
+
+    /**
+     * 通过无人机所属公司id或者用户角色id查询
+     * @param cId
+     * @param urId
+     * @return
+     */
+    public  List<EfRelationCompanyUav> queryAllUavByCIdOrUrId(@Param("cId") Integer cId, @Param("urId") Integer urId);
 }
 

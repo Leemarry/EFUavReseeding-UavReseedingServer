@@ -2,6 +2,7 @@ package com.bear.reseeding.service.impl;
 
 import com.bear.reseeding.entity.EfRelationCompanyUav;
 import com.bear.reseeding.dao.EfRelationCompanyUavDao;
+import com.bear.reseeding.entity.EfUav;
 import com.bear.reseeding.service.EfRelationCompanyUavService;
 import org.springframework.stereotype.Service;
 
@@ -85,5 +86,15 @@ public class EfRelationCompanyUavServiceImpl implements EfRelationCompanyUavServ
     @Override
     public List<EfRelationCompanyUav> queryAll2() {
         return this.efRelationCompanyUavDao.queryAll2();
+    }
+    /**
+     * 通过无人机所属公司id或者用户角色id查询
+     * @param cId
+     * @param urId
+     * @return
+     */
+    @Override
+    public  List<EfRelationCompanyUav> queryAllUavByCIdOrUrId(Integer cId, Integer urId){
+        return  efRelationCompanyUavDao.queryAllUavByCIdOrUrId(cId,urId);
     }
 }

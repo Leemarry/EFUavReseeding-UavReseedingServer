@@ -56,13 +56,26 @@ jasypt:
     password: efuav1603pvi
     algorithm: PBEWithMD5AndDES
 minio:
-  AccessKey: efsoft
-  SecretKey: efuavminio76832gysc4s23324dsdsa
-  BucketName: efuav
-  BucketNameKmz: efuavkmz
-  Endpoint: http://miniohost:9000
-  EndpointExt:  http://1.14.109.186
+#  AccessKey: efsoft
+#  SecretKey: efuavminio76832gysc4s23324dsdsa
+#  BucketName: efuav
+#  BucketNameKmz: efuavkmz
+#  Endpoint: http://miniohost:9000
+#  EndpointExt:  http://1.14.109.186
 #  Endpoint: http://1.14.109.186:29000
+  AccessKey: Dfkxm0rwlTp5Ww8yFOLz
+  SecretKey: 2Nrh7jddlw8FUWhQEiYet5mZReqH8kuyGOXQGf4j
+  BucketName: minioadmin
+  BucketNameKmz: minioadmin
+  Endpoint: http://miniohost:9000
+  EndpointExt:  http://127.0.0.1:9090
+#   http://8.134.196.47:9001
+#
+#ENV MINIO_ROOT_USER=admin
+#ENV MINIO_ROOT_PASSWORD=ef!8xm36an
+#
+#ENV MINIO_ACCESS_KEY=efuav
+#ENV MINIO_SECRET_KEY=efuavminio~xz222y!1dsd6
 TxyTrtc:
   TxyTrtcSdkAppId: 1400739024 # 腾讯云服务器 ,音视频通话SDK
   TxyTrtcExpireTime: 604800 # 过期时间，7天

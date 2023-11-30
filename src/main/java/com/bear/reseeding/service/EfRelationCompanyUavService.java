@@ -1,6 +1,7 @@
 package com.bear.reseeding.service;
 
 import com.bear.reseeding.entity.EfRelationCompanyUav;
+import com.bear.reseeding.entity.EfUav;
 
 import java.util.List;
 
@@ -59,4 +60,13 @@ public interface EfRelationCompanyUavService {
      * @return
      */
     List<EfRelationCompanyUav> queryAll2();
+
+
+    /**
+     * 通过无人机所属公司id或者用户角色id查询
+     * @param cId 属公司id
+     * @param urId 用户角色id
+     * @return
+     */
+    List<EfRelationCompanyUav> queryAllUavByCIdOrUrId(Integer cId, Integer urId);
 }

@@ -19,6 +19,15 @@ public class EfRelationCompanyUav implements Serializable {
      * 公司编号
      */
     private Integer companyId;
+
+    public EfUav getEfUav() {
+        return efUav;
+    }
+
+    public void setEfUav(EfUav efUav) {
+        this.efUav = efUav;
+    }
+
     /**
      * 无人机唯一标识
      */
@@ -27,6 +36,11 @@ public class EfRelationCompanyUav implements Serializable {
      * 如果无人机是租赁的，可以限制租赁日期
      */
     private Date limitDate;
+
+    /**
+     *公司关联无人机信息
+     */
+    private  EfUav efUav;
 
 
     public Integer getId() {

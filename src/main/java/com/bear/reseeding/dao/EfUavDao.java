@@ -79,5 +79,13 @@ public interface EfUavDao {
      */
     int deleteById(String uavId);
 
+    /**
+     * 通过无人机所属公司id或者用户角色id查询
+     * @param cId
+     * @param Urid
+     * @return
+     */
+    public  List<EfUav> queryAllUavByCIdOrUrId(@Param("cId") Integer cId,@Param("Urid") Integer Urid);
+
 }
 
