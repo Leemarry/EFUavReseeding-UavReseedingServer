@@ -9,11 +9,32 @@
         <result property="limitDate" column="limit_date" jdbcType="TIMESTAMP"/>
     </resultMap>
 
+    <resultMap type="com.bear.reseeding.entity.EfRelationCompanyUav" id="EfRelationCompanyUavsMap">
+        <result property="id" column="id" jdbcType="VARCHAR"/>
+        <result property="companyId" column="company_id" jdbcType="INTEGER"/>
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="limitDate" column="limit_date" jdbcType="TIMESTAMP"/>
+
+        <!-- 一对一关联映射：uav  -->
+        <association property="efUav" column="uav_id" select="com.bear.reseeding.dao.EfUavDao.queryById"
+                     javaType="com.bear.reseeding.entity.EfUav"/>
+    </resultMap>
+
     <!--查询全部-->
     <select id="queryAll2" resultMap="EfRelationCompanyUavMap">
         select
           id, company_id, uav_id, limit_date
         from ef_relation_company_uav
+    </select>
+
+<!--    queryAllUavByCIdOrUrId-->
+    <select id="queryAllUavByCIdOrUrId" resultMap="EfRelationCompanyUavsMap">
+        <if test="urId ==1">
+            SELECT * FROM  ef_relation_company_uav
+        </if>
+        <if test="urId ==2 ||urId ==3 ">
+            SELECT * FROM  ef_relation_company_uav  WHERE company_id=#{cId}
+        </if>
     </select>
 
 

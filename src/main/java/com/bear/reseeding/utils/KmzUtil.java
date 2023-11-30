@@ -57,7 +57,7 @@ public class KmzUtil {
      * @param uavType
      * @return
      */
-    public static  File beforeDataProcessing(List<Map> coordinateArray,String fileName,double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath){
+    public static  File beforeDataProcessing(List<double[]> coordinateArray,String fileName,double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath){
         boolean flag = false;
         File kmzFile = null; // 返回的文件实例
         try {
@@ -119,7 +119,7 @@ public class KmzUtil {
         return kmzFile;
     }
 
-    public static String writeKml(List<Map> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath) {
+    public static String writeKml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath) {
         try {
             Element root = DocumentHelper.createElement("kml");
             Namespace namespace = Namespace.get("http://www.opengis.net/kml/2.2");
@@ -179,25 +179,32 @@ public class KmzUtil {
             folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature");
             double direction =0;
             for (int i = 0; i < coordinateArray.size(); i++) {
-                Map<String, Double> entry = coordinateArray.get(i);
-                double lng = entry.get("x");
-                double lat = entry.get("y");
-                double alt = entry.get("z");
+                double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
+                double lng = firstPoint[0];  // 获取经度
+                double lat = firstPoint[1];  // 获取纬度
+//                Map<double[]> entry = coordinateArray.get(i);
+//                double lng = entry.get("x");
+//                double lat = entry.get("y");
+//                double alt = entry.get("z");
                 for (int j= i+1;j<coordinateArray.size();j++){
-                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
-                    double lng1 = nextentry.get("x");
-                    double lat1 = nextentry.get("y");
-                    double alt1 = nextentry.get("z");
-                    direction =getDirection(lat,lng,lat1,lng1);
+                    double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
+                    double longitude1= firstPoint[0];  // 获取经度
+                    double latitude2 = firstPoint[1];  // 获取纬度
+//                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
+//                    double lng1 = nextentry.get("x");
+//                    double lat1 = nextentry.get("y");
+//                    double alt1 = nextentry.get("z");
+//                    direction =getDirection(lat,lng,lat1,lng1);
+                    direction =getDirection(lat,lng,latitude2,longitude1);
                     break;
                 }
 
                 Element placemark = folder.addElement("Placemark");
                 Element point = placemark.addElement("Point");
-                point.addElement("coordinates").addText("\r\n" + lng + "," + alt + "\r\n");
+                point.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ? String.valueOf(alt - homeAltAbs) : String.valueOf(alt));
-                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(alt - homeAltAbs) : String.valueOf(alt));
+                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ?String.valueOf(50) : String.valueOf(50) ); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
+                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(50 - homeAltAbs) : String.valueOf(50));
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(direction));  //朝向？
@@ -293,7 +300,7 @@ public class KmzUtil {
         }
     }
 
-    private static String writewpml(List<Map> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath) {
+    private static String writewpml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath) {
         try {
             Element root = DocumentHelper.createElement("kml");
             Namespace namespace = Namespace.get("http://www.opengis.net/kml/2.2");
@@ -335,16 +342,23 @@ public class KmzUtil {
 //
             double direction =0;
             for (int i = 0; i < coordinateArray.size(); i++) {
-                Map<String, Double> entry = coordinateArray.get(i);
-                double lng = entry.get("x");
-                double lat = entry.get("y");
-                double alt = entry.get("z");
+                double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
+                double lng = firstPoint[0];  // 获取经度
+                double lat = firstPoint[1];  // 获取纬度
+//                Map<double[]> entry = coordinateArray.get(i);
+//                double lng = entry.get("x");
+//                double lat = entry.get("y");
+//                double alt = entry.get("z");
                 for (int j= i+1;j<coordinateArray.size();j++){
-                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
-                    double lng1 = nextentry.get("x");
-                    double lat1 = nextentry.get("y");
-                    double alt1 = nextentry.get("z");
-                    direction =getDirection(lat,lng,lat1,lng1);
+                    double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
+                    double longitude1= firstPoint[0];  // 获取经度
+                    double latitude2 = firstPoint[1];  // 获取纬度
+//                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
+//                    double lng1 = nextentry.get("x");
+//                    double lat1 = nextentry.get("y");
+//                    double alt1 = nextentry.get("z");
+//                    direction =getDirection(lat,lng,lat1,lng1);
+                    direction =getDirection(lat,lng,latitude2,longitude1);
                     break;
                 }
 
@@ -353,7 +367,7 @@ public class KmzUtil {
                 Element pointElement = placemark.addElement("Point");
                 pointElement.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(alt - homeAltAbs) : String.valueOf(alt));//航点执行高度
+                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(50) : String.valueOf(50));//航点执行高度
                 placemark.addElement("wpml:waypointSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));//航点飞行速度
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");//偏航角参数模式
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");

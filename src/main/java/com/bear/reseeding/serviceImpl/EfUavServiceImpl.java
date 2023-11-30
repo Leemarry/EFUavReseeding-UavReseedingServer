@@ -76,4 +76,16 @@ public class EfUavServiceImpl implements EfUavService {
     public boolean deleteById(String uavId) {
         return this.efUavDao.deleteById(uavId) > 0;
     }
+
+    /**
+     * 通过无人机所属公司id或者用户角色id查询
+     * @param cId
+     * @param Urid
+     * @return
+     */
+    @Override
+    public  List<EfUav> queryAllUavByCIdOrUrId(Integer cId,Integer Urid){
+        return  efUavDao.queryAllUavByCIdOrUrId(cId,Urid);
+    }
+
 }

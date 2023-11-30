@@ -76,4 +76,15 @@ public class EfRelationUserUavServiceImpl implements EfRelationUserUavService {
     public boolean deleteById(Integer id) {
         return this.efRelationUserUavDao.deleteById(id) > 0;
     }
+
+    /**
+     * 根据用户角色查询无人机信息
+     * @param urId
+     * @return
+     */
+    @Override
+    public List<EfRelationUserUav> queryByUrid (Integer urId){
+        return  efRelationUserUavDao.queryByUrid(urId);
+    }
+
 }
