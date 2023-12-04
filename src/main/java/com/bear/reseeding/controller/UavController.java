@@ -75,16 +75,16 @@ public class UavController {
     private EfCavitySeedingService efCavitySeedingService;
 
     /**
-     *无人机与公司关联
+     * 无人机与公司关联
      */
     @Resource
-    private  EfRelationCompanyUavService efRelationCompanyUavService;
+    private EfRelationCompanyUavService efRelationCompanyUavService;
 
     /**
      * 无人机 与用户关联
      */
     @Resource
-    private  EfRelationUserUavService efRelationUserUavService;
+    private EfRelationUserUavService efRelationUserUavService;
 
 
     @Value("${BasePath:C://efuav/reseeding/}")
@@ -115,34 +115,34 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/getUavs")
-    public Result getUavs(@CurrentUser EfUser currentUser , HttpServletRequest request) {
+    public Result getUavs(@CurrentUser EfUser currentUser, HttpServletRequest request) {
         try {
-//            uName
+
             Integer cId = currentUser.getUCId();  //公司Id
             Integer urId = currentUser.getURId(); //角色id
             List<EfUav> efUavList = new ArrayList<>();
-//            List<EfUav> efUavs = efUavService.queryUavs(currentUser);
-            //      通过公司id查询到无人机与公司关联表
-            if(urId == 1 || urId == 2 || urId ==3){
+            //   List<EfUav> efUavs = efUavService.queryUavs(currentUser);
+            //    通过公司id查询到无人机与公司关联表
+            if (urId == 1 || urId == 2 || urId == 3) {
                 List<EfRelationCompanyUav> efRelationCompanyUavList = efRelationCompanyUavService.queryAllUavByCIdOrUrId(cId, urId);
-                int a =efRelationCompanyUavList.size();
-                if (a>0){
+                int a = efRelationCompanyUavList.size();
+                if (a > 0) {
                     efRelationCompanyUavList.forEach(efRelationCompanyUav -> {
                         EfUav efUav = efRelationCompanyUav.getEfUav();
                         efUavList.add(efUav);
                     });
                 }
-            }else {
+            } else {
                 List<EfRelationUserUav> efRelationUserUavList = efRelationUserUavService.queryByUrid(urId);
-                int a =efRelationUserUavList.size();
-                if(a>0){
+                int a = efRelationUserUavList.size();
+                if (a > 0) {
                     efRelationUserUavList.forEach(efRelationUserUav -> {
                         EfUav efUav = efRelationUserUav.getEfUav();
                         efUavList.add(efUav);
                     });
                 }
             }
-            return ResultUtil.success("查询无人机成功",efUavList);
+            return ResultUtil.success("查询无人机成功", efUavList);
         } catch (Exception e) {
             LogUtil.logError("获取所有权限的无人机异常：" + e.toString());
             return ResultUtil.error("获取所有权限的无人机异常,请联系管理员!");
@@ -160,7 +160,7 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/takeoff")
-    public Result takeoff(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "alt") double alt, HttpServletRequest request) {
+    public Result takeoff(@RequestParam(value = "uavId") String uavId, double alt, HttpServletRequest request) {
         try {
             // String idSession = request.getSession().getId();
             String ipLocal = request.getRemoteAddr();
@@ -209,20 +209,102 @@ public class UavController {
 
 
     /**
-     * TODO 降落无人机
+     * 控制命令  降落无人机--1103
      *
-     * @param uavId 无人机ID
+     * @param map 标识 tag
+     *            timeout 超时时间，秒
+     *            uavId 无人机编号
+     *            hiveId 停机坪编号，如果停机坪编号不为空，同时给推送消息给停机坪
+     *            command 命令字
+     *            parm1 参数1
+     *            parm2 参数2
+     *            parm3 参数3
+     *            parm4 参数4
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/land")
-    public Result land(@RequestParam(value = "uavId") String uavId, HttpServletRequest request) {
+    public Result land(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
 
-            return ResultUtil.success();
+            int timeout = Integer.parseInt(map.getOrDefault("timeout", "5").toString()) * 1000;
+            String uavId = map.getOrDefault("uavId", "").toString();
+            String tag = map.getOrDefault("tag", "0").toString();
+            String hiveId = map.getOrDefault("hiveId", "").toString();
+            String command = map.getOrDefault("command", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();
+            String parm2 = map.getOrDefault("parm2", "0").toString();
+            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm4 = map.getOrDefault("parm4", "0").toString();
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            /**
+             *redis存储的对应id
+             */
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+
+            //1.打包3050上传等待
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(Integer.parseInt(tag));
+            eflink_msg_3050.setCommand(Integer.parseInt(command));
+            eflink_msg_3050.setParm1(Integer.parseInt(parm1));
+            eflink_msg_3050.setParm2(Integer.parseInt(parm2));
+            eflink_msg_3050.setParm3(Integer.parseInt(parm3));
+            eflink_msg_3050.setParm4(Integer.parseInt(parm4));
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            boolean onlyPushToHive = false;
+            //2.推送到mqtt,返回3052判断
+            long startTime = System.currentTimeMillis();
+            String keyHive = null;
+            boolean goon = false;
+            String error = "未知错误！";
+            if (null != hiveId && !"".equals(hiveId)) {
+                keyHive = hiveId + "_" + 3051 + "_" + tag;
+                redisUtils.remove(keyHive);
+                MqttUtil.publish(MqttUtil.Tag_Hive, packet, hiveId);
+                if ("2003".equals(hiveId)) {
+                    onlyPushToHive = true;
+                }
+            }
+            String key = uavId + "_" + 3051 + "_" + tag;
+            if (!onlyPushToHive) {
+                redisUtils.remove(key);
+                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            }
+
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (!onlyPushToHive && ack != null) {
+                    error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    goon = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (keyHive != null) {
+                    ack = redisUtils.get(keyHive);
+                    if (ack != null) {
+                        error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                        goon = ((Integer) ack == 1);
+                        redisUtils.remove(keyHive);
+                        break;
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+            return ResultUtil.success(error);
+
         } catch (Exception e) {
             LogUtil.logError("降落无人机异常：" + e.toString());
             return ResultUtil.error("降落无人机异常,请联系管理员!");
@@ -230,21 +312,94 @@ public class UavController {
     }
 
 
+
     /**
-     * TODO 返航无人机
+     * 控制命令  返航无人机--1102  1109一键全自动返航
      *
-     * @param uavId 无人机ID
+     * @param map 标识 tag
+     *            timeout 超时时间，秒
+     *            uavId 无人机编号
+     *            hiveId 停机坪编号，如果停机坪编号不为空，同时给推送消息给停机坪
+     *            command 命令字
+     *            parm1 参数1
+     *            parm2 参数2
+     *            parm3 参数3
+     *            parm4 参数4
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/rtl")
-    public Result rtl(@RequestParam(value = "uavId") String uavId, HttpServletRequest request) {
+    public Result rtl(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
+            int timeout = Integer.parseInt(map.getOrDefault("timeout", "5").toString()) * 1000;
+            String uavId = map.getOrDefault("uavId", "").toString();
+            String tag = map.getOrDefault("tag", "0").toString();
+            String hiveId = map.getOrDefault("hiveId", "").toString();
+            String command = map.getOrDefault("command", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();
+            String parm2 = map.getOrDefault("parm2", "0").toString();
+            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm4 = map.getOrDefault("parm4", "0").toString();
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            //1.打包3050上传等待
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(Integer.parseInt(tag));
+            eflink_msg_3050.setCommand(Integer.parseInt(command));
+            eflink_msg_3050.setParm1(Integer.parseInt(parm1));
+            eflink_msg_3050.setParm2(Integer.parseInt(parm2));
+            eflink_msg_3050.setParm3(Integer.parseInt(parm3));
+            eflink_msg_3050.setParm4(Integer.parseInt(parm4));
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
 
-            return ResultUtil.success();
+            boolean onlyPushToHive = false;
+            //2.推送到mqtt,返回3052判断
+            long startTime = System.currentTimeMillis();
+            String keyHive = null;
+            boolean goon = false;
+            String error = "未知错误！";
+            if (null != hiveId && !"".equals(hiveId)) {
+                keyHive = hiveId + "_" + 3051 + "_" + tag;
+                redisUtils.remove(keyHive);
+                MqttUtil.publish(MqttUtil.Tag_Hive, packet, hiveId);
+                if ("2003".equals(hiveId)) {
+                    onlyPushToHive = true;
+                }
+            }
+            String key = uavId + "_" + 3051 + "_" + tag;
+            if (!onlyPushToHive) {
+                redisUtils.remove(key);
+                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            }
+
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (!onlyPushToHive && ack != null) {
+                    error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    goon = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (keyHive != null) {
+                    ack = redisUtils.get(keyHive);
+                    if (ack != null) {
+                        error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                        goon = ((Integer) ack == 1);
+                        redisUtils.remove(keyHive);
+                        break;
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+            return ResultUtil.success(error);
         } catch (Exception e) {
             LogUtil.logError("返航无人机异常：" + e.toString());
             return ResultUtil.error("返航无人机异常,请联系管理员!");
@@ -252,17 +407,22 @@ public class UavController {
     }
 
     /**
-     *
-     * TODO 开始执行任务
-     *
-     * @param uavId uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
-     * @param map  指令参数
-     * @param request
-     * @return
+     * 控制命令   TODO 开始执行任务
+     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * @param map 标识 tag
+     *            timeout 超时时间，秒
+     *            uavId 无人机编号
+     *            hiveId 停机坪编号，如果停机坪编号不为空，同时给推送消息给停机坪
+     *            command 命令字  1006
+     *            parm1 参数1
+     *            parm2 参数2
+     *            parm3 参数3
+     *            parm4 参数4
+     * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/startMission")
-    public Result startMission(@RequestBody Map<String, Object> map,  HttpServletRequest request) {
+    public Result startMission(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
 //            if("".equals(uavId)){
 //                LogUtil.logError("未获取到无人机信息" );
@@ -349,39 +509,125 @@ public class UavController {
     }
 
     /**
-     * TODO 暂停执行任务
-     *
-     * @param uavId 无人机ID
+     * 控制命令   TODO 暂停执行任务
+     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * @param map 标识 tag
+     *            timeout 超时时间，秒
+     *            uavId 无人机编号
+     *            hiveId 停机坪编号，如果停机坪编号不为空，同时给推送消息给停机坪
+     *            command 命令字  1006
+     *            parm1 参数1
+     *            parm2 参数2
+     *            parm3 参数3
+     *            parm4 参数4
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/pauseMission")
-    public Result pauseMission(@RequestParam(value = "uavId") String uavId, HttpServletRequest request) {
+    public Result pauseMission(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
 
-            return ResultUtil.success();
+            int timeout = Integer.parseInt(map.getOrDefault("timeout", "5").toString()) * 1000;
+            String uavId = map.getOrDefault("uavId", "").toString();
+            String tag = map.getOrDefault("tag", "0").toString();
+            String hiveId = map.getOrDefault("hiveId", "").toString();
+            String command = map.getOrDefault("command", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();
+            String parm2 = map.getOrDefault("parm2", "0").toString();
+            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm4 = map.getOrDefault("parm4", "0").toString();
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+
+
+            //1.打包3050上传等待
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(Integer.parseInt(tag));
+            eflink_msg_3050.setCommand(Integer.parseInt(command));
+            eflink_msg_3050.setParm1(Integer.parseInt(parm1));
+            eflink_msg_3050.setParm2(Integer.parseInt(parm2));
+            eflink_msg_3050.setParm3(Integer.parseInt(parm3));
+            eflink_msg_3050.setParm4(Integer.parseInt(parm4));
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            boolean onlyPushToHive = false;
+            //2.推送到mqtt,返回3052判断
+            long startTime = System.currentTimeMillis();
+            String keyHive = null;
+            boolean goon = false;
+            String error = "未知错误！";
+            if (null != hiveId && !"".equals(hiveId)) {
+                keyHive = hiveId + "_" + 3051 + "_" + tag;
+                redisUtils.remove(keyHive);
+                MqttUtil.publish(MqttUtil.Tag_Hive, packet, hiveId);
+                if ("2003".equals(hiveId)) {
+                    onlyPushToHive = true;
+                }
+            }
+            String key = uavId + "_" + 3051 + "_" + tag;
+            if (!onlyPushToHive) {
+                redisUtils.remove(key);
+                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            }
+
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (!onlyPushToHive && ack != null) {
+                    error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    goon = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (keyHive != null) {
+                    ack = redisUtils.get(keyHive);
+                    if (ack != null) {
+                        error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                        goon = ((Integer) ack == 1);
+                        redisUtils.remove(keyHive);
+                        break;
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+            return ResultUtil.success(error);
         } catch (Exception e) {
             LogUtil.logError("暂停任务异常：" + e.toString());
             return ResultUtil.error("暂停任务异常,请联系管理员!");
         }
     }
 
+
     /**
-     * TODO 继续执行任务
-     *
-     * @param uavId 无人机ID
+     * 控制命令   TODO 继续执行任务
+     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * @param map 标识 tag
+     *            timeout 超时时间，秒
+     *            uavId 无人机编号
+     *            hiveId 停机坪编号，如果停机坪编号不为空，同时给推送消息给停机坪
+     *            command 命令字  1006
+     *            parm1 参数1
+     *            parm2 参数2
+     *            parm3 参数3
+     *            parm4 参数4
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/resumeMission")
-    public Result resumeMission(@RequestParam(value = "uavId") String uavId, HttpServletRequest request) {
+    public Result resumeMission(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
+
 
             return ResultUtil.success();
         } catch (Exception e) {
@@ -390,15 +636,24 @@ public class UavController {
         }
     }
 
+
     /**
-     * TODO 停止执行任务
-     *
-     * @param uavId 无人机ID
+     * 控制命令   TODO 停止执行任务
+     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * @param map 标识 tag
+     *            timeout 超时时间，秒
+     *            uavId 无人机编号
+     *            hiveId 停机坪编号，如果停机坪编号不为空，同时给推送消息给停机坪
+     *            command 命令字  1006
+     *            parm1 参数1
+     *            parm2 参数2
+     *            parm3 参数3
+     *            parm4 参数4
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/stopMission")
-    public Result stopMission(@RequestParam(value = "uavId") String uavId, HttpServletRequest request) {
+    public Result stopMission(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
             // String idSession = request.getSession().getId();
             String ipLocal = request.getRemoteAddr();
@@ -414,35 +669,22 @@ public class UavController {
     //endregion 通用无人机控制
 
     //region 测绘无人机控制
+
     /**
      * 上传航点任务给无人机
      *
-     * @param uavId       无人机ID
-     * param mission 数组信息
-     * @param altType     高度类型：0 使用相对高度，1使用海拔高度
-     * @param takeoffAlt  安全起飞高度，相对于无人机当前位置的高度，单位米
-     * @param homeAlt     起飞点海拔（如果传-1，并且使用海拔高度飞行，则自动获取无人机起飞点海拔高度）
+     * @param uavId      无人机ID
+     *                   param mission 数组信息
+     * @param altType    高度类型：0 使用相对高度，1使用海拔高度
+     * @param takeoffAlt 安全起飞高度，相对于无人机当前位置的高度，单位米
+     * @param homeAlt    起飞点海拔（如果传1，并且使用海拔高度飞行，则自动获取无人机起飞点海拔高度）
      * @return 成功/失败
      */
     @ResponseBody
     @PostMapping(value = "/uploadMission")
-    public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody List<double[]> mission,@RequestParam("altType") int altType,
+    public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
                                 @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, HttpServletRequest request) {
         try {
-
-
-
-//            for (Map<String, Double> entry : mission) {
-//                double x = entry.get("x");
-//                double y = entry.get("y");
-//                double z = entry.get("z");
-//                // 进行相应的操作...
-//                System.out.println(x+","+y+""+z);
-//
-//            }
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
             if (mission == null || mission.size() <= 0) {
                 return ResultUtil.error("航线为空!");
             }
@@ -482,13 +724,12 @@ public class UavController {
                 uavType = realtimedata.getUavType();
             }
             // 生成kmz
-//            boolean iscreate= true;
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType,basePath);
-            if (kmzFile==null) {
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath);
+            if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
             // 上传minion
-            String url = applicationName  + "/" + kmzFile.getName();
+            String url = applicationName + "/" + kmzFile.getName();
             if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
                 if (kmzFile.exists()) {
                     FileUtil.deleteDir(kmzFile.getParent());
@@ -540,11 +781,6 @@ public class UavController {
             if (!goon) {
                 return ResultUtil.error(error);
             }
-
-
-//            if(iscreate){
-//                return ResultUtil.error("生成kmz文件失败！");
-//            }
 
             return ResultUtil.success("上传巡检航线成功。");
         } catch (Exception e) {
@@ -669,7 +905,7 @@ public class UavController {
             byte[] fileStream = BytesUtil.inputStreamToByteArray(file.getInputStream());
             // 开启线程储存照片
             taskAnsisPhoto.savePhoto(new Date(MediaCreatTime), UavID, newFileName, StreamSource, lat, lng, fileStream,
-                    FolderName, type, suffix,  sizeBig,  alt, altAbs, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw);
+                    FolderName, type, suffix, sizeBig, alt, altAbs, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw);
             return ResultUtil.success("上传图片成功!");
         } catch (Exception e) {
             LogUtil.logError("上传图片出错：" + e.toString());
@@ -941,9 +1177,9 @@ public class UavController {
             String start = DateUtil.timeStamp2Date(startTime, "yyyy-MM-dd HH:mm:ss");
             String end = DateUtil.timeStamp2Date(endTime, "yyyy-MM-dd HH:mm:ss");
             // 查询 uavid start end 查询 飞行架次
-            List<EfUavEachsortie> efUavEachsortieList = efUavEachsortieService.queryByIdOrTime(uavId,start,end);
+            List<EfUavEachsortie> efUavEachsortieList = efUavEachsortieService.queryByIdOrTime(uavId, start, end);
 
-            return  ResultUtil.success("查询飞行架次成功",efUavEachsortieList);
+            return ResultUtil.success("查询飞行架次成功", efUavEachsortieList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行架次数据异常,请联系管理员！");
@@ -960,15 +1196,15 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/queryPhotoInfo")
-    public Result queryPhotoInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+    public Result queryPhotoInfo(@RequestParam(value = "uavId", required = false) String uavId, @RequestParam(value = "eachsortieId") Integer eachsortieId) {
         try {
-            if(eachsortieId == null){
-                return  ResultUtil.error("架次id为空");
+            if (eachsortieId == null) {
+                return ResultUtil.error("架次id为空");
             }
             // 查询 uavid eachsortieId 查询 实时拍摄照片表
-           List<EfMediaPhoto> efMediaPhotoList=  efMediaPhotoService.queryByeachsortieIdOruavId(eachsortieId);
+            List<EfMediaPhoto> efMediaPhotoList = efMediaPhotoService.queryByeachsortieIdOruavId(eachsortieId);
 
-            return  ResultUtil.success("查询飞行架次图片列表信息成功",efMediaPhotoList);
+            return ResultUtil.success("查询飞行架次图片列表信息成功", efMediaPhotoList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次图片列表数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行架次图片列表数据异常,请联系管理员！");
@@ -978,21 +1214,22 @@ public class UavController {
 
     /**
      * 查询草原空洞表 queryHoleInfo
-     * @param uavId 无人机编号
+     *
+     * @param uavId        无人机编号
      * @param eachsortieId 飞行架次
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/queryHoleInfo")
-    public Result queryHoleInfo(@RequestParam(value = "uavId",required = false) String uavId,@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+    public Result queryHoleInfo(@RequestParam(value = "uavId", required = false) String uavId, @RequestParam(value = "eachsortieId") Integer eachsortieId) {
         try {
-            if(eachsortieId == null){
-                return  ResultUtil.error("架次id为空");
+            if (eachsortieId == null) {
+                return ResultUtil.error("架次id为空");
             }
             // 查询 uavid eachsortieId 查询 实时拍摄照片表
-            List<EfCavity> efCavityList =efCavityService.queryByeachsortieIdOruavId(eachsortieId);
+            List<EfCavity> efCavityList = efCavityService.queryByeachsortieIdOruavId(eachsortieId);
 
-            return  ResultUtil.success("查询飞行架次空斑列表信息成功",efCavityList);
+            return ResultUtil.success("查询飞行架次空斑列表信息成功", efCavityList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次空斑列表数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行空斑列表数据异常,请联系管理员！");
@@ -1002,7 +1239,7 @@ public class UavController {
 
     /**
      * 查询草原空洞播种记录表 queryHoleSeedingInfo
-
+     *
      * @param cavityId 洞斑id
      * @return
      */
@@ -1010,20 +1247,19 @@ public class UavController {
     @PostMapping(value = "/queryHoleSeedingInfo")
     public Result queryHoleSeedingInfo(@RequestParam(value = "cavityId") Integer cavityId) {
         try {
-            if(cavityId == null){
-                return  ResultUtil.error("架次id为空");
+            if (cavityId == null) {
+                return ResultUtil.error("架次id为空");
             }
             // 查询 uavid cavityId 查询 查询草原空洞播种记录表
-            List<EfCavitySeeding> efCavitySeedingList =efCavitySeedingService.queryBycavityId(cavityId);
+            List<EfCavitySeeding> efCavitySeedingList = efCavitySeedingService.queryBycavityId(cavityId);
 
-            return  ResultUtil.success("查询空斑播种信息成功",efCavitySeedingList);
+            return ResultUtil.success("查询空斑播种信息成功", efCavitySeedingList);
         } catch (Exception e) {
             LogUtil.logError("查询空斑播种数据异常：" + e.toString());
             return ResultUtil.error("查询空斑播种数据异常,请联系管理员！");
         }
 
     }
-
 
 
     //endregion

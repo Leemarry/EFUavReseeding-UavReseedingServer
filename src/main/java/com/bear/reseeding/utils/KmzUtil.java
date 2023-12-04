@@ -161,7 +161,7 @@ public class KmzUtil {
             Element waylineCoordinateSysParam = folder.addElement("wpml:waylineCoordinateSysParam");
             waylineCoordinateSysParam.addElement("wpml:coordinateMode").addText("WGS84");
             waylineCoordinateSysParam.addElement("wpml:heightMode").addText(altType == 0 ? "relativeToStartPoint" : "EGM96");
-            waylineCoordinateSysParam.addElement("wpml:globalHeight").addText(String.valueOf(efTaskWps.getWpsAlt()));
+            waylineCoordinateSysParam.addElement("wpml:globalHeight").addText(String.valueOf(efTaskWps.getWpsAlt())); //homeAlt
             waylineCoordinateSysParam.addElement("wpml:positioningType").addText("GPS");
 
             folder.addElement("wpml:autoFlightSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));
@@ -203,11 +203,11 @@ public class KmzUtil {
                 Element point = placemark.addElement("Point");
                 point.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ?String.valueOf(50) : String.valueOf(50) ); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
-                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(50 - homeAltAbs) : String.valueOf(50));
+                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ?String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) ); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
+                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs));
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
-                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(direction));  //朝向？
+                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText("0");  //朝向？ String.valueOf(direction)
                 waypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPathMode").addText("followBadArc");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPoiIndex").addText("0");
@@ -367,11 +367,11 @@ public class KmzUtil {
                 Element pointElement = placemark.addElement("Point");
                 pointElement.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(50) : String.valueOf(50));//航点执行高度
+                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs));//航点执行高度
                 placemark.addElement("wpml:waypointSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));//航点飞行速度
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");//偏航角参数模式
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
-                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(direction)); //朝向？
+                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText("0"); //朝向？ String.valueOf(direction)
                 waypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPathMode").addText("followBadArc");
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");

@@ -1,5 +1,7 @@
 package com.bear.reseeding.entity;
 
+import com.google.gson.JsonElement;
+
 import java.util.Date;
 import java.io.Serializable;
 

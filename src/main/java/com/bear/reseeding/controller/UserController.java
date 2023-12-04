@@ -1,11 +1,13 @@
 package com.bear.reseeding.controller;
 
+import cn.hutool.json.JSONObject;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.entity.*;
 import com.bear.reseeding.model.CurrentUser;
 import com.bear.reseeding.model.Result;
 import com.bear.reseeding.service.*;
 import com.bear.reseeding.utils.*;
+import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -87,8 +89,13 @@ public class UserController {
                     return ResultUtil.error("账号已失效!");
                 }
             }
-            String token = TokenUtil.sign(user);
-            return ResultUtil.success(token);
+//            JSONObject jsonObject =new JSONObject();
+//            jsonObject.append("user",user);
+            Map map =new HashMap();
+            map.put("user",user);
+
+            String token = TokenUtil.sign(user); //token
+            return ResultUtil.success(token,map);
         } catch (Exception e) {
             LogUtil.logError("登录异常：" + e.toString());
             return ResultUtil.error("登录异常,请联系管理员!");
