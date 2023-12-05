@@ -61,6 +61,26 @@ public class KmzUtil {
         boolean flag = false;
         File kmzFile = null; // 返回的文件实例
         try {
+            // 距离 点集合
+            int numPoints = coordinateArray.size();
+            double distaceCount=0.0;
+            double distance;
+            for (int i = 0; i < numPoints; i++) {
+                for (int j = i + 1; j < numPoints; j++) {
+                    double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
+                    double lng1 = firstPoint[0];  // 获取经度
+                    double lat1 = firstPoint[1];  // 获取纬度
+                    double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
+                    double lng2 = nextPoint[0];  // 获取经度
+                    double lat2 = nextPoint[1];  // 获取纬度
+
+                    distance = GisUtil.getDistance(lng1,lat1 , lng2, lat2);
+                    distaceCount += distance;
+//                    System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
+                    break;
+                }
+            }
+
             // 构建光伏巡检默认参数
             EfTaskWps efTaskWps = new EfTaskWps();
             efTaskWps.setWpsCreateTime(new Date());
@@ -72,8 +92,10 @@ public class KmzUtil {
             efTaskWps.setWpsGimbalPitchRotationEnabled(true);
             efTaskWps.setWpsAlt(200);   //海拔
             efTaskWps.setWpsSpeed(5f);
-            efTaskWps.setWpsDistance(0);
-            efTaskWps.setWpsUserTime(0);
+            efTaskWps.setWpsDistance(distaceCount);
+            Integer WpsUserTime = (int) (distaceCount / 5f);
+            efTaskWps.setWpsUserTime(WpsUserTime); //任务预计用时
+//            efTaskWps.setWpsUserTime(0);
             //kmlPath
 
             String wpmlPathString = writewpml( coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType,topbasePath);
@@ -136,15 +158,15 @@ public class KmzUtil {
             Element missionConfig = documentElement.addElement("wpml:missionConfig");
             missionConfig.addElement("wpml:flyToWaylineMode").addText(efTaskWps.getWpsGotoWaypointMode() == 0 ? "safely" : "pointToPoint");
             missionConfig.addElement("wpml:finishAction").addText("goHome");
-            missionConfig.addElement("wpml:exitOnRCLost").addText("executeLostAction");
+            missionConfig.addElement("wpml:exitOnRCLost").addText("executeLostAction"); //goContinue
             missionConfig.addElement("wpml:executeRCLostAction").addText("goBack");
             missionConfig.addElement("wpml:takeOffSecurityHeight").addText(String.valueOf(takeoffAlt));
             missionConfig.addElement("wpml:globalTransitionalSpeed").addText("10");
 
             //声明无人机型号
             Element droneInfo = missionConfig.addElement("wpml:droneInfo");
-            droneInfo.addElement("wpml:droneEnumValue").addText("77");
-            droneInfo.addElement("wpml:droneSubEnumValue").addText("1");
+            droneInfo.addElement("wpml:droneEnumValue").addText("67");  // 77
+            droneInfo.addElement("wpml:droneSubEnumValue").addText("0");  // 1
 
             //声明有效载荷模型
             Element payloadInfo = missionConfig.addElement("wpml:payloadInfo");
@@ -161,13 +183,17 @@ public class KmzUtil {
             Element waylineCoordinateSysParam = folder.addElement("wpml:waylineCoordinateSysParam");
             waylineCoordinateSysParam.addElement("wpml:coordinateMode").addText("WGS84");
             waylineCoordinateSysParam.addElement("wpml:heightMode").addText(altType == 0 ? "relativeToStartPoint" : "EGM96");
-            waylineCoordinateSysParam.addElement("wpml:globalHeight").addText(String.valueOf(efTaskWps.getWpsAlt()));
+            waylineCoordinateSysParam.addElement("wpml:globalShootHeight").addText(String.valueOf(efTaskWps.getWpsAlt()));
+//            waylineCoordinateSysParam.addElement("wpml:globalHeight").addText(String.valueOf(efTaskWps.getWpsAlt())); //  ??
             waylineCoordinateSysParam.addElement("wpml:positioningType").addText("GPS");
+            // surfaceFollowModeEnable
+            waylineCoordinateSysParam.addElement("wpml:surfaceFollowModeEnable").addText("1");
+            waylineCoordinateSysParam.addElement("wpml:surfaceFollowModeEnable").addText("100");
 
             folder.addElement("wpml:autoFlightSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));
             folder.addElement("wpml:transitionalSpeed").addText("5");
             folder.addElement("wpml:caliFlightEnable").addText("0");
-            folder.addElement("wpml:gimbalPitchMode").addText("manual");
+            folder.addElement("wpml:gimbalPitchMode").addText("usePointSetting"); // usePointSetting
 
             Element globalWaypointHeadingParam = folder.addElement("wpml:globalWaypointHeadingParam");
 
@@ -187,9 +213,10 @@ public class KmzUtil {
 //                double lat = entry.get("y");
 //                double alt = entry.get("z");
                 for (int j= i+1;j<coordinateArray.size();j++){
+
                     double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
-                    double longitude1= firstPoint[0];  // 获取经度
-                    double latitude2 = firstPoint[1];  // 获取纬度
+                    double longitude1= nextPoint[0];  // 获取经度
+                    double latitude2 = nextPoint[1];  // 获取纬度
 //                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
 //                    double lng1 = nextentry.get("x");
 //                    double lat1 = nextentry.get("y");
@@ -201,13 +228,14 @@ public class KmzUtil {
 
                 Element placemark = folder.addElement("Placemark");
                 Element point = placemark.addElement("Point");
-                point.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
+//                point.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
+                point.addElement("coordinates").addText( lng + "," + lat );
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ?String.valueOf(50) : String.valueOf(50) ); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
-                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(50 - homeAltAbs) : String.valueOf(50));
+                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) ); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
+                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) );
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
-                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(direction));  //朝向？
+                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(0));  //朝向？ direction
                 waypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPathMode").addText("followBadArc");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPoiIndex").addText("0");
@@ -215,7 +243,7 @@ public class KmzUtil {
                 placemark.addElement("wpml:useGlobalSpeed").addText("1");
                 placemark.addElement("wpml:useGlobalHeadingParam").addText("1");
                 placemark.addElement("wpml:useGlobalTurnParam").addText("1");
-                placemark.addElement("wpml:gimbalPitchAngle").addText(String.valueOf(90));//云台俯仰？
+                placemark.addElement("wpml:gimbalPitchAngle").addText(String.valueOf(-90));//云台俯仰？
                 //动作组
                 Element actionGroup = placemark.addElement("wpml:actionGroup");
                 actionGroup.addElement("wpml:actionGroupId").addText(String.valueOf(i));
@@ -232,13 +260,13 @@ public class KmzUtil {
 //                actionActuatorFuncParamZero.addElement("wpml:aircraftHeading").addText(String.valueOf(0));  // 相机朝向
 //                actionActuatorFuncParamZero.addElement("wpml:gimbalRotateMode").addText("counterClockwise");
 //
-//                Element actionTwo = actionGroup.addElement("wpml:action");//动作列表
-//                actionTwo.addElement("wpml:actionId").addText("1");//动作id
-//                actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
-//                Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
-//                actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
-//                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
-//                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(0));//云台俯仰转动角度
+                Element actionTwo = actionGroup.addElement("wpml:action");//动作列表
+                actionTwo.addElement("wpml:actionId").addText("1");//动作id
+                actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
+                Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
+                actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
+                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
+                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-90));//云台俯仰转动角度
 //
 //                Element actionThree = actionGroup.addElement("wpml:action");//动作列表
 //                actionThree.addElement("wpml:actionId").addText("2");//动作id
@@ -270,6 +298,7 @@ public class KmzUtil {
                 actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
 //                actionActuatorFuncParamSix.addElement("wpml:payloadLensIndex").addText("ir,zoom");
                 actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
+
 
 //                Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
 //                actionSeven.addElement("wpml:actionId").addText("6");//动作id
@@ -351,8 +380,8 @@ public class KmzUtil {
 //                double alt = entry.get("z");
                 for (int j= i+1;j<coordinateArray.size();j++){
                     double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
-                    double longitude1= firstPoint[0];  // 获取经度
-                    double latitude2 = firstPoint[1];  // 获取纬度
+                    double longitude1= nextPoint[0];  // 获取经度
+                    double latitude2 = nextPoint[1];  // 获取纬度
 //                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
 //                    double lng1 = nextentry.get("x");
 //                    double lat1 = nextentry.get("y");
@@ -365,13 +394,14 @@ public class KmzUtil {
 //                coordinateArray efPvBoardGroup = boardGroupList.get(i);
                 Element placemark = folder.addElement("Placemark");
                 Element pointElement = placemark.addElement("Point");
-                pointElement.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
+//                pointElement.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
+                pointElement.addElement("coordinates").addText( lng + "," + lat );
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(50) : String.valueOf(50));//航点执行高度
+                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) );//航点执行高度
                 placemark.addElement("wpml:waypointSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));//航点飞行速度
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");//偏航角参数模式
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
-                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(direction)); //朝向？
+                waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(0)); //朝向？ direction
                 waypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPathMode").addText("followBadArc");
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
@@ -397,13 +427,13 @@ public class KmzUtil {
 //                actionActuatorFuncParamZero.addElement("wpml:aircraftHeading").addText(String.valueOf(0));  //拍摄时的朝向，无人机或相机朝向?
 //                actionActuatorFuncParamZero.addElement("wpml:gimbalRotateMode").addText("counterClockwise");
 //
-//                Element actionTwo = actionGroup.addElement("wpml:action");//动作列表
-//                actionTwo.addElement("wpml:actionId").addText("1");//动作id
-//                actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
-//                Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
-//                actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
-//                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
-//                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(0));//云台俯仰转动角度
+                Element actionTwo = actionGroup.addElement("wpml:action");//动作列表 无人机
+                actionTwo.addElement("wpml:actionId").addText("1");//动作id
+                actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
+                Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
+                actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
+                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
+                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-90));//云台俯仰转动角度
 //
 //                Element actionThree = actionGroup.addElement("wpml:action");//动作列表
 //                actionThree.addElement("wpml:actionId").addText("2");//动作id
@@ -428,6 +458,25 @@ public class KmzUtil {
 //                Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
 //                actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText("2");
 
+//                Element actionSix = actionGroup.addElement("wpml:action");//动作列表
+//                actionSix.addElement("wpml:actionId").addText("5");//动作id
+//                actionSix.addElement("wpml:actionActuatorFunc").addText("takePhoto");//动作类型
+//                Element actionActuatorFuncParamSix = actionSix.addElement("wpml:actionActuatorFuncParam");//动作参数
+//
+//                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
+////                actionActuatorFuncParamSix.addElement("wpml:payloadLensIndex").addText("ir,zoom");
+//                actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-40));//云台俯仰转动角度
+
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalYawRotateEnable").addText("1");//是否使能云台俯仰转动
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalYawRotateAngle").addText(String.valueOf(30));//云台转动角度
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalRollRotateEnable").addText("1");//是否使能云台俯仰转动
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalRollRotateAngle").addText(String.valueOf(30));//云台转动角度
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalRotateTimeEnable").addText("0");//是否使能云台转动时间
+//                actionActuatorFuncParamSix.addElement("wpml:gimbalRotateTime").addText("0");//云台转动用时
+//                gimbalRollRotateEnable
                 Element actionSix = actionGroup.addElement("wpml:action");//动作列表
                 actionSix.addElement("wpml:actionId").addText("5");//动作id
                 actionSix.addElement("wpml:actionActuatorFunc").addText("takePhoto");//动作类型
@@ -435,6 +484,7 @@ public class KmzUtil {
                 actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
 //                actionActuatorFuncParamSix.addElement("wpml:payloadLensIndex").addText("ir,zoom");
                 actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
+
 
 //                Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
 //                actionSeven.addElement("wpml:actionId").addText("6");//动作id
