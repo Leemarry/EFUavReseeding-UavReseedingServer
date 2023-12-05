@@ -19,6 +19,7 @@ public class ResultUtil {
      */
     public static Result success(int msgid, String message, Object data) {
         Result result = new Result();
+        result.setMessageId(msgid);
         result.setCode(ResultEnum.SUCCESS.getCode());
         result.setMessage(message);
         result.setData(data);
@@ -27,6 +28,7 @@ public class ResultUtil {
 
     public static Result success(int msgid, String DID, String message, Object data) {
         Result result = new Result();
+        result.setMessageId(msgid);
         result.setCode(ResultEnum.SUCCESS.getCode());
         result.setMessage(message);
         result.setData(data);
@@ -42,6 +44,7 @@ public class ResultUtil {
      */
     public static Result error(int msgid, String message) {
         Result result = new Result();
+        result.setMessageId(msgid);
         result.setCode(ResultEnum.ERROR.getCode());
         result.setMessage(message);
         return result;
@@ -57,6 +60,7 @@ public class ResultUtil {
      */
     public static Result error(int msgid, String message, Object data) {
         Result result = new Result();
+        result.setMessageId(msgid);
         result.setCode(ResultEnum.ERROR.getCode());
         result.setMessage(message);
         result.setData(data);

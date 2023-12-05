@@ -12,7 +12,6 @@ import com.bear.reseeding.service.EfMediaPhotoService;
 import com.bear.reseeding.service.EfUavEachsortieService;
 import com.bear.reseeding.utils.*;
 
-import jdk.internal.org.jline.utils.Log;
 import org.apache.commons.lang.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

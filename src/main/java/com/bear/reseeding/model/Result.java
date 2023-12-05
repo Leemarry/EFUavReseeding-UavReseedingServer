@@ -19,6 +19,10 @@ public class Result implements Serializable {
      */
     private String message;
     /**
+     * 消息ID
+     */
+    private Integer messageId;
+    /**
      * 如果有分页用到总数
      */
     private Integer dataCount;
@@ -47,6 +51,13 @@ public class Result implements Serializable {
         this.code = code;
     }
 
+    public Integer getMessageId() {
+        return messageId;
+    }
+
+    public void setMessageId(Integer messageId) {
+        this.messageId = messageId;
+    }
 
     /**
      * @Title: getMessage
