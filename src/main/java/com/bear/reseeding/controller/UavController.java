@@ -1064,7 +1064,7 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMediaResult")
-    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestBody Map<String, Object> map, HttpServletRequest request) {
+    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestBody HashMap<String, Object> map, HttpServletRequest request) {
         try {
             if (file.isEmpty()) {
                 return ResultUtil.error("上传分析照片失败，空文件！");
