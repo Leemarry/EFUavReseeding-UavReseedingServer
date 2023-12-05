@@ -87,8 +87,10 @@ public class UserController {
                     return ResultUtil.error("账号已失效!");
                 }
             }
+            Map map = new HashMap();
+            map.put("user", user);
             String token = TokenUtil.sign(user);
-            return ResultUtil.success(token);
+            return ResultUtil.success(token, map);
         } catch (Exception e) {
             LogUtil.logError("登录异常：" + e.toString());
             return ResultUtil.error("登录异常,请联系管理员!");

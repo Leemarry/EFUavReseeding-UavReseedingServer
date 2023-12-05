@@ -1,5 +1,7 @@
 package com.bear.reseeding.utils;
 
+import com.bear.reseeding.entity.EfRelationUavsn;
+import com.bear.reseeding.service.EfRelationUavsnService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.ListOperations;
@@ -11,6 +13,7 @@ import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +30,8 @@ public class RedisUtils {
 
     @Autowired
     private RedisTemplate redisTemplate;
+    @Resource
+    private EfRelationUavsnService efRelationUavsnService;
 
     private static final Long SUCCESS = 1L;
 
@@ -39,36 +44,37 @@ public class RedisUtils {
      * @return 无人机ID
      */
     public String getUavIdByUavSn(String uavSn) {
-        String uavIdSystem = null;
-//        if (!hasKey("table_uav_sn_id")) {
-//            List<EfRelationUavsn> uavsnList = efRelationUavsnService.queryAll();
-//            remove("table_uav_sn_id");
-//            remove("table_uav_id_sn");
-//            if (uavsnList != null && uavsnList.size() > 0) {
-//                for (EfRelationUavsn item : uavsnList) {
-//                    if (item.getUavSn().equals(uavSn)) {
-//                        uavIdSystem = item.getUavId();
-//                    }
-//                    // 1 对 1 关系
-//                    hmSet("table_uav_sn_id", item.getUavSn(), item.getUavId());
-//                    hmSet("table_uav_id_sn", item.getUavId(), item.getUavSn());
-//                    // Object obj = redisUtils.hmGet("table_uav_sn_id", item.getUavSn()); //根据无人机SN获取无人机ID  2,1,
-//                }
-//            } else {
-//                hmSet("table_uav_sn_id", "-1", "-1");
-//                hmSet("table_uav_id_sn", "-1", "-1");
-//            }
-//        } else {
-//            //  根据 uavsn 获取 userid table_uav_sn_id
-//            Object obj = hmGet("table_uav_sn_id", uavSn); //根据无人机SN获取无人机ID  2,1,
-//            if (obj != null) {
-//                uavIdSystem = obj.toString();
-//            }
-//        }
-//        if (uavIdSystem == null) {
-//            LogUtil.logWarn("系统未配置无人机[" + uavSn + "]！");
-//        }
-        return uavIdSystem;
+        String uavId = null;
+        try {
+            boolean forceReset = false;
+            long lastRefreshTime = 0;
+            String keyTemp = "table_rel_uav_id_sn_timerefresh";
+            if (hasKey(keyTemp)) {
+                lastRefreshTime = ConvertUtil.convertToLong(get(keyTemp), 0);
+            }
+            if (lastRefreshTime + 24 * 60 * 1000 <= System.currentTimeMillis()) {
+                forceReset = true;
+                set(keyTemp, System.currentTimeMillis());
+            }
+            if (forceReset || !exists("table_rel_uav_sn_id") || !exists("table_rel_uav_id_sn")) {
+                List<EfRelationUavsn> efRelationUavsns = efRelationUavsnService.queryAllByLimit(0, 100000);
+                remove("table_rel_uav_sn_id", "table_rel_uav_id_sn");
+                if (efRelationUavsns != null && efRelationUavsns.size() > 0) {
+                    for (EfRelationUavsn item : efRelationUavsns) {
+                        // 1 对 1 关系
+                        hmSet("table_rel_uav_sn_id", item.getUavSn(), item.getUavId());
+                        hmSet("table_rel_uav_id_sn", item.getUavId(), item.getUavSn());
+                    }
+                }
+            }
+            Object obj = hmGet("table_rel_uav_sn_id", uavSn); //根据无人机SN获取无人机ID
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+        } catch (Exception e) {
+            LogUtil.logError("从缓存根据无人机SN获取无人机ID异常：" + e.toString());
+        }
+        return uavId;
     }
     // endregion
 
