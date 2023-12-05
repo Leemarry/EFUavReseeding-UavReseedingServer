@@ -544,7 +544,6 @@ public class UavController {
                 uavId = obj.toString();
             }
 
-
             //1.打包3050上传等待
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
             eflink_msg_3050.setTag(Integer.parseInt(tag));
@@ -627,9 +626,82 @@ public class UavController {
     @PostMapping(value = "/resumeMission")
     public Result resumeMission(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
+            int timeout = Integer.parseInt(map.getOrDefault("timeout", "5").toString()) * 1000;
+            String uavId = map.getOrDefault("uavId", "").toString();
+            String tag = map.getOrDefault("tag", "0").toString();
+            String hiveId = map.getOrDefault("hiveId", "").toString();
+            String command = map.getOrDefault("command", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();
+            String parm2 = map.getOrDefault("parm2", "0").toString();
+            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm4 = map.getOrDefault("parm4", "0").toString();
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
+            if (obj != null) {
+                uavId = obj.toString();
+            }
 
 
-            return ResultUtil.success();
+            //1.打包3050上传等待
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(Integer.parseInt(tag));
+            eflink_msg_3050.setCommand(Integer.parseInt(command));
+            eflink_msg_3050.setParm1(Integer.parseInt(parm1));
+            eflink_msg_3050.setParm2(Integer.parseInt(parm2));
+            eflink_msg_3050.setParm3(Integer.parseInt(parm3));
+            eflink_msg_3050.setParm4(Integer.parseInt(parm4));
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            boolean onlyPushToHive = false;
+            //2.推送到mqtt,返回3052判断
+            long startTime = System.currentTimeMillis();
+            String keyHive = null;
+            boolean goon = false;
+            String error = "未知错误！";
+            if (null != hiveId && !"".equals(hiveId)) {
+                keyHive = hiveId + "_" + 3051 + "_" + tag;
+                redisUtils.remove(keyHive);
+                MqttUtil.publish(MqttUtil.Tag_Hive, packet, hiveId);
+                if ("2003".equals(hiveId)) {
+                    onlyPushToHive = true;
+                }
+            }
+            String key = uavId + "_" + 3051 + "_" + tag;
+            if (!onlyPushToHive) {
+                redisUtils.remove(key);
+                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            }
+
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (!onlyPushToHive && ack != null) {
+                    error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    goon = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (keyHive != null) {
+                    ack = redisUtils.get(keyHive);
+                    if (ack != null) {
+                        error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                        goon = ((Integer) ack == 1);
+                        redisUtils.remove(keyHive);
+                        break;
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+            return ResultUtil.success(error);
+
         } catch (Exception e) {
             LogUtil.logError("继续任务异常：" + e.toString());
             return ResultUtil.error("继续任务异常,请联系管理员!");
@@ -655,11 +727,81 @@ public class UavController {
     @PostMapping(value = "/stopMission")
     public Result stopMission(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
+            int timeout = Integer.parseInt(map.getOrDefault("timeout", "5").toString()) * 1000;
+            String uavId = map.getOrDefault("uavId", "").toString();
+            String tag = map.getOrDefault("tag", "0").toString();
+            String hiveId = map.getOrDefault("hiveId", "").toString();
+            String command = map.getOrDefault("command", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();
+            String parm2 = map.getOrDefault("parm2", "0").toString();
+            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm4 = map.getOrDefault("parm4", "0").toString();
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
+            if (obj != null) {
+                uavId = obj.toString();
+            }
 
-            return ResultUtil.success();
+
+            //1.打包3050上传等待
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(Integer.parseInt(tag));
+            eflink_msg_3050.setCommand(Integer.parseInt(command));
+            eflink_msg_3050.setParm1(Integer.parseInt(parm1));
+            eflink_msg_3050.setParm2(Integer.parseInt(parm2));
+            eflink_msg_3050.setParm3(Integer.parseInt(parm3));
+            eflink_msg_3050.setParm4(Integer.parseInt(parm4));
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            boolean onlyPushToHive = false;
+            //2.推送到mqtt,返回3052判断
+            long startTime = System.currentTimeMillis();
+            String keyHive = null;
+            boolean goon = false;
+            String error = "未知错误！";
+            if (null != hiveId && !"".equals(hiveId)) {
+                keyHive = hiveId + "_" + 3051 + "_" + tag;
+                redisUtils.remove(keyHive);
+                MqttUtil.publish(MqttUtil.Tag_Hive, packet, hiveId);
+                if ("2003".equals(hiveId)) {
+                    onlyPushToHive = true;
+                }
+            }
+            String key = uavId + "_" + 3051 + "_" + tag;
+            if (!onlyPushToHive) {
+                redisUtils.remove(key);
+                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            }
+
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (!onlyPushToHive && ack != null) {
+                    error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    goon = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (keyHive != null) {
+                    ack = redisUtils.get(keyHive);
+                    if (ack != null) {
+                        error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                        goon = ((Integer) ack == 1);
+                        redisUtils.remove(keyHive);
+                        break;
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+            return ResultUtil.success(error);
         } catch (Exception e) {
             LogUtil.logError("停止任务异常：" + e.toString());
             return ResultUtil.error("停止任务异常,请联系管理员!");
@@ -676,8 +818,8 @@ public class UavController {
      * @param uavId      无人机ID
      *                   param mission 数组信息
      * @param altType    高度类型：0 使用相对高度，1使用海拔高度
-     * @param takeoffAlt 安全起飞高度，相对于无人机当前位置的高度，单位米
-     * @param homeAlt    起飞点海拔（如果传1，并且使用海拔高度飞行，则自动获取无人机起飞点海拔高度）
+     * @param takeoffAlt 安全起飞高度，相对于无人机当前位置的高度，单位米  相对高度
+     * @param homeAlt    起飞点海拔（如果传1，并且使用海拔高度飞行，则自动获取无人机起飞点海拔高度 多边形绘制无法使用）
      * @return 成功/失败
      */
     @ResponseBody
