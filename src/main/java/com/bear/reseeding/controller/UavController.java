@@ -160,47 +160,85 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/takeoff")
-    public Result takeoff(@RequestParam(value = "uavId") String uavId, double alt, HttpServletRequest request) {
+    public Result takeoff(@RequestBody Map<String, Object> map, HttpServletRequest request) {
         try {
-            // String idSession = request.getSession().getId();
-            String ipLocal = request.getRemoteAddr();
-            String ipWww = NetworkUtil.getIpAddr(request);
-            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机ID获取无人机SN
+            int timeout = Integer.parseInt(map.getOrDefault("timeout", "5").toString()) * 1000;
+            String uavId = map.getOrDefault("uavId", "").toString();
+            String tag = map.getOrDefault("tag", "0").toString();
+            String hiveId = map.getOrDefault("hiveId", "").toString();
+            String command = map.getOrDefault("command", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();
+            String parm2 = map.getOrDefault("parm2", "0").toString();
+            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm4 = map.getOrDefault("parm4", "0").toString();
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            /**
+             *redis存储的对应id
+             */
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
             if (obj != null) {
                 uavId = obj.toString();
             }
+
             //1.打包3050上传等待
-            int tag = new Random().nextInt();
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
-            eflink_msg_3050.setTag(tag);
-            eflink_msg_3050.setCommand(11203);
-            eflink_msg_3050.setParm1((int) (alt * 100));
-            eflink_msg_3050.setParm2(0);
-            eflink_msg_3050.setParm3(0);
-            eflink_msg_3050.setParm4(0);
+            eflink_msg_3050.setTag(Integer.parseInt(tag));
+            eflink_msg_3050.setCommand(Integer.parseInt(command));
+            eflink_msg_3050.setParm1(Integer.parseInt(parm1));
+            eflink_msg_3050.setParm2(Integer.parseInt(parm2));
+            eflink_msg_3050.setParm3(Integer.parseInt(parm3));
+            eflink_msg_3050.setParm4(Integer.parseInt(parm4));
             byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            boolean onlyPushToHive = false;
             //2.推送到mqtt,返回3052判断
             long startTime = System.currentTimeMillis();
             String keyHive = null;
             boolean goon = false;
             String error = "未知错误！";
-            String key = uavId + "_" + 3051 + "_" + tag;
-            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
-            MyApplication.keyObj.put(key, key);
-            synchronized (MyApplication.keyObj) {
-                try {
-                    if (!MyApplication.keyObj.containsKey(key)) {
-                        MyApplication.keyObj.get(key).wait(10000); // 等待回复
-                    }
-                    // 有值之后，处理值
-
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            if (null != hiveId && !"".equals(hiveId)) {
+                keyHive = hiveId + "_" + 3051 + "_" + tag;
+                redisUtils.remove(keyHive);
+                MqttUtil.publish(MqttUtil.Tag_Hive, packet, hiveId);
+                if ("2003".equals(hiveId)) {
+                    onlyPushToHive = true;
                 }
             }
-            MyApplication.keyObj.remove(key);
+            String key = uavId + "_" + 3051 + "_" + tag;
+            if (!onlyPushToHive) {
+                redisUtils.remove(key);
+                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            }
 
-            return ResultUtil.success();
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (!onlyPushToHive && ack != null) {
+                    error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    goon = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (keyHive != null) {
+                    ack = redisUtils.get(keyHive);
+                    if (ack != null) {
+                        error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                        goon = ((Integer) ack == 1);
+                        redisUtils.remove(keyHive);
+                        break;
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+            return ResultUtil.success(error);
         } catch (Exception e) {
             LogUtil.logError("起飞无人机异常：" + e.toString());
             return ResultUtil.error("起飞无人机异常,请联系管理员!");
@@ -1369,7 +1407,7 @@ public class UavController {
             if (eachsortieId == null) {
                 return ResultUtil.error("架次id为空");
             }
-            // 查询 uavid eachsortieId 查询 实时拍摄照片表
+            // 查询 uavid eachsortieId 查询 实时拍摄空斑信息表
             List<EfCavity> efCavityList = efCavityService.queryByeachsortieIdOruavId(eachsortieId);
 
             return ResultUtil.success("查询飞行架次空斑列表信息成功", efCavityList);
@@ -1391,7 +1429,7 @@ public class UavController {
     public Result queryHoleSeedingInfo(@RequestParam(value = "cavityId") Integer cavityId) {
         try {
             if (cavityId == null) {
-                return ResultUtil.error("架次id为空");
+                return ResultUtil.error("空斑id为空");
             }
             // 查询 uavid cavityId 查询 查询草原空洞播种记录表
             List<EfCavitySeeding> efCavitySeedingList = efCavitySeedingService.queryBycavityId(cavityId);
@@ -1403,6 +1441,46 @@ public class UavController {
         }
 
     }
+
+    /**
+     * 查询草原空洞播种记录表 queryHoleSeedingInfo
+     *
+     * @param eachsortieId 架次id
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryHoleSeedingInfobyeachsortieId")
+    public Result queryHoleSeedingInfobyeachsortieId(@RequestParam(value = "eachsortieId") Integer eachsortieId) {
+        try {
+            if (eachsortieId == null) {
+                return ResultUtil.error("架次id为空");
+            }
+            // 查询 uavid eachsortieId 查询 实时拍摄空斑信息表
+            List<EfCavity> efCavityList = efCavityService.queryByeachsortieIdOruavId(eachsortieId);
+
+            List<EfCavitySeeding> efCavitySeedingListTatol= new ArrayList<>();
+
+            // 查询 uavid cavityId 查询 查询草原空洞播种记录表
+            if(efCavityList.size()>0){
+                for (int i = 0; i < efCavityList.size(); i++) {
+                    EfCavity efCavity = efCavityList.get(i);
+                    Integer cavityId = efCavity.getId();
+                    List<EfCavitySeeding> efCavitySeedingList = efCavitySeedingService.queryBycavityId(cavityId);
+                    if (efCavitySeedingList.size()>0){
+                        efCavitySeedingListTatol.addAll(efCavitySeedingList);
+                    }
+                }
+            }
+
+            return ResultUtil.success("查询空斑播种信息成功", efCavitySeedingListTatol);
+        } catch (Exception e) {
+            LogUtil.logError("查询空斑播种数据异常：" + e.toString());
+            return ResultUtil.error("查询空斑播种数据异常,请联系管理员！");
+        }
+
+    }
+
+
 
 
     //endregion
