@@ -312,7 +312,6 @@ public class UavController {
     }
 
 
-
     /**
      * 控制命令  返航无人机--1102  1109一键全自动返航
      *
@@ -408,7 +407,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 开始执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -510,7 +510,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 暂停执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -610,7 +611,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 继续执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -711,7 +713,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 停止执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
