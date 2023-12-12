@@ -64,8 +64,9 @@ public class HandleMqttMessage {
                             //user = strings[2];
                             uavserid = strings[2];
                         }
-                        if (packet.length >= 14)
+                        if (packet.length >= 14) {
                             msgid = String.valueOf(BytesUtil.bytes2UShort(packet, 10));
+                        }
                         HandleMqttMessageEf.unPacket(redisUtils, topic, uavserid, packet);
                     } else if (topic.startsWith("efuav/djiappC/")) {
                         //Android dji 客户端推送
