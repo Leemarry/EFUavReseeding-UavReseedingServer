@@ -1112,7 +1112,7 @@ public class UavController {
                 return ResultUtil.error("无人机不在线！");
             }
             String uavSn = obj.toString();
-            String key = uavSn + "_" + 3051;
+            String key = uavSn + "_" + 3051 + "_" + tag;
             redisUtils.remove(key);
             MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
             //3.判断是否收到响应
@@ -1168,10 +1168,9 @@ public class UavController {
                 return ResultUtil.error("无人机不存在！");
             }
             String uavSn = obj.toString();
-            String key = uavSn + "_" + 3051;
+            String key = uavSn + "_" + 3051 + "_" + tag;
             redisUtils.remove(key);
             MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
-
             //3.判断是否收到响应
             int timeout = 5000;
             long startTime = System.currentTimeMillis();
@@ -1226,9 +1225,9 @@ public class UavController {
                 return ResultUtil.error("无人机不存在！");
             }
             String uavSn = obj.toString();
-            String key = uavSn + "_" + 3051;
+            String key = uavSn + "_" + 3051 + "_" + tag;
             redisUtils.remove(key);
-            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
 
             //3.判断是否收到响应
             int timeout = 5000;

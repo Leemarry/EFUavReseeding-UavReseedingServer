@@ -1,8 +1,11 @@
 package com.bear.reseeding.datalink;
 
+import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.eflink.EFLINK_MSG_2000;
+import com.bear.reseeding.eflink.EFLINK_MSG_3051;
 import com.bear.reseeding.eflink.EFLINK_MSG_3110;
+import com.bear.reseeding.eflink.enums.EF_PARKING_APRON_ACK;
 import com.bear.reseeding.entity.EfUavRealtimedata;
 import com.bear.reseeding.model.Uint32;
 import com.bear.reseeding.task.TaskUavHeartbeat;
@@ -10,6 +13,7 @@ import com.bear.reseeding.utils.BytesUtil;
 import com.bear.reseeding.utils.LogUtil;
 import com.bear.reseeding.utils.RedisUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -23,15 +27,17 @@ import java.util.concurrent.TimeUnit;
  * @Date: 2021/12/27 15:51
  * @Description: null
  */
+@Component
 public class HandleMqttMessageEf {
-    private static TaskUavHeartbeat taskUavHeartbeat;
+    @Resource
+    private TaskUavHeartbeat taskUavHeartbeat;
 
-    public static void unPacket(RedisUtils redisUtils, String topic, String deviceId, byte[] packet) {
+    public void unPacket(RedisUtils redisUtils, String topic, String deviceId, byte[] packet) {
         DoPacketEfuav(redisUtils, packet, "", deviceId);
     }
 
     //解析翼飞无人机数据保存到数据库中
-    private static void DoPacketEfuav(RedisUtils redisUtils, byte[] packet, String userid, String uavid) {
+    private void DoPacketEfuav(RedisUtils redisUtils, byte[] packet, String userid, String uavid) {
         try {
             if (redisUtils == null) {
                 throw new Exception("RedisUtils对象为空！");
@@ -104,13 +110,13 @@ public class HandleMqttMessageEf {
                 case 2000:
                     //region 心跳包数据推送至前台
                     EFLINK_MSG_2000 eflink_msg_2000 = new EFLINK_MSG_2000();
-                    eflink_msg_2000.InitPacket(packet,12);
+                    eflink_msg_2000.InitPacket(packet, 12);
                     //赋值心跳包数据，准备推送前台
                     EfUavRealtimedata realtimedata = new EfUavRealtimedata();
                     realtimedata.setUavId(uavid);
                     realtimedata.setDataDate(new Date());
-                    realtimedata.setLat((double)eflink_msg_2000.getLat());
-                    realtimedata.setLng((double)eflink_msg_2000.getLng());
+                    realtimedata.setLat((double) eflink_msg_2000.getLat());
+                    realtimedata.setLng((double) eflink_msg_2000.getLng());
                     realtimedata.setAltabs((float) eflink_msg_2000.getAltAbs());
                     realtimedata.setAlt((float) eflink_msg_2000.getAltRel());
                     realtimedata.setXySpeed((float) eflink_msg_2000.getXYSpeed());
@@ -136,21 +142,18 @@ public class HandleMqttMessageEf {
                     taskUavHeartbeat.addQueue(realtimedata);
                     //endregion
                     break;
-                case 3050:
+                case 3051:
                     //region 控制指令回复
-                    tag = packet[Index] & 0xFF; //标记
-                    Index++;
-                    int cmd = BytesUtil.bytes2UShort(packet, Index);  //命令
-                    Index += 2;
-                    ack = packet[Index] & 0xFF;  //结果
-                    Index++;
-                    String ackString = "未知状态"; //EF_DJI_ACK.msg(ack);//MAV_RESULT
-                    if (ack == 0) {
-                        ackString = "成功";
-                    } else if (ack == 1) {
-                        ackString = "无法执行命令";
-                    } else {
-
+                    EFLINK_MSG_3051 msg3051 = new EFLINK_MSG_3051();
+                    msg3051.unPacket(packet, Index);
+                    redisUtils.set(uavid + "_" + msgid + "_" + msg3051.getTag(), msg3051.getAck(), 30L, TimeUnit.SECONDS);
+                    String key = uavid + "_" + msgid + "_" + msg3051.getTag();
+                    synchronized (MyApplication.keyObj) {
+                        try {
+                            MyApplication.keyObj.put(key, msg3051);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                     //endregion
                     break;
@@ -158,11 +161,11 @@ public class HandleMqttMessageEf {
                     //region 远程控制指令回复
                     tag = packet[Index] & 0xFF;  //标记
                     Index++;
-                    cmd = BytesUtil.bytes2UShort(packet, Index);  //命令
+                    int cmd = BytesUtil.bytes2UShort(packet, Index);  //命令
                     Index += 2;
                     ack = packet[Index] & 0xFF;  //结果
                     Index++;
-                    ackString = "未知状态"; //EF_DJI_ACK.msg(ack);//MAV_RESULT
+                    String ackString = "未知状态"; //EF_DJI_ACK.msg(ack);//MAV_RESULT
                     if (ack == 0) {
                         ackString = "成功";
                     } else if (ack == 1) {
