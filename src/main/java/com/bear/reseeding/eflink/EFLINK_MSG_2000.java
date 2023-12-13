@@ -101,32 +101,6 @@ public class EFLINK_MSG_2000 implements Serializable {
         } catch (Exception ignored) {
         }
     }
-
-    public byte[] toByteArray() {
-        ByteBuffer buffer = ByteBuffer.allocate(16 + 23);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.put((byte) DeviceID);
-        buffer.putInt(Lat);
-        buffer.putInt(Lng);
-        buffer.putInt(AltRel);
-        buffer.putInt(AltAbs);
-        buffer.putInt(XYSpeed);
-        buffer.putInt(ZSpeed);
-        buffer.putInt(Mode);
-        buffer.putFloat(Roll);
-        buffer.putFloat(Pitch);
-        buffer.putFloat(Yaw);
-        buffer.putInt(BattPert);
-        buffer.putInt(DownlinkSignalQuality);
-        buffer.putInt(UplinkSignalQuality);
-        buffer.putInt(GpsStatus);
-        buffer.putInt(SatelliteCount);
-        buffer.putInt(GpsHdop);
-        buffer.putInt(SystemStatus);
-        buffer.putInt(Armed);
-        return buffer.array();
-    }
-
     @Override
     public String toString() {
         return "EFLINK_MSG_2000{" +

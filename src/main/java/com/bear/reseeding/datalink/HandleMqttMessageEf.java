@@ -13,6 +13,7 @@ import org.apache.commons.lang.ArrayUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -107,8 +108,9 @@ public class HandleMqttMessageEf {
                     //赋值心跳包数据，准备推送前台
                     EfUavRealtimedata realtimedata = new EfUavRealtimedata();
                     realtimedata.setUavId(uavid);
-                    realtimedata.setLat((double) eflink_msg_2000.getLat());
-                    realtimedata.setLng((double) eflink_msg_2000.getLng());
+                    realtimedata.setDataDate(new Date());
+                    realtimedata.setLat((double)eflink_msg_2000.getLat());
+                    realtimedata.setLng((double)eflink_msg_2000.getLng());
                     realtimedata.setAltabs((float) eflink_msg_2000.getAltAbs());
                     realtimedata.setAlt((float) eflink_msg_2000.getAltRel());
                     realtimedata.setXySpeed((float) eflink_msg_2000.getXYSpeed());

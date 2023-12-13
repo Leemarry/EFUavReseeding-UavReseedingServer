@@ -221,7 +221,7 @@ public class MqttUtil {
         }
     }
 
-    public static void publish(String msg) {
+    public static void publish(String msg, byte[] packet, int i) {
         publish(msg, TopicPublish, "", "");
     }
 
