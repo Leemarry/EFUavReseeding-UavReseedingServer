@@ -1089,21 +1089,17 @@ public class UavController {
      * @param uavId 无人机ID
      * @param lat   纬度
      * @param lng   经度
-     * @param alt   相对高度
+     * @param alt   相对高度,单位米
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/guidToHere")
     public Result guidToHere(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "lat") double lat, @RequestParam(value = "lng") double lng, @RequestParam(value = "alt") double alt) {
         try {
-            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-            if (obj == null) {
-                return ResultUtil.error("无人机不在线！");
-            }
-            EfUavRealtimedata lastHeart = (EfUavRealtimedata) obj;
             //1.打包3050上传等待
+            int tag = ((byte) new Random().nextInt() & 0xFF);
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
-            eflink_msg_3050.setTag(0);
+            eflink_msg_3050.setTag(tag);
             eflink_msg_3050.setCommand(1113);
             eflink_msg_3050.setParm1((int) (lat * 1e7));
             eflink_msg_3050.setParm2((int) (lng * 1e7));
@@ -1111,6 +1107,10 @@ public class UavController {
             eflink_msg_3050.setParm4(0);
             byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
             //2.推送到mqtt,返回3051判断
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
+            }
             String uavSn = obj.toString();
             String key = uavSn + "_" + 3051;
             redisUtils.remove(key);
@@ -1125,7 +1125,7 @@ public class UavController {
                     boolean success = ((Integer) ack == 1);
                     redisUtils.remove(key);
                     if (success) {
-                        return ResultUtil.success(error);
+                        return ResultUtil.success();
                     } else {
                         return ResultUtil.error(error);
                     }
@@ -1147,7 +1147,7 @@ public class UavController {
      *
      * @param uavId    无人机ID
      * @param type     移动方向 , 1115:前移  , 1116:后移  , 1117:左移  , 1118:右移  , 1119:上  , 1120	下
-     * @param distance 移动距离，单位米
+     * @param distance 移动距离，单位厘米
      * @return 成功，失败
      */
     @ResponseBody
@@ -1155,9 +1155,11 @@ public class UavController {
     public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type, @RequestParam(value = "distance") double distance) {
         try {
             //1.打包3050上传等待
+            int tag = ((byte) new Random().nextInt() & 0xFF);
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(tag);
             eflink_msg_3050.setCommand(type);
-            eflink_msg_3050.setParm1((int) (distance * 100));
+            eflink_msg_3050.setParm1((int) distance);
             byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
 
             //2.推送到mqtt,返回3051判断
@@ -1168,7 +1170,7 @@ public class UavController {
             String uavSn = obj.toString();
             String key = uavSn + "_" + 3051;
             redisUtils.remove(key);
-            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
 
             //3.判断是否收到响应
             int timeout = 5000;
@@ -1180,7 +1182,7 @@ public class UavController {
                     boolean success = ((Integer) ack == 1);
                     redisUtils.remove(key);
                     if (success) {
-                        return ResultUtil.success(error);
+                        return ResultUtil.success();
                     } else {
                         return ResultUtil.error(error);
                     }
@@ -1210,7 +1212,9 @@ public class UavController {
     public Result throwObject(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "count") int count, @RequestParam(value = "duration") double duration) {
         try {
             //1.打包3050上传等待
+            int tag = ((byte) new Random().nextInt() & 0xFF);
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(tag);
             eflink_msg_3050.setCommand(1130);
             eflink_msg_3050.setParm1(count);
             eflink_msg_3050.setParm2((int) (duration * 100));
@@ -1236,7 +1240,7 @@ public class UavController {
                     boolean success = ((Integer) ack == 1);
                     redisUtils.remove(key);
                     if (success) {
-                        return ResultUtil.success(error);
+                        return ResultUtil.success();
                     } else {
                         return ResultUtil.error(error);
                     }
