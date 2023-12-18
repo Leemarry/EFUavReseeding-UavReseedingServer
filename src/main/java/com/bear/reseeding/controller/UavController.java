@@ -350,7 +350,6 @@ public class UavController {
     }
 
 
-
     /**
      * 控制命令  返航无人机--1102  1109一键全自动返航
      *
@@ -446,7 +445,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 开始执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -548,7 +548,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 暂停执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -648,7 +649,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 继续执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -749,7 +751,8 @@ public class UavController {
 
     /**
      * 控制命令   TODO 停止执行任务
-     *  uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     * uavId 无人机ID  @RequestParam(value = "uavId") String uavId,
+     *
      * @param map 标识 tag
      *            timeout 超时时间，秒
      *            uavId 无人机编号
@@ -781,8 +784,6 @@ public class UavController {
             if (obj != null) {
                 uavId = obj.toString();
             }
-
-
             //1.打包3050上传等待
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
             eflink_msg_3050.setTag(Integer.parseInt(tag));
@@ -1121,20 +1122,58 @@ public class UavController {
     //region 补种无人机控制
 
     /**
-     * TODO 飞往某个航点，未起飞则先起飞到航点高度
+     * 飞往某个航点，未起飞则先起飞到航点高度
      *
      * @param uavId 无人机ID
      * @param lat   纬度
      * @param lng   经度
-     * @param alt   相对高度
+     * @param alt   相对高度,单位米
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/guidToHere")
     public Result guidToHere(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "lat") double lat, @RequestParam(value = "lng") double lng, @RequestParam(value = "alt") double alt) {
         try {
-
-            return ResultUtil.success();
+            //1.打包3050上传等待
+            int tag = ((byte) new Random().nextInt() & 0xFF);
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(tag);
+            eflink_msg_3050.setCommand(1113);
+            eflink_msg_3050.setParm1((int) (lat * 1e7));
+            eflink_msg_3050.setParm2((int) (lng * 1e7));
+            eflink_msg_3050.setParm3((int) (alt * 100));
+            eflink_msg_3050.setParm4(0);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+            //2.推送到mqtt,返回3051判断
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
+            }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 3051 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
+            //3.判断是否收到响应
+            int timeout = 5000;
+            long startTime = System.currentTimeMillis();
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (ack != null) {
+                    String error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    boolean success = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    if (success) {
+                        return ResultUtil.success();
+                    } else {
+                        return ResultUtil.error(error);
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            return ResultUtil.error("无人机未响应！");
         } catch (Exception e) {
             LogUtil.logError("飞往航点异常：" + e.toString());
             return ResultUtil.error("飞往航点异常,请联系管理员!");
@@ -1142,18 +1181,55 @@ public class UavController {
     }
 
     /**
-     * TODO 控制无人机微调移动
+     * 控制无人机微调移动
      *
      * @param uavId    无人机ID
      * @param type     移动方向 , 1115:前移  , 1116:后移  , 1117:左移  , 1118:右移  , 1119:上  , 1120	下
-     * @param distance 移动距离，单位米
+     * @param distance 移动距离，单位厘米
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/moveUav")
     public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type, @RequestParam(value = "distance") double distance) {
         try {
-            return ResultUtil.success();
+            //1.打包3050上传等待
+            int tag = ((byte) new Random().nextInt() & 0xFF);
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(tag);
+            eflink_msg_3050.setCommand(type);
+            eflink_msg_3050.setParm1((int) distance);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            //2.推送到mqtt,返回3051判断
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不存在！");
+            }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 3051 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
+            //3.判断是否收到响应
+            int timeout = 5000;
+            long startTime = System.currentTimeMillis();
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (ack != null) {
+                    String error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    boolean success = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    if (success) {
+                        return ResultUtil.success();
+                    } else {
+                        return ResultUtil.error(error);
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            return ResultUtil.error("无人机未响应！");
         } catch (Exception e) {
             LogUtil.logError("控制无人机微移异常：" + e.toString());
             return ResultUtil.error("控制无人机微移异常,请联系管理员!");
@@ -1161,7 +1237,7 @@ public class UavController {
     }
 
     /**
-     * TODO 抛投
+     * 抛投
      *
      * @param uavId    无人机ID
      * @param count    抛投数量/抛投次数
@@ -1172,7 +1248,46 @@ public class UavController {
     @PostMapping(value = "/throwObject")
     public Result throwObject(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "count") int count, @RequestParam(value = "duration") double duration) {
         try {
-            return ResultUtil.success();
+            //1.打包3050上传等待
+            int tag = ((byte) new Random().nextInt() & 0xFF);
+            EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
+            eflink_msg_3050.setTag(tag);
+            eflink_msg_3050.setCommand(1130);
+            eflink_msg_3050.setParm1(count);
+            eflink_msg_3050.setParm2((int) (duration * 100));
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
+
+            //2.推送到mqtt,返回3051判断
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不存在！");
+            }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 3051 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
+
+            //3.判断是否收到响应
+            int timeout = 5000;
+            long startTime = System.currentTimeMillis();
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (ack != null) {
+                    String error = EF_PARKING_APRON_ACK.msg((Integer) ack);
+                    boolean success = ((Integer) ack == 1);
+                    redisUtils.remove(key);
+                    if (success) {
+                        return ResultUtil.success();
+                    } else {
+                        return ResultUtil.error(error);
+                    }
+                }
+                if (timeout + startTime < System.currentTimeMillis()) {
+                    break;
+                }
+                Thread.sleep(50);
+            }
+            return ResultUtil.error("无人机未响应！");
         } catch (Exception e) {
             LogUtil.logError("抛投异常：" + e.toString());
             return ResultUtil.error("抛投异常,请联系管理员!");
