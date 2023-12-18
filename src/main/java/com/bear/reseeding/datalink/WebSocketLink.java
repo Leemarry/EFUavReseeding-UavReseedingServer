@@ -42,7 +42,7 @@ public class WebSocketLink {
 
     //推送数据给前台
     public static void push(Object obj, String... userids) {
-        System.out.println("接收数据");
+        System.out.println("接收数据!");
         System.out.println(obj);
         try {
             if (userids == null || userids.length == 0) {
