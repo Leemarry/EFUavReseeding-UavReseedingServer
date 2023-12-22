@@ -63,11 +63,27 @@ public class EfUav implements Serializable {
      * 外键：当前使用的相机，手动配置
      */
     private Integer uavCurrentCamera;
+
+
+
     /**
      * 逻辑状态默认0正常，-1：已删除
      */
     private Integer uavStatus;
 
+    /**
+     * 无人机类型信息
+     */
+    private  EfUavType efUavType;
+
+
+    public EfUavType getEfUavType() {
+        return efUavType;
+    }
+
+    public void setEfUavType(EfUavType efUavType) {
+        this.efUavType = efUavType;
+    }
 
     public String getUavId() {
         return uavId;

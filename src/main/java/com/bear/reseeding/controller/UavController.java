@@ -154,8 +154,7 @@ public class UavController {
     /**
      * TODO 起飞无人机
      *
-     * @param uavId 无人机ID
-     * @param alt   起飞高度
+     * @param map 无人机map
      * @return 成功，失败
      */
     @ResponseBody
@@ -167,13 +166,26 @@ public class UavController {
             String tag = map.getOrDefault("tag", "0").toString();
             String hiveId = map.getOrDefault("hiveId", "").toString();
             String command = map.getOrDefault("command", "0").toString();
-            String parm1 = map.getOrDefault("parm1", "0").toString();
-            String parm2 = map.getOrDefault("parm2", "0").toString();
-            String parm3 = map.getOrDefault("parm3", "0").toString();
+            String parm1 = map.getOrDefault("parm1", "0").toString();  // lat
+            String parm2 = map.getOrDefault("parm2", "0").toString();  // lng
+            String parm3 = map.getOrDefault("parm3", "0").toString(); // alt
             String parm4 = map.getOrDefault("parm4", "0").toString();
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
+
             /**
              *redis存储的对应id
              */
@@ -209,7 +221,16 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -277,6 +298,19 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
             /**
              *redis存储的对应id
              */
@@ -312,7 +346,16 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -380,6 +423,26 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
+            /**
+             *redis存储的对应id
+             */
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
+            if (obj != null) {
+                uavId = obj.toString();
+            }
             //1.打包3050上传等待
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
             eflink_msg_3050.setTag(Integer.parseInt(tag));
@@ -407,7 +470,17 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+//                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -478,6 +551,19 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
+
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
             if (obj != null) {
                 uavId = obj.toString();
@@ -510,7 +596,16 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -578,6 +673,21 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
+
+
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
             if (obj != null) {
                 uavId = obj.toString();
@@ -610,7 +720,16 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -678,6 +797,20 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
+
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
             if (obj != null) {
                 uavId = obj.toString();
@@ -711,7 +844,17 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+//                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -780,6 +923,19 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机！");
             }
+            /**
+             * 查询无人机信息 ---》无人机类型
+             */
+            EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
+            Integer typeProtocol =-1 ;
+            if(efUav !=null){
+                EfUavType efUavType = efUav.getEfUavType();
+                typeProtocol = efUavType.getTypeProtocol();
+//                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
+            }else {
+                return  ResultUtil.error("该无人机信息异常");
+            }
+
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
             if (obj != null) {
                 uavId = obj.toString();
@@ -811,7 +967,17 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+//                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                if(typeProtocol == 1){
+                    /**开源*/
+                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+                } else if(typeProtocol == -1){
+                    return ResultUtil.error("未获取到无人机类型");
+                }
+                else {
+                    /**大疆*/
+                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+                }
             }
 
             while (true) {
@@ -1253,7 +1419,7 @@ public class UavController {
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
             eflink_msg_3050.setTag(tag);
             eflink_msg_3050.setCommand(1130);
-            eflink_msg_3050.setParm1(count);
+            eflink_msg_3050.setParm1(count); //包头id
             eflink_msg_3050.setParm2((int) (duration * 100));
             byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
 

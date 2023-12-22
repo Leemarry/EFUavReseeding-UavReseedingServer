@@ -21,6 +21,15 @@ public interface EfUavDao {
      */
     EfUav queryById(String uavId);
 
+
+    /**
+     * 通过ID查询单条数据 并且获取无人机类型信息
+     *
+     * @param uavId 主键
+     * @return 实例对象
+     */
+    EfUav queryByIdAndType(String uavId);
+
     /**
      * 查询指定行数据
      *
