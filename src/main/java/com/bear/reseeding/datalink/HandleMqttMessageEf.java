@@ -39,7 +39,7 @@ public class HandleMqttMessageEf {
         switch (msgid) {
             case 2000:
                 //region 心跳包数据
-                
+
                 //endregion
                 break;
             case 2002:
