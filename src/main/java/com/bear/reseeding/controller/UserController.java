@@ -91,11 +91,11 @@ public class UserController {
             }
 //            JSONObject jsonObject =new JSONObject();
 //            jsonObject.append("user",user);
-            Map map =new HashMap();
-            map.put("user",user);
+            Map map = new HashMap();
+            map.put("user", user);
 
             String token = TokenUtil.sign(user); //token
-            return ResultUtil.success(token,map);
+            return ResultUtil.success(token, map);
         } catch (Exception e) {
             LogUtil.logError("登录异常：" + e.toString());
             return ResultUtil.error("登录异常,请联系管理员!");
@@ -104,18 +104,16 @@ public class UserController {
 
 
     /**
-     * 安卓端登陆
+     * 安卓端登陆，返回用户对应公司的 EfSysteminfo 表的信息
      *
-     * @param map     RsaPublicKey
-     *                UserId
-     *                UserPwd
-     *                ClientId
-     * @param request
-     * @return
+     * @param loginName   登录名称
+     * @param password    密码,MD5加密后的密码
+     * @param machineCode 根据Android设备硬件生成机器码字符串ID
+     * @return Result{ EfSysteminfo }
      */
     @ResponseBody
     @PostMapping(value = "/appLogin")
-    public Result appLogin(@RequestBody Map<String, String> map, HttpServletRequest request) {
+    public Result appLogin(@RequestParam(value = "loginName") String loginName, @RequestParam(value = "password") String password, @RequestParam(value = "machineCode") String machineCode, HttpServletRequest request) {
         try {
             try {
                 Jedis jedis = new Jedis(host, port);
@@ -126,9 +124,6 @@ public class UserController {
             } catch (Exception e) {
                 return ResultUtil.error("数据服务未启动!");
             }
-            String loginName = map.getOrDefault("UserId", "").toString();
-            String password = map.getOrDefault("UserPwd", "").toString();
-            String clientId = map.getOrDefault("ClientId", "").toString();
             if ("".equals(loginName) || "".equals(password)) {
                 return ResultUtil.error("请输入正确的账户信息!");
             }
@@ -165,7 +160,7 @@ public class UserController {
             logined.setULoginTime(new Date());
             logined.setULoginName(user.getULoginName());
             logined.setUName(user.getUName());
-            logined.setUMachineCode(clientId);
+            logined.setUMachineCode(machineCode);
             logined.setULoginOutTime(new Date());
             logined.setUOnlineTime(1);
             logined.setUDescription("大疆APP登录");
@@ -213,18 +208,18 @@ public class UserController {
         }
     }
 
+
     /**
-     * app心跳
+     * App 心跳包 ，更新登录记录表，
      *
-     * @param request
-     * @return
+     * @param machineCode Android设备机器码
+     * @param onLine      是否在线，0 表示退出系统，1 表示在线
+     * @return Result
      */
     @ResponseBody
     @PostMapping(value = "/appHeartbeat")
-    public Result appHeartbeat(@CurrentUser EfUser user, @RequestBody Map<String, String> map, HttpServletRequest request) {
+    public Result appHeartbeat(@CurrentUser EfUser user, @RequestParam(value = "machineCode") String machineCode, @RequestParam(value = "onLine") int onLine, HttpServletRequest request) {
         try {
-            String MachineCode = map.getOrDefault("MachineCode", "");  //机器码，用来判断是不是已经登录过
-            String onLine = map.getOrDefault("OnLine", "0");  //是否为退出登录，1为保活，0为退出系统
             String token = request.getHeader("token");
             String userLoginName = user.getULoginName();
             String userName = user.getUName();
@@ -234,14 +229,14 @@ public class UserController {
             if (object != null) {
                 userLogin = (EfUserLogin) object;
             }
-            if ("0".equals(onLine)) {
+            if (onLine == 0) {
                 //退出登录
                 if (object != null) {
                     userLogin.setULoginOutTime(new Date());
                     userLogin.setUOnlineTime((int) ((System.currentTimeMillis() - userLogin.getULoginTime().getTime()) / 1000));
                     userLogin = efUserLoginService.update(userLogin);
                 }
-                LogUtil.logInfo("DJI客户端[" + MachineCode + "] :  用户 " + userLoginName + " 退出登录");
+                LogUtil.logInfo("DJI客户端[" + machineCode + "] :  用户 " + userLoginName + " 退出登录");
                 redisUtils.remove(token,
                         token + "_LoginIpWww",
                         token + "_LoginIpLocal",
@@ -254,16 +249,16 @@ public class UserController {
                 // 正常保活中
                 if (object != null) {
                     // 登录过
-                    if (userLogin.getUMachineCode() != null && userLogin.getUMachineCode().equals(MachineCode)) {
+                    if (userLogin.getUMachineCode() != null && userLogin.getUMachineCode().equals(machineCode)) {
                         userLogin.setULoginOutTime(new Date(System.currentTimeMillis()));
                         userLogin.setUOnlineTime((int) ((System.currentTimeMillis() - userLogin.getULoginTime().getTime()) / 1000));
                         userLogin = efUserLoginService.update(userLogin);
-                        LogUtil.logInfo("DJI客户端[" + MachineCode + "]保活: 用户 " + userLoginName + " 正常保活中...");
+                        LogUtil.logInfo("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 正常保活中...");
                         //String sign = JwtUtil.sign(userId, userLoginName, userName, MachineCode, uCid, roleId);
                         return ResultUtil.success(); // 可刷新token
                     } else {
-                        LogUtil.logInfo("DJI客户端[" + MachineCode + "]保活: 用户 " + userLoginName + " 的机器码与登录时不一致!");
-                        return ResultUtil.error("DJI客户端[" + MachineCode + "]保活: 用户 " + userLoginName + " 登录地异常");
+                        LogUtil.logInfo("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 的机器码与登录时不一致!");
+                        return ResultUtil.error("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 登录地异常");
                     }
                 } else {
                     //没有登录过，或重启了服务器
@@ -274,11 +269,11 @@ public class UserController {
                     userLogined.setUOnlineTime(1);
                     userLogined.setUDescription("大疆APP登录");
                     userLogined.setUStatus(0);
-                    userLogined.setUMachineCode(MachineCode);
+                    userLogined.setUMachineCode(machineCode);
                     userLogined.setUName(userName);
                     userLogined = efUserLoginService.insert(userLogined);
                     redisUtils.set(token + "_LoginedId", userLogined);
-                    return ResultUtil.error("DJI客户端[" + MachineCode + "]保活: 用户 " + userLoginName + " 无登录记录，已作为登录记录添加!");
+                    return ResultUtil.error("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 无登录记录，已作为登录记录添加!");
                 }
             }
         } catch (Exception e) {
