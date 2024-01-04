@@ -107,6 +107,7 @@ public class BaseConfiguration extends WebMvcConfigurationSupport {
         //配置server虚拟路径，handler为前台访问的目录，locations为files相对应的本地路径
         // 完整路径为 http://localhost:8765/efapi/uavsystem/efuav/UavSystem/efuav/usericos/admin.png，前台直接显示图片为：efuav/UavSystem/efuav/usericos/admin.png 即可访问
 //        registry.addResourceHandler("/efuav/**").addResourceLocations("file:C:/efuav/");
+//        C://efuav/reseeding/photo/uav/1ZNBJ5F00C008L/image/20231205/dji9700089_20231205190730.JPG
         // 完整路径为 http://localhost:8765/efapi/uavsystem/efuav/usericos/admin.png  ，前台直接显示图片为：efuav/usericos/admin.png 即可访问
         registry.addResourceHandler("/resource/**").addResourceLocations("file:" + path);
         registry.addResourceHandler("/mapresource/**").addResourceLocations("file:" + MapTilesPath);

@@ -1,118 +1,140 @@
 package com.bear.reseeding.utils;
 
+
 /**
- * 测绘工具类
- *
- * @Auther: bear
- * @Date: 2023/4/7 10:36
- * @Description: null
+ * 测绘航线计算
  */
 public class MappingUtil {
 
+    final double rad2deg = (180 / Math.PI);
+    final double deg2rad = (1.0 / rad2deg);
+
+    // 相机安装倾角，0-180度
+    private double campitch = 0;
+
+    // 相机焦距
+    private double focallen = 0;
+
+    // 传感器宽度，mm
+    private double sensorwidth = 0;
+
+    // 传感器高度，mm
+    private double sensorheight = 0;
+
+    // 图片宽度，像素
+    private double imagewidth = 0;
+
+    // 图片高度，像素
+    private double imageheight = 0;
+
+    // 比例尺，根据分辨率计算得出。一般根据比例尺去计算分辨率
+    private double blc = 0;
+
+    // 分辨率，根据比例尺计算得出。
+    private double fbl = 0;
+
+    // 航向重叠率 ， 1-99
+    private double overlap = 0;
+
+    // 旁向重叠率 ， 1-99
+    private double sidelap = 0;
+
+    // 摄像头是否朝前，默认true
+    private boolean camTowardFront = true;
 
     /**
-     * 度转弧度
+     * 构造函数
      *
-     * @param d 度
-     * @return 弧度
+     * @param campitch       相机安装倾角，0-180度
+     * @param focallen       相机焦距
+     * @param sensorwidth    传感器宽度，mm
+     * @param sensorheight   传感器高度，mm
+     * @param imagewidth     图片宽度，像素
+     * @param imageheight    图片高度，像素
+     * @param blc            比例尺
+     * @param overlap        航向重叠率 ， 1-99
+     * @param sidelap        旁向重叠率 ， 1-99
+     * @param camTowardFront 摄像头是否朝前，默认true
      */
-    private static double toRadian(double d) {
-        return d * Math.PI / 180.0;
+    public MappingUtil(double campitch, double focallen, double sensorwidth, double sensorheight, double imagewidth, double imageheight, double blc, double overlap, double sidelap, boolean camTowardFront) {
+        this.campitch = campitch;
+        this.focallen = focallen;
+        this.sensorwidth = sensorwidth;
+        this.sensorheight = sensorheight;
+        this.imagewidth = imagewidth;
+        this.imageheight = imageheight;
+        this.blc = blc;
+        this.overlap = overlap;
+        this.sidelap = sidelap;
+        this.camTowardFront = camTowardFront;
     }
 
     /**
-     * 弧度转度
+     * 已知需要拍摄的比例尺分辨率，计算航线间距与旁向间距
      *
-     * @param radians 弧度
-     * @return 度
+     * @return double[5]
+     * values[0] = headingSpacing;  // 航线间距
+     * values[1] = sideSpacing;  // 旁向间距
+     * values[2] = flyalt;  // 飞行高度
+     * values[3] = fbl;  // 分辨率
+     * values[4] = cmpixel;  // 1像素等于多少厘米，厘米/像素
      */
-    private static double toDegrees(double radians) {
-        double radToDegFactor = 180 / Math.PI;
-        return radians * radToDegFactor;
-    }
+    public double[] calculate() {
+        // 分辨率 ,
+        fbl = blc / 10000;
 
-    /**
-     * 根据相机参数计算水平与垂直的视场角度
-     * <p>
-     * 举例：  视场角大小和CMOS传感器尺寸和镜头焦距有关。
-     * H水平视场角 = 2 × arctan（w / 2f）;
-     * V垂直视场角 = 2 × arctan（h / 2f）;
-     * 视场角 = 2 × arctan（d / 2f）;
-     * w为CMOS的宽，h为CMOS的高，d为CMOS对角线长。
-     * 以禅思P1 35mm镜头为例，CMOS尺寸为35.9×24 mm，带入公式计算：
-     * <p>
-     * 水平视场角= 2 × arctan（35 .9/ 70）= 54.3°。
-     *
-     * @param focalLength 焦距 mm
-     * @param sensorW     CMOS像元大小，长度, 毫米
-     * @param sensorH     CMOS像元大小，高度, 毫米
-     * @return double[3] ， 0水平视场角，1垂直视场角 ，2视场角
-     */
-    public static double[] calculateViewAngle(double focalLength, double sensorW, double sensorH) {
-        double angleH = 2 * toDegrees(Math.atan(sensorW / 2 * focalLength));
-        double angleV = 2 * toDegrees(Math.atan(sensorH / 2 * focalLength));
-        double d = Math.sqrt(Math.pow(sensorW, 2) + Math.pow(sensorH, 2)); // 对角线尺寸，mm
-        double angle = 2 * toDegrees(Math.atan(d / 2 * focalLength));
-        return new double[]{angleH, angleV, angle};
-    }
+        // 1、计算飞行高度
+        double blcnew = fbl / (sensorwidth / imagewidth) * 1000d;  // 比例尺 = 分辨率m / 相元大小 * 1000
 
-    /**
-     * 计算图片映射到地面的长宽，单位:米
-     *
-     * @param alt    飞行高度
-     * @param pitch  相机俯仰倾斜角度，朝下为0度，水平超前为90度
-     * @param angleH 水平视场角度
-     * @param angleV 垂直视场角度
-     * @return double[3] ， 0水平视场距离H米，1垂直视场距离V米 ，2斜角距离D米
-     */
-    public static double[] calculateViewMeter(double alt, double pitch, double angleH, double angleV) {
-        // double rollRad = toRadian(roll);
-        double pitchRad = toRadian(Math.abs(pitch));
-        double distanceH = alt * Math.tan(toRadian(angleH) / 2) * 2; //水平视场距离
-        double distanceV = alt * Math.tan(toRadian(angleV) / 2) * 2; //垂直视场距离
-        distanceV = distanceV / Math.cos(pitchRad);
-        double distance = Math.sqrt(Math.pow(distanceH, 2) + Math.pow(distanceV, 2)); // 对角线距离
-        return new double[]{angleH, angleV, distance};
+        double flyalt = (focallen * blcnew / 1000 * Math.cos(campitch * Math.PI / 180d));
+
+        // 2、计算航线间距与旁向间距
+        double[] fovhv = getFOV();
+        double viewwidth = fovhv[0];
+        double viewheight = fovhv[1];
+        //    mm  / pixels * 100
+        double cmpixel = ((viewheight / imageheight) * 100);  //厘米/像素
+
+        double spacing = 0; //航线间距
+        double headingSpacing = 0;     //航向间距
+        // 摄像头超前时
+        if (camTowardFront) {
+            spacing = ((1 - (sidelap / 100.0f)) * viewwidth); //航线间距
+            headingSpacing = ((1 - (overlap / 100.0f)) * viewheight);  //航向间距
+        } else {
+            // 摄像头不超前
+            spacing = ((1 - (sidelap / 100.0f)) * viewheight);  //航线间距
+            headingSpacing = ((1 - (overlap / 100.0f)) * viewwidth);     //航向间距
+        }
+
+        double[] values = new double[5];
+        values[0] = spacing;  // 航线间距
+        values[1] = headingSpacing;  // 航向间距
+        values[2] = flyalt;  // 飞行高度
+        values[3] = fbl;  // 分辨率
+        values[4] = cmpixel;  // 1像素等于多少厘米，厘米/像素
+        return values;
     }
 
 
-    /**
-     * 根据相机视场角度和拍摄坐标计算图片的四个角的坐标
-     *
-     * @param centerLat 拍照纬度
-     * @param centerLng 拍照经度
-     * @param alt       飞行高度
-     * @param pitch     相机俯仰倾斜角度，朝下为0度，水平超前为90度
-     * @param yaw       照片角度，以真北为0度
-     * @param angleH    水平视场角度
-     * @param angleV    垂直视场角度
-     * @return double[4] ， 0左上坐标， 1右上坐标 ， 2右下坐标， 3左下坐标
-     */
-    public static double[][] calculateViewPos(double centerLat, double centerLng, double alt, double pitch, double yaw, double angleH, double angleV) {
-        double[] temps = calculateViewMeter(alt, pitch, angleH, angleV);// 0水平视场距离H米，1垂直视场距离V米 ，2斜角距离D米
-        return calculateViewPos(centerLat, centerLng, yaw, temps[0], temps[1]);
+    public double[] getFOV() {
+        double[] values = new double[2];
+        // scale      mm / mm
+        //double flscale = (1000 * flyalt) / focallen;
+        //根据地面分辨率计算比例尺
+        double xiangyuan = sensorwidth / imagewidth;//=传感器尺寸/对应分辨率
+        double bilichi = fbl / xiangyuan * 1000;//=分辨率(米)/相元大小*1000;
+        double flscale = bilichi;  //比例尺,单位：1/M
+        //   mm * mm / 1000
+        double viewwidth = (sensorwidth * flscale / 1000);
+        double viewheight = (sensorheight * flscale / 1000);
+
+        float fovh1 = (float) (Math.atan(sensorwidth / (2 * focallen)) * rad2deg * 2);
+        float fovv1 = (float) (Math.atan(sensorheight / (2 * focallen)) * rad2deg * 2);
+
+        values[0] = viewwidth;
+        values[1] = viewheight;
+        return values;
     }
-
-
-    /**
-     * 根据相机视场距离和拍摄坐标计算图片的四个角的坐标
-     *
-     * @param centerLat 拍照纬度
-     * @param centerLng 拍照经度
-     * @param yaw       照片角度，以真北为0度
-     * @param distanceH 水平距离n米
-     * @param distanceV 垂直距离n米
-     * @return double[4] ， 0左上坐标， 1右上坐标 ， 2右下坐标， 3左下坐标
-     */
-    public static double[][] calculateViewPos(double centerLat, double centerLng, double yaw, double distanceH, double distanceV) {
-        double distance = Math.sqrt(Math.pow(distanceH, 2) + Math.pow(distanceV, 2)) / 2; //中心点与四个角的距离
-        double yaw1 = toDegrees(Math.atan((distanceV / 2) / (distanceH / 2)));   // 较小的一个角度
-        double yaw2 = 90 - yaw1;  // 大的角度
-        double[] leftTop = GisUtil.findPointAtDistanceFrom(centerLat, centerLng, yaw - yaw2, distance);
-        double[] rightTop = GisUtil.findPointAtDistanceFrom(centerLat, centerLng, yaw + yaw2, distance);
-        double[] rightBottom = GisUtil.findPointAtDistanceFrom(centerLat, centerLng, yaw + 90 + yaw1, distance);
-        double[] leftBottom = GisUtil.findPointAtDistanceFrom(centerLat, centerLng, yaw - 90 - yaw1, distance);
-        return new double[][]{leftTop, rightTop, rightBottom, leftBottom};
-    }
-
 }
+

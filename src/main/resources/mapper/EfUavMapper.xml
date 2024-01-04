@@ -19,6 +19,34 @@
         <result property="uavStatus" column="uav_status" jdbcType="INTEGER"/>
     </resultMap>
 
+    <resultMap type="com.bear.reseeding.entity.EfUav" id="EfUavMapAndType">
+        <result property="uavId" column="uav_id" jdbcType="VARCHAR"/>
+        <result property="uavName" column="uav_name" jdbcType="VARCHAR"/>
+        <result property="uavProductDate" column="uav_product_date" jdbcType="TIMESTAMP"/>
+        <result property="uavProductByUser" column="uav_product_by_user" jdbcType="VARCHAR"/>
+        <result property="uavSellDate" column="uav_sell_date" jdbcType="TIMESTAMP"/>
+        <result property="uavSellByUser" column="uav_sell_by_user" jdbcType="VARCHAR"/>
+        <result property="uavWheelbase" column="uav_wheelbase" jdbcType="VARCHAR"/>
+        <result property="uavMaxpayload" column="uav_maxpayload" jdbcType="VARCHAR"/>
+        <result property="uavEnduranceTime" column="uav_endurance_time" jdbcType="VARCHAR"/>
+        <result property="uavMaxspeed" column="uav_maxspeed" jdbcType="VARCHAR"/>
+        <result property="uavContractNo" column="uav_contract_no" jdbcType="VARCHAR"/>
+        <result property="uavTypeId" column="uav_type_id" jdbcType="INTEGER"/>
+        <result property="uavCurrentCamera" column="uav_current_camera" jdbcType="INTEGER"/>
+        <result property="uavStatus" column="uav_status" jdbcType="INTEGER"/>
+        <!-- 一对一关联映射： efUavType -->
+        <association property="efUavType" column="uav_type_id" select="com.bear.reseeding.dao.EfUavTypeDao.queryById"
+                     javaType="com.bear.reseeding.entity.EfUavType"/>
+    </resultMap>
+
+
+    <select id="queryByIdAndType" resultMap="EfUavMapAndType">
+        select
+        uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status
+        from ef_reseeding.ef_uav
+        where uav_id = #{uavId}
+    </select>
+
     <!--查询单个-->
     <select id="queryById" resultMap="EfUavMap">
         select

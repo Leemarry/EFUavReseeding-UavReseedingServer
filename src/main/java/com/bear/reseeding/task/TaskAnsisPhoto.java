@@ -6,8 +6,10 @@ import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.WebSocketLink;
 import com.bear.reseeding.eflink.EFLINK_MSG_10010;
 import com.bear.reseeding.eflink.EFLINK_MSG_10021;
+import com.bear.reseeding.entity.EfCavity;
 import com.bear.reseeding.entity.EfMediaPhoto;
 import com.bear.reseeding.entity.EfUavEachsortie;
+import com.bear.reseeding.service.EfCavityService;
 import com.bear.reseeding.service.EfMediaPhotoService;
 import com.bear.reseeding.service.EfUavEachsortieService;
 import com.bear.reseeding.utils.*;
@@ -21,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -41,6 +44,9 @@ public class TaskAnsisPhoto {
     private EfUavEachsortieService efUavEachsortieService;
     @Autowired
     private EfMediaPhotoService efMediaPhotoService;
+    @Resource
+    private EfCavityService efCavityService;
+
     @Value("${BasePath:C://efuav/UavSystem/}")
     public String basePath;
     @Value("${minio.EndpointExt}")
@@ -239,6 +245,44 @@ public class TaskAnsisPhoto {
                     new ThreadPoolExecutor.CallerRunsPolicy());
         }
         threadPoolExecutorPhoto.execute(() -> {
+            if (file.isEmpty()) {
+                LogUtil.logWarn("上传失败，无法储存！！！");
+            }
+            /**获取map 数据*/
+            String uavSn = map.getOrDefault("uavSn",'0').toString();
+            String lat = map.getOrDefault("lat","").toString();
+            String lng = map.getOrDefault("lng","").toString();
+            String alt = map.getOrDefault("alt","").toString();
+
+//            /** 存储minio --本地 */
+            // 获取文件名
+            String fileName = file.getOriginalFilename();
+            // 创建一时间为文件夹
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-result");
+            String FolderName = dateFormat.format(new Date());
+            // 指定文件存储路径
+            String filePath =BasePath+"uav/"+ uavSn+ "/imgage/"+FolderName;
+            File dest = new File(filePath+fileName);
+//            File dest = new File(filePath + fileName);
+            try {
+                file.transferTo(dest);
+                LogUtil.logWarn("储存到本地 BasePath ！！！");
+            } catch (IOException e) {
+                e.printStackTrace();
+                LogUtil.logWarn("储存到本地 BasePath ！！！");
+            }
+
+            /**获取minion路径*/
+            String imgPath = filePath+fileName;
+             /** 数据新到数据库表 -- 洞斑信息表*/
+//            efCavityService  时间问题
+            EfCavity efCavity = new EfCavity();
+//            efCavity.setAlt();
+//            efCavity.setAltabs();
+
+
+
+            /** websocket 推送信息到前端*/
 //            // 解析数据
 //            String uavSn = map.getOrDefault("uavSn", "").toString();
 //            String uavId = uavSn;

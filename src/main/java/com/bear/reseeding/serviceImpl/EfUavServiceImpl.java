@@ -31,6 +31,17 @@ public class EfUavServiceImpl implements EfUavService {
     }
 
     /**
+     * 通过ID查询单条数据
+     *
+     * @param uavId 主键
+     * @return 实例对象
+     */
+    @Override
+    public EfUav queryByIdAndType(String uavId) {
+        return this.efUavDao.queryByIdAndType(uavId);
+    }
+
+    /**
      * 查询多条数据
      *
      * @param offset 查询起始位置

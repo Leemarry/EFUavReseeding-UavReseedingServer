@@ -115,16 +115,35 @@ public class HandleMqttMessageEf {
                     EfUavRealtimedata realtimedata = new EfUavRealtimedata();
                     realtimedata.setUavId(uavid);
                     realtimedata.setDataDate(new Date());
-                    realtimedata.setLat((double) eflink_msg_2000.getLat());
-                    realtimedata.setLng((double) eflink_msg_2000.getLng());
-                    realtimedata.setAltabs((float) eflink_msg_2000.getAltAbs());
-                    realtimedata.setAlt((float) eflink_msg_2000.getAltRel());
-                    realtimedata.setXySpeed((float) eflink_msg_2000.getXYSpeed());
-                    realtimedata.setZSpeed((float) eflink_msg_2000.getZSpeed());
+                    int lat = eflink_msg_2000.getLat();
+                    double latDouble =(lat / 1e7d);
+                    realtimedata.setLat(latDouble);
+
+                    int lng = eflink_msg_2000.getLng();
+                    double lngDouble = (lng / 1e7d);
+                    realtimedata.setLng(lngDouble);
+
+                    int altAbs = eflink_msg_2000.getAltAbs();
+                    float altAbsFloat = (altAbs / 100f);
+                    realtimedata.setAltabs(altAbsFloat);
+
+                    int alt = eflink_msg_2000.getAltRel();
+                    float altFloat = (alt/ 100F);
+                    realtimedata.setAlt(altFloat);
+
+                    int xySpeed = eflink_msg_2000.getXYSpeed();
+                    float xySpeedFloat = (xySpeed /100f);
+                    realtimedata.setXySpeed(xySpeedFloat);
+
+                    int zSpeed= eflink_msg_2000.getZSpeed();
+                    float zSpeedFloat = (zSpeed /100f);
+                    realtimedata.setZSpeed(zSpeedFloat);
+
                     realtimedata.setFlightMode(String.valueOf(eflink_msg_2000.getMode()));
                     realtimedata.setRoll(eflink_msg_2000.getRoll());
                     realtimedata.setPitch(eflink_msg_2000.getPitch());
                     realtimedata.setYaw(eflink_msg_2000.getYaw());
+
                     realtimedata.setBatteryValue((float) eflink_msg_2000.getBattPert());
                     realtimedata.setLinkAirDownload(eflink_msg_2000.getDownlinkSignalQuality());
                     realtimedata.setLinkAirUpload(eflink_msg_2000.getUplinkSignalQuality());

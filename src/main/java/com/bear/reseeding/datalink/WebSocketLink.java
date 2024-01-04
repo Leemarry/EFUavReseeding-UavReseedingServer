@@ -42,13 +42,14 @@ public class WebSocketLink {
 
     //推送数据给前台
     public static void push(Object obj, String... userids) {
-        System.out.println("接收数据");
+        System.out.println("接收数据!");
         System.out.println(obj);
         try {
             if (userids == null || userids.length == 0) {
                 return;
             }
             String message = JSONObject.toJSONString(obj);
+            System.out.println(message);
             for (String userid : userids) {
                 if (webSocketMapSession.containsKey(userid)) {
                     ArrayList<Session> sessionList = webSocketMapSession.get(userid);
@@ -183,7 +184,7 @@ public class WebSocketLink {
      */
     @OnMessage
     public static void onMessage(String message, Session session, @PathParam("token") String token) {
-        System.out.println(message);
+        System.out.println("接收Webcoket消息"+message);
         if (!TokenUtil.verify(token)) {
             LogUtil.logError("接收Webcoket消息失败，应用标识验证失败!");
             return;
