@@ -221,6 +221,7 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
+//                typeProtocol = 1;
                 if(typeProtocol == 1){
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
@@ -555,7 +556,7 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
+            Integer typeProtocol = -1 ;
             if(efUav !=null){
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
@@ -1290,6 +1291,8 @@ public class UavController {
     /**
      * 飞往某个航点，未起飞则先起飞到航点高度
      *
+     * 1121左自旋 1122  右   参数角度
+     *
      * @param uavId 无人机ID
      * @param lat   纬度
      * @param lng   经度
@@ -1350,20 +1353,28 @@ public class UavController {
      * 控制无人机微调移动
      *
      * @param uavId    无人机ID
-     * @param type     移动方向 , 1115:前移  , 1116:后移  , 1117:左移  , 1118:右移  , 1119:上  , 1120	下
-     * @param distance 移动距离，单位厘米
+     * @param type     移动方向 , 1115:前移  , 1116:后移  , 1117:左移  , 1118:右移  , 1119:上  , 1120	下  1121
+     * @param Parm1 移动距离，单位厘米 @RequestParam(value = "distance") double distance
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/moveUav")
-    public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type, @RequestParam(value = "distance") double distance) {
+    public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type,@RequestParam(value = "Parm1") double Parm1  ,
+                          @RequestParam(value = "Parm2",required = false) double Parm2,  @RequestParam(value = "Parm3",required = false) double Parm3) {
         try {
             //1.打包3050上传等待
             int tag = ((byte) new Random().nextInt() & 0xFF);
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
             eflink_msg_3050.setTag(tag);
             eflink_msg_3050.setCommand(type);
-            eflink_msg_3050.setParm1((int) distance);
+            if(type == 1121){
+                eflink_msg_3050.setParm1((int) Parm1); // 角度 45
+                eflink_msg_3050.setParm2((int) Parm2); // 顺时针0--逆时针1
+                eflink_msg_3050.setParm3((int) Parm3); // 相对角度0-以正北角度为
+            }else {
+                eflink_msg_3050.setParm1((int) Parm1); // old 距离
+            }
+
             byte[] packet = EfLinkUtil.Packet(eflink_msg_3050.EFLINK_MSG_ID, eflink_msg_3050.packet());
 
             //2.推送到mqtt,返回3051判断

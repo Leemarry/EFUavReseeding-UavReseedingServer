@@ -163,7 +163,10 @@ public class TaskUavHeartbeat {
                         if (object_aremVoltage != null) {
                             aremVoltage = Long.parseLong(object_aremVoltage.toString());
                         } else {
-                            aremVoltage = realtimedata.getBatteryPert();
+                            if(realtimedata.getBatteryPert()!=null){
+                                aremVoltage = realtimedata.getBatteryPert();
+                            }
+
                             redisUtils.set(uavIdSystem + "_aremVoltage", realtimedata.getBatteryPert(), 7200L, TimeUnit.SECONDS);
                         }
                         if (object_airRange != null) {
@@ -178,11 +181,18 @@ public class TaskUavHeartbeat {
                         eachsortie.setFlyingTime(String.valueOf(flyTime));
                         eachsortie.setConnectTime(new Date(connectTime));
                         eachsortie.setAremdTime(new Date(aremdTime));
-                        eachsortie.setLastVoltage(Float.valueOf(realtimedata.getBatteryPert()));
-                        eachsortie.setAremdVoltage(aremVoltage);
-                        eachsortie.setLockedVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+//                        eachsortie.setLastVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+//                        eachsortie.setAremdVoltage(aremVoltage);
+//                        eachsortie.setLockedVoltage(Float.valueOf(realtimedata.getBatteryPert()));
                         eachsortie.setLockedTime(new Date(System.currentTimeMillis()));
                         eachsortie.setOnlineTime(String.valueOf(flyTime));
+                        if (realtimedata.getBatteryPert() != null) {
+                            eachsortie.setLastVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                            eachsortie.setAremdVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                            eachsortie.setLockedVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                        } else {
+                            // 处理未获取到电池电量信息的情况
+                        }
                         EfUavEachsortie update = efUavEachsortieService.update(eachsortie);
                         // 目的：防止redis过期
                         redisUtils.set(uavIdSystem + "_sortieId", update.getId(), 300L, TimeUnit.SECONDS);
@@ -193,12 +203,19 @@ public class TaskUavHeartbeat {
                         eachsortie.setUavId(uavIdSystem);
                         eachsortie.setConnectTime(new Date(connectTime));
                         eachsortie.setAremdTime(new Date(System.currentTimeMillis()));
-                        eachsortie.setLastVoltage(Float.valueOf(realtimedata.getBatteryPert()));
-                        eachsortie.setAremdVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                        if (realtimedata.getBatteryPert() != null) {
+                            eachsortie.setLastVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                            eachsortie.setAremdVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                            eachsortie.setLockedVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+                        } else {
+                            // 处理未获取到电池电量信息的情况
+                        }
+//                        eachsortie.setLastVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+//                        eachsortie.setAremdVoltage(Float.valueOf(realtimedata.getBatteryPert()));
                         eachsortie.setFlyingTime(String.valueOf(flyTime));
                         eachsortie.setOnlineTime(String.valueOf(0));
                         eachsortie.setLockedTime(new Date(System.currentTimeMillis()));
-                        eachsortie.setLockedVoltage(Float.valueOf(realtimedata.getBatteryPert()));
+//                        eachsortie.setLockedVoltage(Float.valueOf(realtimedata.getBatteryPert()));
                         // 新增一个架次
                         EfUavEachsortie insert1 = efUavEachsortieService.insert(eachsortie);
                         LogUtil.logMessage("无人机[" + uavIdSystem + "]开始飞行，当前飞行架次：" + insert1.getId());
