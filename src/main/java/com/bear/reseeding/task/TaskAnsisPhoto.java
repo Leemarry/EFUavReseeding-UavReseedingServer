@@ -250,10 +250,19 @@ public class TaskAnsisPhoto {
             }
             /**获取map 数据*/
             String uavSn = map.getOrDefault("uavSn",'0').toString();
-            String lat = map.getOrDefault("lat","").toString();
-            String lng = map.getOrDefault("lng","").toString();
-            String alt = map.getOrDefault("alt","").toString();
-
+            String latStr = map.getOrDefault("lat","").toString();
+            float lat = latStr.isEmpty() ? 0 : Float.parseFloat(latStr);
+            String lngStr = map.getOrDefault("lng","").toString();
+            float lng = lngStr.isEmpty() ? 0 : Float.parseFloat(lngStr);
+            String altStr = map.getOrDefault("alt","").toString();
+            float alt = altStr.isEmpty() ? 0 : Float.parseFloat(altStr);
+//            String altabsStr =map.getOrDefault("alt","").toString();
+            String efCavityIdStr = map.getOrDefault("id","").toString();
+            Integer efCavityId = efCavityIdStr.isEmpty() ? null : Integer.parseInt(efCavityIdStr);
+            String efCavityLevel = map.getOrDefault("level","").toString();
+            String efCavitySquare = map.getOrDefault("square","").toString();
+            String efCavitySeedNumStr = map.getOrDefault("seedNumber","").toString();
+            Integer efCavitySeedNum = efCavitySeedNumStr.isEmpty() ? 0 : Integer.parseInt(efCavitySeedNumStr);
 //            /** 存储minio --本地 */
             // 获取文件名
             String fileName = file.getOriginalFilename();
@@ -263,7 +272,7 @@ public class TaskAnsisPhoto {
             // 指定文件存储路径
             String filePath =BasePath+"uav/"+ uavSn+ "/imgage/"+FolderName;
             File dest = new File(filePath+fileName);
-//            File dest = new File(filePath + fileName);
+
             try {
                 file.transferTo(dest);
                 LogUtil.logWarn("储存到本地 BasePath ！！！");
@@ -277,8 +286,14 @@ public class TaskAnsisPhoto {
              /** 数据新到数据库表 -- 洞斑信息表*/
 //            efCavityService  时间问题
             EfCavity efCavity = new EfCavity();
-//            efCavity.setAlt();
-//            efCavity.setAltabs();
+            efCavity.setAlt(alt);
+//            efCavity.setAltabs(altabs);
+            efCavity.setCavityName(efCavityIdStr);
+            efCavity.setId(efCavityId);
+            efCavity.setSeedingCount(efCavitySeedNum);
+            //架次 照片id ??
+            efCavityService.insert(efCavity);
+
 
 
 
