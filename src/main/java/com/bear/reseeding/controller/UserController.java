@@ -42,6 +42,8 @@ public class UserController {
     private EfUserService efUserService;
     @Resource
     private EfUserLoginService efUserLoginService;
+    @Resource
+    private EfSysteminfoService efSysteminfoService;
 
     /**
      * 加密
@@ -172,32 +174,37 @@ public class UserController {
             //endregion
             //region 返回token
             String token = TokenUtil.sign(user);
-            Map<String, Object> hashMap = new HashMap<String, Object>();
+            EfSysteminfo efSysteminfo = new EfSysteminfo();
             if (token != null) {
                 if (redisUtils != null) {
-                    redisUtils.set(token, "登录时间：" + System.currentTimeMillis(), 5L, TimeUnit.HOURS);
-                    redisUtils.set(token + "_LoginIpWww", ip, 5L, TimeUnit.HOURS);
-                    redisUtils.set(token + "_LoginIpLocal", addr, 5L, TimeUnit.HOURS);
-                    redisUtils.set(token + "_UserInfo", user, 5L, TimeUnit.HOURS); //token对应的用户信息
-                    redisUtils.set(token + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //登录时间
-                    redisUtils.set(token + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //上次操作时间
+                    redisUtils.set(machineCode, "登录时间：" + System.currentTimeMillis(), 5L, TimeUnit.HOURS);
+                    redisUtils.set(machineCode + "_LoginIpWww", ip, 5L, TimeUnit.HOURS);
+                    redisUtils.set(machineCode + "_LoginIpLocal", addr, 5L, TimeUnit.HOURS);
+                    redisUtils.set(machineCode + "_UserInfo", user, 5L, TimeUnit.HOURS); //token对应的用户信息
+                    redisUtils.set(machineCode + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //登录时间
+                    redisUtils.set(machineCode + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //上次操作时间
                     if (logined != null) {
-                        redisUtils.set(token + "_LoginedId", logined); //储存的登录记录ID
+                        redisUtils.set(machineCode + "_LoginedId", logined); //储存的登录记录ID
                     }
-                    int roomId = (int) user.getUCId();
+                }
+                //获取登录对象的公司id
+                Integer ucId = user.getUCId();
+                //通过ucId获取cSystemId
+                 efSysteminfo = efSysteminfoService.queryById(ucId);
+//                    int roomId = (int) user.getUCId();
                     //获取userSig
-                    String roomUserId = user.getUName() + "-" + DateUtil.timeStamp2Date(System.currentTimeMillis(), "HHmmssSSS");
+//                    String roomUserId = user.getUName() + "-" + DateUtil.timeStamp2Date(System.currentTimeMillis(), "HHmmssSSS");
 //                    TLSSigAPIv2 api = new TLSSigAPIv2(EfStaticController.TxyTrtcSdkAppId, EfStaticController.TxyTrtcSecretKey);
 //                    String userSig = api.genUserSig(roomUserId, EfStaticController.TxyTrtcExpireTime);
-                    hashMap.put("token", token);
-                    hashMap.put("roomId", roomId);
+//                    hashMap.put("token", token);
+//                    hashMap.put("roomId", roomId);
 //                    hashMap.put("userSign", userSig);
-                    hashMap.put("userName", user.getUName());
-                    hashMap.put("roomUserId", roomUserId);
-                }
-                user.setULoginPassword("");
-                hashMap.put("user", user);
-                return ResultUtil.success(token, hashMap);
+//                    hashMap.put("userName", user.getUName());
+//                    hashMap.put("roomUserId", roomUserId);
+//                }
+//                user.setULoginPassword("");
+//                hashMap.put("user", user);
+                return ResultUtil.success(token, efSysteminfo);
             } else {
                 LogUtil.logWarn("登录完成, 生成Token失败！");
                 return ResultUtil.error("生成唯一标识失败！");
@@ -210,7 +217,7 @@ public class UserController {
 
 
     /**
-     * App 心跳包 ，更新登录记录表，
+     * todo App 心跳包 ，更新登录记录表，
      *
      * @param machineCode Android设备机器码
      * @param onLine      是否在线，0 表示退出系统，1 表示在线
@@ -225,7 +232,7 @@ public class UserController {
             String userName = user.getUName();
             // 更新登录记录表
             EfUserLogin userLogin = new EfUserLogin();
-            Object object = redisUtils.get(token + "_LoginedId");
+            Object object = redisUtils.get(machineCode + "_LoginedId");
             if (object != null) {
                 userLogin = (EfUserLogin) object;
             }
@@ -237,13 +244,13 @@ public class UserController {
                     userLogin = efUserLoginService.update(userLogin);
                 }
                 LogUtil.logInfo("DJI客户端[" + machineCode + "] :  用户 " + userLoginName + " 退出登录");
-                redisUtils.remove(token,
-                        token + "_LoginIpWww",
-                        token + "_LoginIpLocal",
-                        token + "_UserInfo",
-                        token + "_LoginTime",
-                        token + "_LastOpterTime",
-                        token + "_LoginedId");
+                redisUtils.remove(machineCode,
+                        machineCode + "_LoginIpWww",
+                        machineCode + "_LoginIpLocal",
+                        machineCode + "_UserInfo",
+                        machineCode + "_LoginTime",
+                        machineCode + "_LastOpterTime",
+                        machineCode + "_LoginedId");
                 return ResultUtil.success();
             } else {
                 // 正常保活中
