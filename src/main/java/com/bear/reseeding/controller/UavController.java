@@ -17,6 +17,8 @@ import com.bear.reseeding.service.*;
 import com.bear.reseeding.task.TaskAnsisPhoto;
 import com.bear.reseeding.task.MinioService;
 import com.bear.reseeding.utils.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
 import com.tencentcloudapi.common.profile.HttpProfile;
@@ -33,10 +35,10 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.plaf.synth.Region;
-import java.io.File;
+import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +76,9 @@ public class UavController {
     @Resource
     private EfCavitySeedingService efCavitySeedingService;
 
+    @Resource
+    private  EfTaskKmzService efTaskKmzService;
+
     /**
      * 无人机与公司关联
      */
@@ -89,6 +94,9 @@ public class UavController {
 
     @Value("${BasePath:C://efuav/reseeding/}")
     public String basePath;
+
+    @Value("${BasePath:C://efuav/UavSystem/}")
+    public String BasePath;
 
 
     /**
@@ -117,7 +125,7 @@ public class UavController {
     @PostMapping(value = "/getUavs")
     public Result getUavs(@CurrentUser EfUser currentUser, HttpServletRequest request) {
         try {
-
+//            Thread.sleep(5000);
             Integer cId = currentUser.getUCId();  //公司Id
             Integer urId = currentUser.getURId(); //角色id
             List<EfUav> efUavList = new ArrayList<>();
@@ -1139,6 +1147,144 @@ public class UavController {
 
 
     /**
+     * 保存巡检航线至minio
+     * @param uavId
+     * @param mission
+     * @param altType
+     * @param takeoffAlt
+     * @param homeAlt
+     * @param request
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/saveRouteToMinio")
+    public Result saveRouteToMinio(@CurrentUser EfUser efUser, @RequestParam(value = "uavId",required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
+                                @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value= "name") String  name,
+                                   HttpServletRequest request) {
+        try {
+            if (mission == null || mission.size() <= 0) {
+                return ResultUtil.error("航线为空!");
+            }
+            Integer ucId = efUser.getUCId();
+            Integer userId = efUser.getId(); //
+            String userName = efUser.getUName();
+            Date nowdate= new Date();
+
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            /**航线名称*/
+//            String fileName ="temp_" + uavId + System.currentTimeMillis();
+            String  fileName= name ;
+
+            if (altType == 0) {
+                // 使用相对高度，获取飞机当前海拔
+                if (homeAlt == -1) {
+                    Object objalt = redisUtils.get(uavId + "_heart");
+                    if (objalt != null) {
+                        EfUavRealtimedata realtimedata = (EfUavRealtimedata) objalt;
+                        if (realtimedata.getAremd() == 1) {
+                            return ResultUtil.error("无人机已经起飞，请先降落无人机！");
+                        }
+                        if (realtimedata.getGpsStatus() == 10 || realtimedata.getGpsStatus() == 5) {
+                            homeAlt = realtimedata.getAltabs();
+                        } else {
+                            return ResultUtil.error("无人机未差分定位！");
+                        }
+                    } else {
+                        return ResultUtil.error("无人机已离线！");
+                    }
+                }
+            }
+            int uavType = 0;
+            //获取飞机类型
+            Object objtype = redisUtils.get(uavId + "_heart");
+            if (objtype != null) {
+                EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
+                uavType = realtimedata.getUavType();
+            }
+            // 生成kmz
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath);
+            if (kmzFile == null) {
+                return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+            }
+            // 上传minion
+            String url = applicationName + File.separator + File.separator+ ucId+ File.separator+ kmzFile.getName();
+            if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+                if (kmzFile.exists()) {
+                    FileUtil.deleteDir(kmzFile.getParent());
+                }
+                return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+            }
+
+            url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+            if ("".equals(url)) {
+                return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+            }
+            long fileSize = kmzFile.length();
+//            double fileSizeKB = (double) kmzFile.length() / 1024; // 将字节数转换为 KB
+//            String formattedSize = String.format("%.2f KB", fileSizeKB); // 格式化结果（保留两位小数）
+//            System.out.println("文件大小：" + fileSize + "字节");
+            // 距离 点集合
+            int numPoints = mission.size();
+            double distaceCount=0.0;
+            double distance;
+            for (int i = 0; i < numPoints; i++) {
+                for (int j = i + 1; j < numPoints; j++) {
+                    double[] firstPoint = mission.get(i);  // 获取第一组坐标点
+                    double lng1 = firstPoint[0];  // 获取经度
+                    double lat1 = firstPoint[1];  // 获取纬度
+                    double[] nextPoint = mission.get(j);  // 获取第一组坐标点
+                    double lng2 = nextPoint[0];  // 获取经度
+                    double lat2 = nextPoint[1];  // 获取纬度
+
+                    distance = GisUtil.getDistance(lng1,lat1 , lng2, lat2);
+                    distaceCount += distance;
+//                    System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
+                    break;
+                }
+            }
+            // minio上传成功  保存 到数据库
+            EfTaskKmz efTaskKmz = new EfTaskKmz();
+            efTaskKmz.setKmzUpdateTime(nowdate);
+            efTaskKmz.setKmzCreateTime(nowdate);
+            efTaskKmz.setKmzName(name);
+            efTaskKmz.setKmzPath(url);
+            efTaskKmz.setKmzType("kmz");
+            efTaskKmz.setKmzSize(fileSize);
+            efTaskKmz.setKmzDes("");
+            efTaskKmz.setKmzVersion("1.0.0");
+            efTaskKmz.setKmzDistance(distaceCount);
+            efTaskKmz.setKmzDuration((Double) (distaceCount / 5f));
+            efTaskKmz.setKmzCreateUser(userName);
+            efTaskKmz.setKmzUpdateUser(userName);
+            efTaskKmz.setKmzUpdateByUserId(userId);
+            efTaskKmz.setKmzCreateByUserId(userId);
+            efTaskKmz.setKmzCompanyId(ucId);
+
+            efTaskKmz =   efTaskKmzService.insert(efTaskKmz);
+            if(efTaskKmz!=null){
+                 return ResultUtil.success("保存航线成功！");
+             }
+             /**移除minio 错误航线*/
+            Boolean gold = minioService.removeObject(BucketNameKmz, url);
+            if(gold){
+                return ResultUtil.error("保存航线失败！！！请重新上传");
+            }else {
+                return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
+            }
+
+
+        } catch (Exception e) {
+            LogUtil.logError("上传航点任务至无人机异常：" + e.toString());
+            return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
+        }
+    }
+
+
+
+    /**
      * 测绘无人机主动上传 APP照片上传到云端, 使用中
      *
      * @param file image 图片名称
@@ -1270,13 +1416,63 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMediaResult")
-    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestBody HashMap<String, Object> map, HttpServletRequest request) {
+    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, String map, HttpServletRequest request) {
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            HashMap<String,Object> hashMap = new HashMap<>();
+            try {
+                hashMap =  objectMapper.readValue(map,HashMap.class);
+//                System.out.println(hashMap); // 输出转换后的 HashMap
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+//            Gson gson = new Gson();
+//            HashMap<String,Object> hashMap =gson.fromJson()
             if (file.isEmpty()) {
                 return ResultUtil.error("上传分析照片失败，空文件！");
             }
             // 开启线程储存照片
-            taskAnsisPhoto.saveSeedingPhoto(file, map);
+            taskAnsisPhoto.saveSeedingPhoto(file, hashMap);
+            return ResultUtil.success();
+        } catch (Exception e) {
+            LogUtil.logError("上传分析照片异常：" + e.toString());
+            return ResultUtil.error("上传分析照片异常,请联系管理员!");
+        }
+    }
+
+    @ResponseBody
+    @PostMapping(value = "/uploadMediaResults")
+    public Result uploadMediaResults(@RequestParam(value = "file") MultipartFile file, HttpServletRequest request) {
+        try {
+            if (file.isEmpty()) {
+                return ResultUtil.error("上传分析照片失败，空文件！");
+            }
+
+            // 获取文件名-大小
+            String fileName = file.getOriginalFilename();
+            long fileSize = file.getSize();
+            // 创建一时间为文件夹
+            Date time = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+            String FolderName = dateFormat.format(time)+"-result";
+            // 指定文件存储路径
+            String filePath ="photo/uav/"+ "/imgage/"+FolderName+"/";
+
+            try {
+                File dest = new File(BasePath+filePath,fileName);
+                if (!dest.exists()) {
+                    boolean res = dest.mkdirs();
+                    if (!res) {
+                        LogUtil.logWarn("创建目录失败！");
+                    }
+                }
+                // 存储文件
+                file.transferTo(dest);
+                LogUtil.logWarn("储存到本地 BasePath ！！！");
+            } catch (IOException e) {
+                e.printStackTrace();
+                LogUtil.logWarn("储存到本地 BasePath ！！！");
+            }
             return ResultUtil.success();
         } catch (Exception e) {
             LogUtil.logError("上传分析照片异常：" + e.toString());
@@ -1360,8 +1556,10 @@ public class UavController {
     @ResponseBody
     @PostMapping(value = "/moveUav")
     public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type,@RequestParam(value = "Parm1") double Parm1  ,
-                          @RequestParam(value = "Parm2",required = false) double Parm2,  @RequestParam(value = "Parm3",required = false) double Parm3) {
+                          @RequestParam(value = "Parm2",required = false) double Parm2,  @RequestParam(value = "Parm3",required = false) double Parm3, HttpServletRequest request) {
         try {
+
+            //后缀名 .JPEG
             //1.打包3050上传等待
             int tag = ((byte) new Random().nextInt() & 0xFF);
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
@@ -1772,6 +1970,51 @@ public class UavController {
 
     }
 
+    /**
+     * 查询无人机信息-类型
+     * @param efUser
+     * @param uavId
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryUavType")
+    public Result queryUavType(@CurrentUser EfUser efUser,@RequestParam(value = "uavId") String uavId){
+        try {
+            EfUav efUav =  efUavService.queryById(uavId);
+            if(efUav!=null){
+                return  ResultUtil.success("查询无人机类型信息成功", efUav);
+            }
+            return ResultUtil.error("查询无人机类型信息失败,请联系管理员！");
+        }catch (Exception e){
+            LogUtil.logError("查询无人机类型失败");
+            return ResultUtil.error("查询无人机类型异常,请联系管理员！");
+        }
+    }
+    /**c
+     * 查询 航点任务表 信息 时间
+     * */
+    @ResponseBody
+    @PostMapping(value = "/queryKmzInfo")
+    public Result queryKmzInfo(@CurrentUser EfUser efUser,
+                               @RequestParam(value = "startTime", required = false) long startTime, @RequestParam(value = "endTime", required = false) long endTime){
+        try {
+            if(endTime<=startTime){
+                return ResultUtil.error("查询时间段异常");
+            }
+            Integer Ucid= efUser.getUCId(); // 航线任务所属公司
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String startTimeStr= dateFormat.format(new Date(startTime));
+            String endTimeStr = dateFormat.format(new Date(endTime));
+            List<EfTaskKmz> efTaskKmzList = efTaskKmzService.queryByUcidAndTime(Ucid,startTimeStr,endTimeStr);
+            if(efTaskKmzList.size()>=0){
+                return ResultUtil.success("查询航线任务列表信息成功！",efTaskKmzList);
+            }
+            return ResultUtil.error("查询航线任务列表信息失败！请联系管理员！");
+        }catch (Exception e){
+            LogUtil.logError("查询无人机类型失败");
+            return ResultUtil.error("查询无人机类型异常,请联系管理员！");
+        }
+    }
 
 
 

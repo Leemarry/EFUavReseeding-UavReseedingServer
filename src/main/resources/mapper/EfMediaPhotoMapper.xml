@@ -38,6 +38,10 @@
         SELECT * FROM  ef_media_photo WHERE deviceId=#{UavID} and image_tag=#{newFileName}
     </select>
 
+<!--    queryByUavIdAndLatestTime 根据时间查询无人机最近的图片-->
+    <select id="queryByUavIdAndLatestTime" resultMap="EfMediaPhotoMap">
+        SELECT * FROM  ef_media_photo WHERE deviceId=#{uavId}  and  create_date &lt;= #{lastTime}  ORDER BY create_date  DESC LIMIT 1;
+    </select>
     <!--查询单个-->
     <select id="queryById" resultMap="EfMediaPhotoMap">
         select

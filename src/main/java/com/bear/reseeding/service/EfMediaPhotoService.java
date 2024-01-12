@@ -3,6 +3,7 @@ package com.bear.reseeding.service;
 import com.bear.reseeding.entity.EfMediaPhoto;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -71,4 +72,13 @@ public interface EfMediaPhotoService {
      * @return
      */
     EfMediaPhoto queryByCreatTime(@Param("UavID") String UavID, @Param("newFileName") String newFileName);
+
+    /**
+     * 根据时间查询无人机拍照最近的图片
+     * @param uavId
+     * @param lastTime
+     * @return
+     */
+    EfMediaPhoto queryByUavIdAndLatestTime(@Param("uavId") String uavId, @Param("lastTime") Date lastTime);
+
 }

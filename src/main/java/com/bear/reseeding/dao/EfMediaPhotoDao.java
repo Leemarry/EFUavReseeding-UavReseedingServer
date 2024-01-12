@@ -3,6 +3,7 @@ package com.bear.reseeding.dao;
 import com.bear.reseeding.entity.EfMediaPhoto;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -97,6 +98,9 @@ public interface EfMediaPhotoDao {
      * @return
      */
     EfMediaPhoto queryByCreatTime(@Param("UavID") String UavID, @Param("newFileName") String newFileName);
+
+
+    EfMediaPhoto queryByUavIdAndLatestTime(@Param(value = "uavId") String uavId, @Param(value = "lastTime") Date lastTime);
 
 }
 

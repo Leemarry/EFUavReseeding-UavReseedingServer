@@ -49,6 +49,11 @@ public class EfTaskKmz implements Serializable {
      * 任务创建时间
      */
     private Date kmzCreateTime;
+
+    /**
+     * 创建人名称
+     */
+    private String kmzCreateUser;
     /**
      * 外键：任务创建人
      */
@@ -57,6 +62,28 @@ public class EfTaskKmz implements Serializable {
      * 任务最新修改时间
      */
     private Date kmzUpdateTime;
+
+    public String getKmzCreateUser() {
+        return kmzCreateUser;
+    }
+
+    public void setKmzCreateUser(String kmzCreateUser) {
+        this.kmzCreateUser = kmzCreateUser;
+    }
+
+    public String getKmzUpdateUser() {
+        return kmzUpdateUser;
+    }
+
+    public void setKmzUpdateUser(String kmzUpdateUser) {
+        this.kmzUpdateUser = kmzUpdateUser;
+    }
+
+    /**
+     * 修改人名称
+     */
+    private String kmzUpdateUser;
+
     /**
      * 外键：任务最新修改人
      */

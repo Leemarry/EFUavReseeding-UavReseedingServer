@@ -73,4 +73,6 @@ public interface EfUavEachsortieService {
      * @return
      */
     EfUavEachsortie queryByPhotoTime(@Param("date") Date date, @Param("uavId") String uavId);
+
+
 }
