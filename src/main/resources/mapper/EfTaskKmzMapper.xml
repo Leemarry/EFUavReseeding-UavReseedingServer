@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfTaskKmzDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfTaskKmz" id="EfTaskKmzMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="kmzName" column="kmz_name" jdbcType="VARCHAR"/>
+        <result property="kmzPath" column="kmz_path" jdbcType="VARCHAR"/>
+        <result property="kmzType" column="kmz_type" jdbcType="VARCHAR"/>
+        <result property="kmzVersion" column="kmz_version" jdbcType="VARCHAR"/>
+        <result property="kmzSize" column="kmz_size" jdbcType="NUMERIC"/>
+        <result property="kmzDistance" column="kmz_distance" jdbcType="NUMERIC"/>
+        <result property="kmzDuration" column="kmz_duration" jdbcType="NUMERIC"/>
+        <result property="kmzCreateTime" column="kmz_create_time" jdbcType="TIMESTAMP"/>
+        <result property="kmzCreateByUserId" column="kmz_create_by_user_id" jdbcType="INTEGER"/>
+        <result property="kmzUpdateTime" column="kmz_update_time" jdbcType="TIMESTAMP"/>
+        <result property="kmzUpdateByUserId" column="kmz_update_by_user_id" jdbcType="INTEGER"/>
+        <result property="kmzCompanyId" column="kmz_company_id" jdbcType="INTEGER"/>
+        <result property="kmzDes" column="kmz_des" jdbcType="VARCHAR"/>
+        <result property="kmzCreateUser" column="kmz_create_user" jdbcType="VARBINARY"></result>
+        <result property="kmzUpdateUser" column="kmz_update_user" jdbcType="VARBINARY"></result>
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfTaskKmzMap">
+        select
+          id, kmz_name, kmz_path, kmz_type, kmz_version, kmz_size, kmz_distance, kmz_duration, kmz_create_time, kmz_create_by_user_id, kmz_update_time, kmz_update_by_user_id, kmz_company_id, kmz_des
+        from ef_task_kmz
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfTaskKmzMap">
+        select
+          id, kmz_name, kmz_path, kmz_type, kmz_version, kmz_size, kmz_distance, kmz_duration, kmz_create_time, kmz_create_by_user_id, kmz_update_time, kmz_update_by_user_id, kmz_company_id, kmz_des
+        from ef_task_kmz
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--根据公司编号查询 -->
+    <select id="queryAllByCid" resultMap="EfTaskKmzMap">
+        select
+          *
+        from ef_task_kmz
+         where kmz_company_id = #{cid}
+         order by kmz_update_time desc
+    </select>
+
+    <!--检测航线任务是否已经存在 -->
+    <select id="checkKmzExist" resultType="java.lang.Integer">
+        select
+          count(id)
+        from ef_task_kmz
+         where kmz_company_id = #{cid} and kmz_name= #{fileName}
+    </select>
+
+    <!-- 通过公司id与时间段查询航线列表   queryByUcidAndTime-->
+    <select id="queryByUcidAndTime"  resultMap="EfTaskKmzMap">
+        select
+        *
+        from ef_task_kmz Where  kmz_company_id =#{UcId}
+        AND kmz_update_time BETWEEN #{startTime} AND #{endTime} ORDER BY kmz_update_time DESC
+    </select>
+
+    <!--通过实体作为筛选条件查询-->
+    <select id="queryAll" resultMap="EfTaskKmzMap">
+        select
+        id, kmz_name, kmz_path, kmz_type, kmz_version, kmz_size, kmz_distance, kmz_duration, kmz_create_time,
+        kmz_create_by_user_id, kmz_update_time, kmz_update_by_user_id, kmz_company_id, kmz_des
+        from ef_task_kmz
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="kmzName != null and kmzName != ''">
+                and kmz_name = #{kmzName}
+            </if>
+            <if test="kmzPath != null and kmzPath != ''">
+                and kmz_path = #{kmzPath}
+            </if>
+            <if test="kmzType != null and kmzType != ''">
+                and kmz_type = #{kmzType}
+            </if>
+            <if test="kmzVersion != null and kmzVersion != ''">
+                and kmz_version = #{kmzVersion}
+            </if>
+            <if test="kmzSize != null">
+                and kmz_size = #{kmzSize}
+            </if>
+            <if test="kmzDistance != null">
+                and kmz_distance = #{kmzDistance}
+            </if>
+            <if test="kmzDuration != null">
+                and kmz_duration = #{kmzDuration}
+            </if>
+            <if test="kmzCreateTime != null">
+                and kmz_create_time = #{kmzCreateTime}
+            </if>
+            <if test="kmzCreateByUserId != null">
+                and kmz_create_by_user_id = #{kmzCreateByUserId}
+            </if>
+            <if test="kmzUpdateTime != null">
+                and kmz_update_time = #{kmzUpdateTime}
+            </if>
+            <if test="kmzUpdateByUserId != null">
+                and kmz_update_by_user_id = #{kmzUpdateByUserId}
+            </if>
+            <if test="kmzCompanyId != null">
+                and kmz_company_id = #{kmzCompanyId}
+            </if>
+            <if test="kmzDes != null and kmzDes != ''">
+                and kmz_des = #{kmzDes}
+            </if>
+        </where>
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_task_kmz(kmz_name, kmz_path, kmz_type, kmz_version, kmz_size, kmz_distance, kmz_duration, kmz_create_time, kmz_create_by_user_id, kmz_update_time, kmz_update_by_user_id, kmz_company_id, kmz_des,kmz_create_user,kmz_update_user)
+        values (#{kmzName}, #{kmzPath}, #{kmzType}, #{kmzVersion}, #{kmzSize}, #{kmzDistance}, #{kmzDuration}, #{kmzCreateTime}, #{kmzCreateByUserId}, #{kmzUpdateTime}, #{kmzUpdateByUserId}, #{kmzCompanyId}, #{kmzDes},#{kmzCreateUser},#{kmzUpdateUser})
+    </insert>
+
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_task_kmz(kmz_name, kmz_path, kmz_type, kmz_version, kmz_size, kmz_distance,
+        kmz_duration, kmz_create_time, kmz_create_by_user_id, kmz_update_time, kmz_update_by_user_id, kmz_company_id,
+        kmz_des)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.kmzName}, #{entity.kmzPath}, #{entity.kmzType}, #{entity.kmzVersion}, #{entity.kmzSize},
+            #{entity.kmzDistance}, #{entity.kmzDuration}, #{entity.kmzCreateTime}, #{entity.kmzCreateByUserId},
+            #{entity.kmzUpdateTime}, #{entity.kmzUpdateByUserId}, #{entity.kmzCompanyId}, #{entity.kmzDes})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_task_kmz(kmz_name, kmz_path, kmz_type, kmz_version, kmz_size, kmz_distance,
+        kmz_duration, kmz_create_time, kmz_create_by_user_id, kmz_update_time, kmz_update_by_user_id, kmz_company_id,
+        kmz_des)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.kmzName}, #{entity.kmzPath}, #{entity.kmzType}, #{entity.kmzVersion}, #{entity.kmzSize},
+            #{entity.kmzDistance}, #{entity.kmzDuration}, #{entity.kmzCreateTime}, #{entity.kmzCreateByUserId},
+            #{entity.kmzUpdateTime}, #{entity.kmzUpdateByUserId}, #{entity.kmzCompanyId}, #{entity.kmzDes})
+        </foreach>
+        on duplicate key update
+        kmz_name = values(kmz_name) , kmz_path = values(kmz_path) , kmz_type = values(kmz_type) , kmz_version =
+        values(kmz_version) , kmz_size = values(kmz_size) , kmz_distance = values(kmz_distance) , kmz_duration =
+        values(kmz_duration) , kmz_create_time = values(kmz_create_time) , kmz_create_by_user_id =
+        values(kmz_create_by_user_id) , kmz_update_time = values(kmz_update_time) , kmz_update_by_user_id =
+        values(kmz_update_by_user_id) , kmz_company_id = values(kmz_company_id) , kmz_des = values(kmz_des)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_task_kmz
+        <set>
+            <if test="kmzName != null and kmzName != ''">
+                kmz_name = #{kmzName},
+            </if>
+            <if test="kmzPath != null and kmzPath != ''">
+                kmz_path = #{kmzPath},
+            </if>
+            <if test="kmzType != null and kmzType != ''">
+                kmz_type = #{kmzType},
+            </if>
+            <if test="kmzVersion != null and kmzVersion != ''">
+                kmz_version = #{kmzVersion},
+            </if>
+            <if test="kmzSize != null">
+                kmz_size = #{kmzSize},
+            </if>
+            <if test="kmzDistance != null">
+                kmz_distance = #{kmzDistance},
+            </if>
+            <if test="kmzDuration != null">
+                kmz_duration = #{kmzDuration},
+            </if>
+            <if test="kmzCreateTime != null">
+                kmz_create_time = #{kmzCreateTime},
+            </if>
+            <if test="kmzCreateByUserId != null">
+                kmz_create_by_user_id = #{kmzCreateByUserId},
+            </if>
+            <if test="kmzUpdateTime != null">
+                kmz_update_time = #{kmzUpdateTime},
+            </if>
+            <if test="kmzUpdateByUserId != null">
+                kmz_update_by_user_id = #{kmzUpdateByUserId},
+            </if>
+            <if test="kmzCompanyId != null">
+                kmz_company_id = #{kmzCompanyId},
+            </if>
+            <if test="kmzDes != null and kmzDes != ''">
+                kmz_des = #{kmzDes},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--重命名-->
+    <update id="updateName">
+        update ef_task_kmz
+        set  kmz_name = #{name} ,  kmz_update_time = #{updateTime},  kmz_update_by_user_id = #{userId}
+        where id = #{id}
+    </update>
+
+    <!--重命名-->
+    <update id="updateNamePath">
+        update ef_task_kmz
+        set  kmz_name = #{name} , kmz_path = #{path} ,  kmz_update_time = #{updateTime},  kmz_update_by_user_id = #{userId}
+        where id = #{id}
+    </update>
+
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_task_kmz where id = #{id}
+    </delete>
+
+</mapper>
+

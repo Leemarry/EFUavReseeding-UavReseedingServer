@@ -22,7 +22,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.xml.crypto.Data;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.*;
@@ -245,57 +248,112 @@ public class TaskAnsisPhoto {
                     new ThreadPoolExecutor.CallerRunsPolicy());
         }
         threadPoolExecutorPhoto.execute(() -> {
+            long timenow = System.currentTimeMillis();
             if (file.isEmpty()) {
                 LogUtil.logWarn("上传失败，无法储存！！！");
             }
-            /**获取map 数据*/
+            /**解析 获取map 数据*/
             String uavSn = map.getOrDefault("uavSn",'0').toString();
             String latStr = map.getOrDefault("lat","").toString();
-            float lat = latStr.isEmpty() ? 0 : Float.parseFloat(latStr);
+            Double lat = latStr.isEmpty() ? 0 : Double.parseDouble(latStr);
             String lngStr = map.getOrDefault("lng","").toString();
-            float lng = lngStr.isEmpty() ? 0 : Float.parseFloat(lngStr);
+            Double lng = lngStr.isEmpty() ? 0 : Double.parseDouble(lngStr);
             String altStr = map.getOrDefault("alt","").toString();
             float alt = altStr.isEmpty() ? 0 : Float.parseFloat(altStr);
-//            String altabsStr =map.getOrDefault("alt","").toString();
-            String efCavityIdStr = map.getOrDefault("id","").toString();
-            Integer efCavityId = efCavityIdStr.isEmpty() ? null : Integer.parseInt(efCavityIdStr);
-            String efCavityLevel = map.getOrDefault("level","").toString();
-            String efCavitySquare = map.getOrDefault("square","").toString();
-            String efCavitySeedNumStr = map.getOrDefault("seedNumber","").toString();
-            Integer efCavitySeedNum = efCavitySeedNumStr.isEmpty() ? 0 : Integer.parseInt(efCavitySeedNumStr);
-//            /** 存储minio --本地 */
-            // 获取文件名
-            String fileName = file.getOriginalFilename();
-            // 创建一时间为文件夹
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd-result");
-            String FolderName = dateFormat.format(new Date());
-            // 指定文件存储路径
-            String filePath =BasePath+"uav/"+ uavSn+ "/imgage/"+FolderName;
-            File dest = new File(filePath+fileName);
+            String altabsStr =map.getOrDefault("alt","").toString();
+            float altAbs = altabsStr.isEmpty() ? null : Float.parseFloat(altabsStr);
 
+            // data
+            List<Map<String, Object>> dataList = (List<Map<String, Object>>) map.get("data");
+            String efCavityIdStr = dataList.get(0).getOrDefault("id","").toString();
+            Integer efCavityId = efCavityIdStr.isEmpty() ? null : Integer.parseInt(efCavityIdStr);
+            String efCavityName = dataList.get(0).getOrDefault("id","efCavityNameid").toString();
+            String efCavityLevel = dataList.get(0).getOrDefault("level","").toString();
+            String efCavitySquare = dataList.get(0).getOrDefault("square","").toString();
+            String efCavitySeedNumStr = dataList.get(0).getOrDefault("seedNumber","").toString();
+            Integer efCavitySeedNum = efCavitySeedNumStr.isEmpty() ? 0 : Integer.parseInt(efCavitySeedNumStr);
+
+
+            //获取分析图片的id
+            Integer photoId=(int) map.getOrDefault("photoId",-1);
+
+//            /** 存储minio - Or -本地 */
+            // 获取文件名-大小
+            String fileName = file.getOriginalFilename();
+            long fileSize = file.getSize();
+            // 创建一时间为文件夹
+            Date time = new Date();
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+            String FolderName = dateFormat.format(time)+"-result";
+            // 指定文件存储路径
+            String filePath ="photo/uav/"+ uavSn+ "/imgage/"+FolderName;
+            File dest = new File(BasePath+filePath+"/"+fileName);
             try {
-                file.transferTo(dest);
+//                File dest = new File(BasePath+filePath,fileName);
+                if (!dest.exists()) {
+                    boolean res = dest.mkdirs();
+                    System.out.println("创建目录是否成功：" + res);
+                    if (!res) {
+                        LogUtil.logWarn("创建目录失败！");
+                        return ;
+                    }
+                }
+//                file.transferTo(dest);
+//                Files.copy(file.getInputStream(), dest.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(file.getInputStream(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 LogUtil.logWarn("储存到本地 BasePath ！！！");
             } catch (IOException e) {
                 e.printStackTrace();
                 LogUtil.logWarn("储存到本地 BasePath ！！！");
             }
 
-            /**获取minion路径*/
-            String imgPath = filePath+fileName;
-             /** 数据新到数据库表 -- 洞斑信息表*/
-//            efCavityService  时间问题
+            /**拼接==获取minion路径*/
+            String imgPath = filePath+"/"+fileName;
+            // 前端vue代理访问路径
+            String  resourceUrl =  "resource/" + imgPath;
+            //  efCavityService  时间问题 怎么知道是哪一个架次 和 图片 ---查询
+            /** 根据实时请求的时间--查询最新解锁无人机的架次 **/
+            Integer  efUavEachsortieId = -1;
+            EfUavEachsortie efUavEachsortie = efUavEachsortieService.queryByPhotoTime(time,uavSn);
+            if (efUavEachsortie != null && efUavEachsortie.getId() != null) {
+                efUavEachsortieId = ConvertUtil.convertToInt(efUavEachsortie.getId(), -1);
+            }else {
+                LogUtil.logWarn("未查询到该架次 ！！！");
+            }
+            /** 更新存储图片表 添加分析图*/
+            EfMediaPhoto efMediaPhoto =null ;
+            if(photoId == -1){
+                // 没有返回发送图的id-- 进行查询
+                 efMediaPhoto = efMediaPhotoService.queryByUavIdAndLatestTime(uavSn,time);
+            }else {
+                //存在返回图片Id
+                efMediaPhoto = efMediaPhotoService.queryById(photoId);
+            }
+            //更改该图片id下分析图
+            if(efMediaPhoto ==null){
+                LogUtil.logWarn("未查询 ！！！");
+            }
+            photoId = efMediaPhoto.getId();
+            efMediaPhoto.setPathImageAnalysis(resourceUrl);
+            efMediaPhoto.setSizeImageAnalysis(fileSize);
+            // 更新
+            EfMediaPhoto update = efMediaPhotoService.update(efMediaPhoto);
+            if (update == null) {
+                LogUtil.logError("更新媒体文件失败！");
+            }
+
+            /** 数据新到数据库表 -- 洞斑信息表*/
             EfCavity efCavity = new EfCavity();
             efCavity.setAlt(alt);
-//            efCavity.setAltabs(altabs);
+            efCavity.setAltabs(altAbs);
+            efCavity.setLat(lat);
+            efCavity.setLng(lng);
             efCavity.setCavityName(efCavityIdStr);
-            efCavity.setId(efCavityId);
+//            efCavity.setId(efCavityId);
             efCavity.setSeedingCount(efCavitySeedNum);
-            //架次 照片id ??
+            efCavity.setEachsortieId(efUavEachsortieId); // 飞行架次
+            efCavity.setPhotoId(photoId);
             efCavityService.insert(efCavity);
-
-
-
 
             /** websocket 推送信息到前端*/
 //            // 解析数据
@@ -316,51 +374,51 @@ public class TaskAnsisPhoto {
 //
 //            // 保存数据到数据库
 //
-//            // 推送到前台
-//            String[] owerUsers = new String[0];
-//            Object obj = null;
-//            obj = redisUtils.hmGet("rel_uavid_userid", uavId); //无人机ID获取用户ID  2,1,
-//            if (obj != null) {
-//                String delims = "[,]+";
-//                owerUsers = obj.toString().split(delims);
-//            }
-//            if (owerUsers.length <= 0) {
-//                LogUtil.logWarn("MQTT：无人机[" + uavId + "]未绑定用户！");
-//            }
-//            obj = redisUtils.hmGet("rel_uavid_companyid", uavId);
-//            if (obj != null) {
-//                // 找到公司下的所有管理员
-//                obj = redisUtils.hmGet("rel_companyid_usersid", obj);
-//                if (obj != null) {
-//                    // 有管理员
-//                    String delims = "[,]+";
-//                    String[] users = obj.toString().split(delims);
-//                    if (owerUsers.length <= 0) {
-//                        owerUsers = users;
-//                    } else {
-//                        owerUsers = (String[]) ArrayUtils.addAll(owerUsers, users);
-//                    }
-//                    if (owerUsers != null && owerUsers.length > 0) {
-//                        List<String> list = new ArrayList<>();
-//                        for (String id : owerUsers) {
-//                            if (!list.contains(id)) {
-//                                list.add(id);
-//                            }
-//                        }
-//                        owerUsers = new String[list.size()];
-//                        list.toArray(owerUsers);
-//                    }
-//                }
-//            }
-//            EFLINK_MSG_10021 msg10021 = new EFLINK_MSG_10021();
-//            msg10021.setUavId(uavId);
-//            msg10021.setTime(time);
-//            msg10021.setAlt(alt);
-//            msg10021.setAltAbs(altAbs);
-//            msg10021.setLat(lat);
-//            msg10021.setLng(lng);
-//            msg10021.setUrl(urlBig);
-//            WebSocketLink.push(ResultUtil.success(msg10021.EFLINK_MSG_ID, uavId, null, msg10021), owerUsers);
+            // 推送到前台
+            String[] owerUsers = new String[0];
+            Object obj = null;
+            obj = redisUtils.hmGet("rel_uavid_userid", uavSn); //无人机ID获取用户ID  2,1,
+            if (obj != null) {
+                String delims = "[,]+";
+                owerUsers = obj.toString().split(delims);
+            }
+            if (owerUsers.length <= 0) {
+                LogUtil.logWarn("MQTT：无人机[" + uavSn + "]未绑定用户！");
+            }
+            obj = redisUtils.hmGet("rel_uavid_companyid", uavSn);
+            if (obj != null) {
+                // 找到公司下的所有管理员
+                obj = redisUtils.hmGet("rel_companyid_usersid", obj);
+                if (obj != null) {
+                    // 有管理员
+                    String delims = "[,]+";
+                    String[] users = obj.toString().split(delims);
+                    if (owerUsers.length <= 0) {
+                        owerUsers = users;
+                    } else {
+                        owerUsers = (String[]) ArrayUtils.addAll(owerUsers, users);
+                    }
+                    if (owerUsers != null && owerUsers.length > 0) {
+                        List<String> list = new ArrayList<>();
+                        for (String id : owerUsers) {
+                            if (!list.contains(id)) {
+                                list.add(id);
+                            }
+                        }
+                        owerUsers = new String[list.size()];
+                        list.toArray(owerUsers);
+                    }
+                }
+            }
+            EFLINK_MSG_10021 msg10021 = new EFLINK_MSG_10021();
+            msg10021.setUavId(uavSn);
+            msg10021.setTime(timenow);  //timenow接收到分析图片的时间
+            msg10021.setAlt(alt);
+            msg10021.setAltAbs(altAbs);
+            msg10021.setLat(lat);
+            msg10021.setLng(lng);
+            msg10021.setUrl(resourceUrl);
+            WebSocketLink.push(ResultUtil.success(msg10021.EFLINK_MSG_ID, uavSn, null, msg10021), owerUsers);
         });
     }
 }
