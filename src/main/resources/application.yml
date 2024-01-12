@@ -8,7 +8,7 @@
 #
 spring:
   profiles:
-    active: dev   #激活需要使用的 application-{profile}.yml
+    active: pro   #激活需要使用的 application-{profile}.yml
   config:
     pvUrl: http://8.130.39.240:5050/guangfu
     needEncrypt: false #是否需要对接口返回数据进行 加密
