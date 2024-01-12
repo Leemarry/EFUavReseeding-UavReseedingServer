@@ -180,19 +180,23 @@ public class UserController {
                     redisUtils.set(machineCode, "登录时间：" + System.currentTimeMillis(), 5L, TimeUnit.HOURS);
                     redisUtils.set(machineCode + "_LoginIpWww", ip, 5L, TimeUnit.HOURS);
                     redisUtils.set(machineCode + "_LoginIpLocal", addr, 5L, TimeUnit.HOURS);
-                    redisUtils.set(machineCode + "_UserInfo", user, 5L, TimeUnit.HOURS); //token对应的用户信息
-                    redisUtils.set(machineCode + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //登录时间
-                    redisUtils.set(machineCode + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //上次操作时间
+                    //token对应的用户信息
+                    redisUtils.set(machineCode + "_UserInfo", user, 5L, TimeUnit.HOURS);
+                    //登录时间
+                    redisUtils.set(machineCode + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS);
+                    //上次操作时间
+                    redisUtils.set(machineCode + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS);
                     if (logined != null) {
-                        redisUtils.set(machineCode + "_LoginedId", logined); //储存的登录记录ID
+                        //储存的登录记录ID
+                        redisUtils.set(machineCode + "_LoginedId", logined);
                     }
                 }
                 //获取登录对象的公司id
                 Integer ucId = user.getUCId();
                 //通过ucId获取cSystemId
-                 efSysteminfo = efSysteminfoService.queryById(ucId);
+                efSysteminfo = efSysteminfoService.queryById(ucId);
 //                    int roomId = (int) user.getUCId();
-                    //获取userSig
+                //获取userSig
 //                    String roomUserId = user.getUName() + "-" + DateUtil.timeStamp2Date(System.currentTimeMillis(), "HHmmssSSS");
 //                    TLSSigAPIv2 api = new TLSSigAPIv2(EfStaticController.TxyTrtcSdkAppId, EfStaticController.TxyTrtcSecretKey);
 //                    String userSig = api.genUserSig(roomUserId, EfStaticController.TxyTrtcExpireTime);
@@ -217,7 +221,7 @@ public class UserController {
 
 
     /**
-     * todo App 心跳包 ，更新登录记录表，
+     * App 心跳包 ，更新登录记录表，
      *
      * @param machineCode Android设备机器码
      * @param onLine      是否在线，0 表示退出系统，1 表示在线
@@ -262,14 +266,16 @@ public class UserController {
                         userLogin = efUserLoginService.update(userLogin);
                         LogUtil.logInfo("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 正常保活中...");
                         //String sign = JwtUtil.sign(userId, userLoginName, userName, MachineCode, uCid, roleId);
-                        return ResultUtil.success(); // 可刷新token
+                        // 可刷新token
+                        return ResultUtil.success();
                     } else {
                         LogUtil.logInfo("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 的机器码与登录时不一致!");
                         return ResultUtil.error("DJI客户端[" + machineCode + "]保活: 用户 " + userLoginName + " 登录地异常");
                     }
                 } else {
                     //没有登录过，或重启了服务器
-                    EfUserLogin userLogined = new EfUserLogin();  //服务器重启会导致无记录
+                    //服务器重启会导致无记录
+                    EfUserLogin userLogined = new EfUserLogin();
                     userLogined.setULoginName(userLoginName);
                     userLogined.setULoginTime(new Date(System.currentTimeMillis()));
                     userLogined.setULoginOutTime(new Date());
@@ -300,7 +306,7 @@ public class UserController {
     @PostMapping(value = "/logout")
     public Result logout(@RequestBody Map<String, String> map) {
         try {
-            String token = map.getOrDefault("Token", "").toString();
+            String token = map.getOrDefault("Token", "");
             //String clientId = map.getOrDefault("ClientId", "").toString();
             if (redisUtils != null) {
                 if (redisUtils.exists(token + "_LoginedId")) {
