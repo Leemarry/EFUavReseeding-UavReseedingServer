@@ -6,6 +6,7 @@ import com.bear.reseeding.service.EfMediaPhotoService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -100,4 +101,16 @@ public class EfMediaPhotoServiceImpl implements EfMediaPhotoService {
     public EfMediaPhoto queryByCreatTime(String UavID, String newFileName) {
         return efMediaPhotoDao.queryByCreatTime(UavID, newFileName);
     }
+
+    /**
+     * 用于查询 无人机该时间最近的图片数据
+     * @param uavId
+     * @param lastTime
+     * @return
+     */
+    @Override
+    public  EfMediaPhoto queryByUavIdAndLatestTime(String uavId, Date lastTime){
+        return efMediaPhotoDao.queryByUavIdAndLatestTime(uavId,lastTime);
+    }
+
 }

@@ -547,6 +547,7 @@ public class KmzUtil {
                 Files.copy(wpmlPath, fileInsideZipPathWpml, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
                 flag =true;
                 kmzFile =zipFilePath.toFile();
+
             } catch (IOException e) {
                 LogUtil.logError("写入Kmz航线时IO异常：" + e.toString());
             }
