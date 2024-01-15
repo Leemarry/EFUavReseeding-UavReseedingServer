@@ -18,7 +18,9 @@ import com.bear.reseeding.task.TaskAnsisPhoto;
 import com.bear.reseeding.task.MinioService;
 import com.bear.reseeding.utils.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.tencentcloudapi.common.Credential;
 import com.tencentcloudapi.common.profile.ClientProfile;
 import com.tencentcloudapi.common.profile.HttpProfile;
@@ -27,6 +29,7 @@ import com.tencentcloudapi.live.v20180801.models.CreateRecordTaskRequest;
 import com.tencentcloudapi.live.v20180801.models.CreateRecordTaskResponse;
 import com.tencentcloudapi.live.v20180801.models.StopRecordTaskRequest;
 import com.tencentcloudapi.live.v20180801.models.StopRecordTaskResponse;
+import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -1416,23 +1419,26 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMediaResult")
-    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, String map, HttpServletRequest request) {
+    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestParam String map, HttpServletRequest request) {
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
-            HashMap<String,Object> hashMap = new HashMap<>();
-            try {
-                hashMap =  objectMapper.readValue(map,HashMap.class);
-//                System.out.println(hashMap); // 输出转换后的 HashMap
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-//            Gson gson = new Gson();
-//            HashMap<String,Object> hashMap =gson.fromJson()
-            if (file.isEmpty()) {
+            if (file == null || file.isEmpty()) {
                 return ResultUtil.error("上传分析照片失败，空文件！");
             }
-            // 开启线程储存照片
-            taskAnsisPhoto.saveSeedingPhoto(file, hashMap);
+            Gson gson = new Gson();
+            Map<String, Object> paramMap = null;
+            try {
+                paramMap = gson.fromJson(map, new TypeToken<Map<String, Object>>() {}.getType());
+            } catch (JsonSyntaxException e) {
+                LogUtil.logError("上传分析照片异常：参数格式不正确！"+e.toString());
+                return ResultUtil.error("上传分析照片异常：参数格式不正确！");
+            }
+            // 对上传文件大小进行限制
+//            long fileSizeLimit = 20 * 1024 * 1024L; // 20MB
+//            if (file.getSize() > fileSizeLimit) {
+//                return ResultUtil.error("上传分析照片失败，文件过大！");
+//            }
+            // 开启线程存储照片
+            taskAnsisPhoto.saveSeedingPhoto(file, paramMap);
             return ResultUtil.success();
         } catch (Exception e) {
             LogUtil.logError("上传分析照片异常：" + e.toString());
