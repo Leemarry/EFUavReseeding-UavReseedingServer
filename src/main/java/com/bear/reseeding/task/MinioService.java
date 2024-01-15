@@ -103,7 +103,7 @@ public class MinioService {
                         minioClient.makeBucket(create);
                         LogUtil.logMessage("正在上传文件到Minio，创建储存桶 " + bucketName + "成功。");
                     }
-                    minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream,stream.available(),-1).contentType(contentType).build());
+                    minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream, stream.available(), -1).contentType(contentType).build());
 
                     String fileUrl = minioClient.getPresignedObjectUrl(
                             GetPresignedObjectUrlArgs.builder()
@@ -140,41 +140,41 @@ public class MinioService {
     public boolean uploadfile(String bucketName, String path, String contentType, InputStream stream) {
         boolean result = false;
         try {
-                // 存云端
-                try {
-                    if ("kmz".equals(bucketName)) {
-                        bucketName = BucketNameKmz;
-                    } else if ("word".equals(bucketName)) {
-                        bucketName = BucketNameWord;
-                    } else {
-                        bucketName = BucketName;
-                    }
-                    MinioClient minioClient = MinioClient.builder()
-                            .endpoint(Endpoint)
-                            .credentials(AccessKey, SecretKey)
-                            .build();
-
-                    BucketExistsArgs exist = BucketExistsArgs.builder().bucket(bucketName).build();
-                    boolean isExist = minioClient.bucketExists(exist);
-                    if (!isExist) {
-                        MakeBucketArgs create = MakeBucketArgs.builder().bucket(bucketName).build();
-                        minioClient.makeBucket(create);
-                        LogUtil.logMessage("正在上传文件到Minio，创建储存桶 " + bucketName + "成功。");
-                    }
-                    minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream,stream.available(),-1).contentType(contentType).build());
-
-                    String fileUrl = minioClient.getPresignedObjectUrl(
-                            GetPresignedObjectUrlArgs.builder()
-                                    .method(Method.PUT)
-                                    .bucket(bucketName)
-                                    .object(path)
-                                    .build()
-                    );
-                    result = true;
-                    LogUtil.logInfo("上传文件 " + path + " 到Minio成功。");
-                } catch (Exception e) {
-                    LogUtil.logError("上传文件到MINIO失败：" + e.toString());
+            // 存云端
+            try {
+                if ("kmz".equals(bucketName)) {
+                    bucketName = BucketNameKmz;
+                } else if ("word".equals(bucketName)) {
+                    bucketName = BucketNameWord;
+                } else {
+                    bucketName = BucketName;
                 }
+                MinioClient minioClient = MinioClient.builder()
+                        .endpoint(Endpoint)
+                        .credentials(AccessKey, SecretKey)
+                        .build();
+
+                BucketExistsArgs exist = BucketExistsArgs.builder().bucket(bucketName).build();
+                boolean isExist = minioClient.bucketExists(exist);
+                if (!isExist) {
+                    MakeBucketArgs create = MakeBucketArgs.builder().bucket(bucketName).build();
+                    minioClient.makeBucket(create);
+                    LogUtil.logMessage("正在上传文件到Minio，创建储存桶 " + bucketName + "成功。");
+                }
+                minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream, stream.available(), -1).contentType(contentType).build());
+
+                String fileUrl = minioClient.getPresignedObjectUrl(
+                        GetPresignedObjectUrlArgs.builder()
+                                .method(Method.PUT)
+                                .bucket(bucketName)
+                                .object(path)
+                                .build()
+                );
+                result = true;
+                LogUtil.logInfo("上传文件 " + path + " 到Minio成功。");
+            } catch (Exception e) {
+                LogUtil.logError("上传文件到MINIO失败：" + e.toString());
+            }
 
         } catch (Exception e) {
             LogUtil.logError("上传文件 " + path + " 到Minio异常：" + e.toString());
@@ -182,9 +182,9 @@ public class MinioService {
         return result;
     }
 
-    public String getPresignedObjectUrl(String bucketName, String fileNam){
-        String urlString =null;
-        try{
+    public String getPresignedObjectUrl(String bucketName, String fileNam) {
+        String urlString = null;
+        try {
             MinioClient minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
@@ -209,11 +209,11 @@ public class MinioService {
             }
             System.out.println(fileUrl);
             String fileName = paths.substring(paths.lastIndexOf('/') + 1);
-            urlString =hostString;
-        }catch (Exception e){
+            urlString = hostString;
+        } catch (Exception e) {
             LogUtil.logError("Minio获取文件异常：" + e.toString());
         }
-        return  urlString;
+        return urlString;
     }
 
     /**
@@ -251,13 +251,13 @@ public class MinioService {
         try {
             if (!PhotoStorage) {
                 // 存云端
-                MinioClient  minioClient = MinioClient.builder()
+                MinioClient minioClient = MinioClient.builder()
                         .endpoint(Endpoint)
                         .credentials(AccessKey, SecretKey)
                         .build();
                 /// 从Minio中获取文件
 //                 InputStream stream = minioClient.getObject(BucketNameWord,  fileName);
-                InputStream stream = minioClient.getObject(GetObjectArgs.builder().bucket(BucketNameWord).object(fileName).build());
+                InputStream stream = minioClient.getObject(GetObjectArgs.builder().bucket(bucketName).object(fileName).build());
                 // 生成一个 2 小时有效期的预先签名 get 请求 URL
                 //String urlString = minioClient.presignedGetObject(bucketName, fileName, 2 * 60 * 60);
 //                String urlString = minioClient.presignedPutObject(bucketName, fileName);
@@ -299,7 +299,7 @@ public class MinioService {
                 }
                 // 存云端
 //                MinioClient minioClient = new MinioClient(Endpoint, AccessKey, SecretKey);
-                MinioClient  minioClient =   MinioClient.builder()
+                MinioClient minioClient = MinioClient.builder()
                         .endpoint(Endpoint)
                         .credentials(AccessKey, SecretKey)
                         .build();
@@ -325,11 +325,12 @@ public class MinioService {
 
     /**
      * 连接
+     *
      * @param bucketName
      * @throws Exception
      */
     public void conneCtMinioClient(String bucketName) throws Exception {
-        minioClient =   MinioClient.builder()
+        minioClient = MinioClient.builder()
                 .endpoint(Endpoint)
                 .credentials(AccessKey, SecretKey)
                 .build();
@@ -343,7 +344,7 @@ public class MinioService {
      * @throws Exception
      */
     public boolean checkBucketExists(String bucketName) throws Exception {
-        minioClient =   MinioClient.builder()
+        minioClient = MinioClient.builder()
                 .endpoint(Endpoint)
                 .credentials(AccessKey, SecretKey)
                 .build();
@@ -352,23 +353,24 @@ public class MinioService {
 
     /**
      * 判断桶存不存在 并且创建
+     *
      * @param bucketName
      * @return
      * @throws Exception
      */
-    public boolean checkBucketExistsTOmakeBucket(String bucketName){
-        boolean flog= false;
-        try{
-            minioClient =   MinioClient.builder()
+    public boolean checkBucketExistsTOmakeBucket(String bucketName) {
+        boolean flog = false;
+        try {
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
 
-            if(!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())){
+            if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket("cheshi").build());
             }
-            flog=  true;
-        }catch (Exception e){
+            flog = true;
+        } catch (Exception e) {
             LogUtil.logError((e).toString());
         }
         return flog;
@@ -383,37 +385,39 @@ public class MinioService {
      * @return boolean
      * @throws Exception
      */
-    public boolean checkStatObjectExists(String bucketName, String objectName)   {
-        try{
-            minioClient =   MinioClient.builder()
+    public boolean checkStatObjectExists(String bucketName, String objectName) {
+        try {
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
 
-            boolean bucketExists =minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
-            if(!bucketExists){return  false;}
+            boolean bucketExists = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build());
+            if (!bucketExists) {
+                return false;
+            }
             //检查桶内对象文件是否存在
             boolean isObjectExist = minioClient.statObject(StatObjectArgs.builder().bucket(bucketName).object(objectName).build()) != null;
             if (isObjectExist) {
-                return  true;
-            }else {
-                return  false;
+                return true;
+            } else {
+                return false;
             }
-        }catch (Exception   e){
-            return  false;
+        } catch (Exception e) {
+            return false;
         }
     }
 
     /**
-     *判断文件是否存在
+     * 判断文件是否存在
      *
      * @param bucketName 桶名
-     * @param objectName  文件对象名称
+     * @param objectName 文件对象名称
      * @return
      */
     public boolean doesFileExist(String bucketName, String objectName) {
         try {
-            minioClient =   MinioClient.builder()
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
@@ -435,9 +439,9 @@ public class MinioService {
      * @throws Exception
      */
     public boolean removeObject(String bucketName, String objectName) {
-        boolean gold =false;
-        try{
-            minioClient =   MinioClient.builder()
+        boolean gold = false;
+        try {
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
@@ -447,9 +451,9 @@ public class MinioService {
                             .object(objectName)
                             .build()
             );
-            gold=true;
-        }catch (Exception   e){
-            gold= false;
+            gold = true;
+        } catch (Exception e) {
+            gold = false;
         }
         return gold;
     }
@@ -462,17 +466,17 @@ public class MinioService {
      * @return
      * @throws Exception
      */
-    public boolean removeObjects(String bucketName, String objectName)   {
-        boolean gold =false;
-        try{
-            minioClient =   MinioClient.builder()
+    public boolean removeObjects(String bucketName, String objectName) {
+        boolean gold = false;
+        try {
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
             Iterable<io.minio.Result<Item>> objects = minioClient.listObjects(
                     ListObjectsArgs.builder()
                             .bucket(bucketName)
-                            .prefix(objectName+"/")
+                            .prefix(objectName + "/")
                             .recursive(true)
                             .build()
             );
@@ -485,25 +489,24 @@ public class MinioService {
                                 .build()
                 );
             }
-            gold=true;
+            gold = true;
 
-        }catch (Exception   e){
-            gold= false;
+        } catch (Exception e) {
+            gold = false;
         }
         return gold;
     }
 
     /**
-     *  线程 同步删除文件夹内 对象文件
-     *
+     * 线程 同步删除文件夹内 对象文件
      */
-    public boolean removeObjectsByThread(String bucketName, String objectName){
-        boolean gold =false;
-        try{
+    public boolean removeObjectsByThread(String bucketName, String objectName) {
+        boolean gold = false;
+        try {
             int numThreads = 100; // 设置100个线程
             List<String> objectNames = new ArrayList<>(); // 存储删除对象类型
             //获取文件 minio 路径
-            minioClient =   MinioClient.builder()
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
@@ -555,10 +558,10 @@ public class MinioService {
                 LogUtil.logError("多线程删除对象时出错: " + e.getMessage());
             }
 
-            gold= true ;  //是否 在线程内 删除完成都要关闭线程 返回删除成功
+            gold = true;  //是否 在线程内 删除完成都要关闭线程 返回删除成功
 
-        }catch (Exception e){
-            gold= false;
+        } catch (Exception e) {
+            gold = false;
         }
         return gold;
     }
@@ -566,6 +569,7 @@ public class MinioService {
 
     /**
      * minio 上传压缩文件 解压处理 -- 待验证
+     *
      * @param bucketName
      * @param objectName
      * @return
@@ -602,6 +606,7 @@ public class MinioService {
             return "解压失败：" + e.getMessage();
         }
     }
+
     private void unzipFile(File zipFile, String targetDirectory) throws IOException {
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile))) {
             ZipEntry entry;
@@ -624,7 +629,8 @@ public class MinioService {
             }
         }
     }
-    public String unzipInMinio( String bucketName,  String objectName) {
+
+    public String unzipInMinio(String bucketName, String objectName) {
         try {
             // 创建临时目录
             String tempDirName = UUID.randomUUID().toString();
@@ -662,7 +668,7 @@ public class MinioService {
                             minioClient.putObject(PutObjectArgs.builder()
                                     .bucket(bucketName)
                                     .object(path.subpath(tempDir.getNameCount(), path.getNameCount()).toString())
-                                    .stream(Files.newInputStream(path),Files.newInputStream(path).available(),-1) // 修改此处参数为正确的 InputStream
+                                    .stream(Files.newInputStream(path), Files.newInputStream(path).available(), -1) // 修改此处参数为正确的 InputStream
                                     .build());
                         } catch (Exception e) {
                             e.printStackTrace();
@@ -684,7 +690,7 @@ public class MinioService {
         } catch (MinioException | IOException e) {
             e.printStackTrace();
             return "解压失败：" + e.getMessage();
-        } catch (InvalidKeyException | NoSuchAlgorithmException   e) {
+        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
             e.printStackTrace();
             return "解压失败：" + e.getMessage();
         }
@@ -693,11 +699,10 @@ public class MinioService {
     /**
      * 上传临时分片文件 本质单文件上传
      *
-     * @param chunk 文件块
-     * @param chunkIndex 索引
+     * @param chunk       文件块
+     * @param chunkIndex  索引
      * @param totalChunks 块
-     * @param filemd5 文件ms\d5
-     *
+     * @param filemd5     文件ms\d5
      * @return 分片上传是否成功
      */
     public boolean uploadChunkToMinio(MultipartFile chunk, int chunkIndex, int totalChunks, String filemd5) {
@@ -742,8 +747,8 @@ public class MinioService {
         if (bucketName == null || targetName == null || md5 == null || totalPieces <= 0) {
             throw new IllegalArgumentException("Invalid parameters");
         }
-        try{
-            minioClient =   MinioClient.builder()
+        try {
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();            // 检查文件索引是否都上传完毕
@@ -790,9 +795,9 @@ public class MinioService {
             // 合并失败，返回false
             return false;
 
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
-            return  false;
+            return false;
         }
 
     }
@@ -802,13 +807,13 @@ public class MinioService {
      * 拼接 获取路径
      *
      * @param bucketName 桶名
-     * @param targetName  桶对象
+     * @param targetName 桶对象
      * @return 完整url
      */
     public String generateFileUrl(String bucketName, String targetName) {
         // 拼接文件URL的逻辑
         String baseUrl = EndpointExt;
-        String url = baseUrl+ "/" + bucketName + "/" + targetName;
+        String url = baseUrl + "/" + bucketName + "/" + targetName;
         return url;
     }
 
@@ -816,19 +821,20 @@ public class MinioService {
     // 获取路径
 
     //region 模型地址路径 获取
+
     /**
      * 进行3次递归 找到模型 二维地图启动文件（默认 json文件 --最路径最短-文件名最短
-     * @param bucketName 桶名  cheshi
-     * @param folderName 文件对象名 cheshimodel
-     * @param fileExtension 文件后缀 xml / json
-     * @param maxDepth 深度递归次数
      *
+     * @param bucketName    桶名  cheshi
+     * @param folderName    文件对象名 cheshimodel
+     * @param fileExtension 文件后缀 xml / json
+     * @param maxDepth      深度递归次数
      * @return fileUrls
      */
     public List<String> generateFileUrls(String bucketName, String folderName, String fileExtension, int maxDepth) {
         List<String> fileUrls = new ArrayList<>();
         try {
-            minioClient =   MinioClient.builder()
+            minioClient = MinioClient.builder()
                     .endpoint(Endpoint)
                     .credentials(AccessKey, SecretKey)
                     .build();
@@ -840,15 +846,14 @@ public class MinioService {
     }
 
     /**
-     *  每次递归 递归次数
+     * 每次递归 递归次数
      *
-     * @param bucketName 桶名
-     * @param folderName 文件对象
+     * @param bucketName    桶名
+     * @param folderName    文件对象
      * @param fileExtension 后缀名
-     * @param maxDepth  深度递归次数
-     * @param currentDepth 当前递归数
-     * @param fileUrls 本次递归获取的urls
-     *
+     * @param maxDepth      深度递归次数
+     * @param currentDepth  当前递归数
+     * @param fileUrls      本次递归获取的urls
      * @throws Exception
      */
     private void generateFileUrlsRecursive(String bucketName, String folderName, String fileExtension, int maxDepth, int currentDepth, List<String> fileUrls) throws Exception {
@@ -892,8 +897,8 @@ public class MinioService {
                 String fileName = path.substring(path.lastIndexOf('/') + 1);
                 boolean hasXmlExtension = fileName.toLowerCase().endsWith(".xml");
                 boolean hasJsonExtension = fileName.toLowerCase().endsWith(".json");
-                if (fileName.endsWith("xml")||fileName.endsWith("json")) {
-                    fileUrls.add(hostString+path);
+                if (fileName.endsWith("xml") || fileName.endsWith("json")) {
+                    fileUrls.add(hostString + path);
                 }
             }
         }
@@ -901,7 +906,7 @@ public class MinioService {
     }
 
     /**
-     *  递归文件夹 获取最外层的文件url-- 默认最外层最短的url为模型启动文件名
+     * 递归文件夹 获取最外层的文件url-- 默认最外层最短的url为模型启动文件名
      *
      * @param urls
      * @return
@@ -915,7 +920,7 @@ public class MinioService {
             String[] nextpathlist = url.split("/");
             int outerPath = nextpathlist.length;
             // 路径应该相对更外层 并且 默认应该更短
-            if (outerPath <= shortestOuterPath && pathlist[shortestOuterPath-1].getBytes().length<nextpathlist[outerPath-1].getBytes().length) {
+            if (outerPath <= shortestOuterPath && pathlist[shortestOuterPath - 1].getBytes().length < nextpathlist[outerPath - 1].getBytes().length) {
                 shortestOuterPath = outerPath;
                 shortestUrl = url;
             }

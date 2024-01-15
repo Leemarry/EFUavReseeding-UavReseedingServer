@@ -62,7 +62,7 @@ minio:
   BucketNameKmz: efuavkmz
   BucketNameWord: efuavword
   Endpoint: http://8.134.196.47:9000
-  EndpointExt: http://127.0.0.1:9090
+  EndpointExt: http://8.134.196.47:9000
 TxyTrtc:
   TxyTrtcSdkAppId: 1400739024 # 腾讯云服务器 ,音视频通话SDK
   TxyTrtcExpireTime: 604800 # 过期时间，7天

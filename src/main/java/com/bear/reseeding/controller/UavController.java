@@ -80,7 +80,7 @@ public class UavController {
     private EfCavitySeedingService efCavitySeedingService;
 
     @Resource
-    private  EfTaskKmzService efTaskKmzService;
+    private EfTaskKmzService efTaskKmzService;
 
     /**
      * 无人机与公司关联
@@ -188,13 +188,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
 
             /**
@@ -233,13 +233,12 @@ public class UavController {
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
 //                typeProtocol = 1;
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -315,13 +314,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
             /**
              *redis存储的对应id
@@ -358,13 +357,12 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -440,13 +438,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
             /**
              *redis存储的对应id
@@ -483,13 +481,12 @@ public class UavController {
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
 //                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -567,13 +564,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol = -1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
 
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
@@ -608,13 +605,12 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -690,13 +686,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
 
 
@@ -732,13 +728,12 @@ public class UavController {
             String key = uavId + "_" + 3051 + "_" + tag;
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -814,13 +809,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
 
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
@@ -857,13 +852,12 @@ public class UavController {
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
 //                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -939,13 +933,13 @@ public class UavController {
              * 查询无人机信息 ---》无人机类型
              */
             EfUav efUav = efUavService.queryByIdAndType(uavId); // 含无人机类型信息
-            Integer typeProtocol =-1 ;
-            if(efUav !=null){
+            Integer typeProtocol = -1;
+            if (efUav != null) {
                 EfUavType efUavType = efUav.getEfUavType();
                 typeProtocol = efUavType.getTypeProtocol();
 //                Integer uavTypeId= efUav.getUavTypeId(); // 1: 开源 ： 0:大疆
-            }else {
-                return  ResultUtil.error("该无人机信息异常");
+            } else {
+                return ResultUtil.error("该无人机信息异常");
             }
 
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
@@ -980,13 +974,12 @@ public class UavController {
             if (!onlyPushToHive) {
                 redisUtils.remove(key);
 //                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
-                if(typeProtocol == 1){
+                if (typeProtocol == 1) {
                     /**开源*/
                     MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-                } else if(typeProtocol == -1){
+                } else if (typeProtocol == -1) {
                     return ResultUtil.error("未获取到无人机类型");
-                }
-                else {
+                } else {
                     /**大疆*/
                     MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
                 }
@@ -1151,6 +1144,7 @@ public class UavController {
 
     /**
      * 保存巡检航线至minio
+     *
      * @param uavId
      * @param mission
      * @param altType
@@ -1161,8 +1155,8 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/saveRouteToMinio")
-    public Result saveRouteToMinio(@CurrentUser EfUser efUser, @RequestParam(value = "uavId",required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
-                                @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value= "name") String  name,
+    public Result saveRouteToMinio(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
+                                   @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
                                    HttpServletRequest request) {
         try {
             if (mission == null || mission.size() <= 0) {
@@ -1171,7 +1165,7 @@ public class UavController {
             Integer ucId = efUser.getUCId();
             Integer userId = efUser.getId(); //
             String userName = efUser.getUName();
-            Date nowdate= new Date();
+            Date nowdate = new Date();
 
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
             if (obj != null) {
@@ -1179,7 +1173,7 @@ public class UavController {
             }
             /**航线名称*/
 //            String fileName ="temp_" + uavId + System.currentTimeMillis();
-            String  fileName= name ;
+            String fileName = name;
 
             if (altType == 0) {
                 // 使用相对高度，获取飞机当前海拔
@@ -1213,7 +1207,7 @@ public class UavController {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
             // 上传minion
-            String url = applicationName + File.separator + File.separator+ ucId+ File.separator+ kmzFile.getName();
+            String url = applicationName + File.separator + File.separator + ucId + File.separator + kmzFile.getName();
             if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
                 if (kmzFile.exists()) {
                     FileUtil.deleteDir(kmzFile.getParent());
@@ -1231,7 +1225,7 @@ public class UavController {
 //            System.out.println("文件大小：" + fileSize + "字节");
             // 距离 点集合
             int numPoints = mission.size();
-            double distaceCount=0.0;
+            double distaceCount = 0.0;
             double distance;
             for (int i = 0; i < numPoints; i++) {
                 for (int j = i + 1; j < numPoints; j++) {
@@ -1242,7 +1236,7 @@ public class UavController {
                     double lng2 = nextPoint[0];  // 获取经度
                     double lat2 = nextPoint[1];  // 获取纬度
 
-                    distance = GisUtil.getDistance(lng1,lat1 , lng2, lat2);
+                    distance = GisUtil.getDistance(lng1, lat1, lng2, lat2);
                     distaceCount += distance;
 //                    System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
                     break;
@@ -1266,15 +1260,15 @@ public class UavController {
             efTaskKmz.setKmzCreateByUserId(userId);
             efTaskKmz.setKmzCompanyId(ucId);
 
-            efTaskKmz =   efTaskKmzService.insert(efTaskKmz);
-            if(efTaskKmz!=null){
-                 return ResultUtil.success("保存航线成功！");
-             }
-             /**移除minio 错误航线*/
+            efTaskKmz = efTaskKmzService.insert(efTaskKmz);
+            if (efTaskKmz != null) {
+                return ResultUtil.success("保存航线成功！");
+            }
+            /**移除minio 错误航线*/
             Boolean gold = minioService.removeObject(BucketNameKmz, url);
-            if(gold){
+            if (gold) {
                 return ResultUtil.error("保存航线失败！！！请重新上传");
-            }else {
+            } else {
                 return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
             }
 
@@ -1284,7 +1278,6 @@ public class UavController {
             return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
         }
     }
-
 
 
     /**
@@ -1401,8 +1394,9 @@ public class UavController {
             // 获取文件流字节数组
             byte[] fileStream = BytesUtil.inputStreamToByteArray(file.getInputStream());
             // 开启线程储存照片
+            CompletableFuture<String> urlBigFuture = new CompletableFuture<>();
             taskAnsisPhoto.savePhoto(new Date(MediaCreatTime), UavID, newFileName, StreamSource, lat, lng, fileStream,
-                    FolderName, type, suffix, sizeBig, alt, altAbs, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw);
+                    FolderName, type, suffix, sizeBig, alt, altAbs, urlBigFuture, file, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw);
             return ResultUtil.success("上传图片成功!");
         } catch (Exception e) {
             LogUtil.logError("上传图片出错：" + e.toString());
@@ -1427,17 +1421,16 @@ public class UavController {
             Gson gson = new Gson();
             Map<String, Object> paramMap = null;
             try {
-                paramMap = gson.fromJson(map, new TypeToken<Map<String, Object>>() {}.getType());
+                paramMap = gson.fromJson(map, new TypeToken<Map<String, Object>>() {
+                }.getType());
             } catch (JsonSyntaxException e) {
-                LogUtil.logError("上传分析照片异常：参数格式不正确！"+e.toString());
+                LogUtil.logError("上传分析照片异常：参数格式不正确！" + e.toString());
                 return ResultUtil.error("上传分析照片异常：参数格式不正确！");
             }
-            // 对上传文件大小进行限制
-//            long fileSizeLimit = 20 * 1024 * 1024L; // 20MB
-//            if (file.getSize() > fileSizeLimit) {
-//                return ResultUtil.error("上传分析照片失败，文件过大！");
-//            }
             // 开启线程存储照片
+            // 获取文件流字节数组
+            byte[] fileStream = BytesUtil.inputStreamToByteArray(file.getInputStream());
+            paramMap.put("fileStream", fileStream);
             taskAnsisPhoto.saveSeedingPhoto(file, paramMap);
             return ResultUtil.success();
         } catch (Exception e) {
@@ -1460,12 +1453,12 @@ public class UavController {
             // 创建一时间为文件夹
             Date time = new Date();
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-            String FolderName = dateFormat.format(time)+"-result";
+            String FolderName = dateFormat.format(time) + "-result";
             // 指定文件存储路径
-            String filePath ="photo/uav/"+ "/imgage/"+FolderName+"/";
+            String filePath = "photo/uav/" + "/imgage/" + FolderName + "/";
 
             try {
-                File dest = new File(BasePath+filePath,fileName);
+                File dest = new File(BasePath + filePath, fileName);
                 if (!dest.exists()) {
                     boolean res = dest.mkdirs();
                     if (!res) {
@@ -1492,7 +1485,7 @@ public class UavController {
 
     /**
      * 飞往某个航点，未起飞则先起飞到航点高度
-     *
+     * <p>
      * 1121左自旋 1122  右   参数角度
      *
      * @param uavId 无人机ID
@@ -1554,15 +1547,15 @@ public class UavController {
     /**
      * 控制无人机微调移动
      *
-     * @param uavId    无人机ID
-     * @param type     移动方向 , 1115:前移  , 1116:后移  , 1117:左移  , 1118:右移  , 1119:上  , 1120	下  1121
+     * @param uavId 无人机ID
+     * @param type  移动方向 , 1115:前移  , 1116:后移  , 1117:左移  , 1118:右移  , 1119:上  , 1120	下  1121
      * @param Parm1 移动距离，单位厘米 @RequestParam(value = "distance") double distance
      * @return 成功，失败
      */
     @ResponseBody
     @PostMapping(value = "/moveUav")
-    public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type,@RequestParam(value = "Parm1") double Parm1  ,
-                          @RequestParam(value = "Parm2",required = false) double Parm2,  @RequestParam(value = "Parm3",required = false) double Parm3, HttpServletRequest request) {
+    public Result moveUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "type") int type, @RequestParam(value = "Parm1") double Parm1,
+                          @RequestParam(value = "Parm2", required = false) double Parm2, @RequestParam(value = "Parm3", required = false) double Parm3, HttpServletRequest request) {
         try {
 
             //后缀名 .JPEG
@@ -1571,11 +1564,11 @@ public class UavController {
             EFLINK_MSG_3050 eflink_msg_3050 = new EFLINK_MSG_3050();
             eflink_msg_3050.setTag(tag);
             eflink_msg_3050.setCommand(type);
-            if(type == 1121){
+            if (type == 1121) {
                 eflink_msg_3050.setParm1((int) Parm1); // 角度 45
                 eflink_msg_3050.setParm2((int) Parm2); // 顺时针0--逆时针1
                 eflink_msg_3050.setParm3((int) Parm3); // 相对角度0-以正北角度为
-            }else {
+            } else {
                 eflink_msg_3050.setParm1((int) Parm1); // old 距离
             }
 
@@ -1954,15 +1947,15 @@ public class UavController {
             // 查询 uavid eachsortieId 查询 实时拍摄空斑信息表
             List<EfCavity> efCavityList = efCavityService.queryByeachsortieIdOruavId(eachsortieId);
 
-            List<EfCavitySeeding> efCavitySeedingListTatol= new ArrayList<>();
+            List<EfCavitySeeding> efCavitySeedingListTatol = new ArrayList<>();
 
             // 查询 uavid cavityId 查询 查询草原空洞播种记录表
-            if(efCavityList.size()>0){
+            if (efCavityList.size() > 0) {
                 for (int i = 0; i < efCavityList.size(); i++) {
                     EfCavity efCavity = efCavityList.get(i);
                     Integer cavityId = efCavity.getId();
                     List<EfCavitySeeding> efCavitySeedingList = efCavitySeedingService.queryBycavityId(cavityId);
-                    if (efCavitySeedingList.size()>0){
+                    if (efCavitySeedingList.size() > 0) {
                         efCavitySeedingListTatol.addAll(efCavitySeedingList);
                     }
                 }
@@ -1978,50 +1971,52 @@ public class UavController {
 
     /**
      * 查询无人机信息-类型
+     *
      * @param efUser
      * @param uavId
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/queryUavType")
-    public Result queryUavType(@CurrentUser EfUser efUser,@RequestParam(value = "uavId") String uavId){
+    public Result queryUavType(@CurrentUser EfUser efUser, @RequestParam(value = "uavId") String uavId) {
         try {
-            EfUav efUav =  efUavService.queryById(uavId);
-            if(efUav!=null){
-                return  ResultUtil.success("查询无人机类型信息成功", efUav);
+            EfUav efUav = efUavService.queryById(uavId);
+            if (efUav != null) {
+                return ResultUtil.success("查询无人机类型信息成功", efUav);
             }
             return ResultUtil.error("查询无人机类型信息失败,请联系管理员！");
-        }catch (Exception e){
-            LogUtil.logError("查询无人机类型失败");
-            return ResultUtil.error("查询无人机类型异常,请联系管理员！");
-        }
-    }
-    /**c
-     * 查询 航点任务表 信息 时间
-     * */
-    @ResponseBody
-    @PostMapping(value = "/queryKmzInfo")
-    public Result queryKmzInfo(@CurrentUser EfUser efUser,
-                               @RequestParam(value = "startTime", required = false) long startTime, @RequestParam(value = "endTime", required = false) long endTime){
-        try {
-            if(endTime<=startTime){
-                return ResultUtil.error("查询时间段异常");
-            }
-            Integer Ucid= efUser.getUCId(); // 航线任务所属公司
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String startTimeStr= dateFormat.format(new Date(startTime));
-            String endTimeStr = dateFormat.format(new Date(endTime));
-            List<EfTaskKmz> efTaskKmzList = efTaskKmzService.queryByUcidAndTime(Ucid,startTimeStr,endTimeStr);
-            if(efTaskKmzList.size()>=0){
-                return ResultUtil.success("查询航线任务列表信息成功！",efTaskKmzList);
-            }
-            return ResultUtil.error("查询航线任务列表信息失败！请联系管理员！");
-        }catch (Exception e){
+        } catch (Exception e) {
             LogUtil.logError("查询无人机类型失败");
             return ResultUtil.error("查询无人机类型异常,请联系管理员！");
         }
     }
 
+    /**
+     * c
+     * 查询 航点任务表 信息 时间
+     */
+    @ResponseBody
+    @PostMapping(value = "/queryKmzInfo")
+    public Result queryKmzInfo(@CurrentUser EfUser efUser,
+                               @RequestParam(value = "startTime", required = false) long startTime, @RequestParam(value = "endTime", required = false) long endTime) {
+        try {
+            if (endTime <= startTime) {
+                return ResultUtil.error("查询时间段异常");
+            }
+            Integer Ucid = efUser.getUCId(); // 航线任务所属公司
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String startTimeStr = dateFormat.format(new Date(startTime));
+            String endTimeStr = dateFormat.format(new Date(endTime));
+            List<EfTaskKmz> efTaskKmzList = efTaskKmzService.queryByUcidAndTime(Ucid, startTimeStr, endTimeStr);
+            if (efTaskKmzList.size() >= 0) {
+                return ResultUtil.success("查询航线任务列表信息成功！", efTaskKmzList);
+            }
+            return ResultUtil.error("查询航线任务列表信息失败！请联系管理员！");
+        } catch (Exception e) {
+            LogUtil.logError("查询无人机类型失败");
+            return ResultUtil.error("查询无人机类型异常,请联系管理员！");
+        }
+    }
 
 
     //endregion
