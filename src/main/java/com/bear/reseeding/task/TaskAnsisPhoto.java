@@ -214,6 +214,12 @@ public class TaskAnsisPhoto {
                 }
                 // 推送前台
                 urlBig = minioService.getObjectFullRealUrl("efuav", "photo/" + pathBigImage);
+                int questionMarkIndex = urlBig.indexOf("?");
+                if (questionMarkIndex != -1) {
+                    urlBig = urlBig.substring(0, questionMarkIndex);
+                } else {
+                    LogUtil.logWarn("截取对外查看照片路径错误！");
+                }
                 String[] owerUsers = new String[0];
                 Object obj = null;
                 obj = redisUtils.hmGet("rel_uavid_userid", uavId); //无人机ID获取用户ID  2,1,
@@ -430,6 +436,12 @@ public class TaskAnsisPhoto {
 
                 // 推送到前台
                 resourceUrl = minioService.getObjectFullRealUrl("efuav", "photo/" + pathBigImage);
+                int questionMarkIndex = resourceUrl.indexOf("?");
+                if (questionMarkIndex != -1) {
+                    resourceUrl = resourceUrl.substring(0, questionMarkIndex);
+                } else {
+                    LogUtil.logWarn("截取对外查看照片路径错误！");
+                }
                 String[] owerUsers = new String[0];
                 Object obj = null;
                 obj = redisUtils.hmGet("rel_uavid_userid", uavSn); //无人机ID获取用户ID  2,1,

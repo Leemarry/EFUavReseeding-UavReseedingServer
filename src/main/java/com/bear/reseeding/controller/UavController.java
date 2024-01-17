@@ -1295,7 +1295,7 @@ public class UavController {
     public Result uploadMedia(@CurrentUser EfUser user, @RequestParam(value = "file") MultipartFile file, HttpServletRequest request) {
         try {
             String token = request.getHeader("token");
-            String uCid = user.getUCId().toString();
+//            String uCid = user.getUCId().toString();
 
             //region 取出参数
             HashMap<String, Object> map = RequestUtil.getRequestParam(request);
