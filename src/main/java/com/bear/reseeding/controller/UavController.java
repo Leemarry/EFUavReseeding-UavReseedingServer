@@ -1413,7 +1413,7 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMediaResult")
-    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestParam String map, HttpServletRequest request) {
+    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "map") String map, HttpServletRequest request) {
         try {
             if (file == null || file.isEmpty()) {
                 return ResultUtil.error("上传分析照片失败，空文件！");
