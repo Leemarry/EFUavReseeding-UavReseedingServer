@@ -59,7 +59,7 @@ public interface EfUavDao {
     /**
      * 批量新增数据（MyBatis原生foreach方法）
      *
-     * @param entities List<EfUav> 实例对象列表
+     * @param entities List<EfUav>实例对象列表
      * @return 影响行数
      */
     int insertBatch(@Param("entities") List<EfUav> entities);
@@ -67,7 +67,7 @@ public interface EfUavDao {
     /**
      * 批量新增或按主键更新数据（MyBatis原生foreach方法）
      *
-     * @param entities List<EfUav> 实例对象列表
+     * @param entities List<EfUav>实例对象列表
      * @return 影响行数
      */
     int insertOrUpdateBatch(@Param("entities") List<EfUav> entities);

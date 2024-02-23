@@ -76,7 +76,7 @@ public class MinioService {
      * @param path        储存路径含完整名称： photo/image/123.jpg
      * @param contentType 文件类型：image/jpg
      * @param stream      文件流
-     * @return
+     * @return boolean result是否上传成功
      */
     public boolean uploadImage(String bucketName, String path, String contentType, InputStream stream) {
         boolean result = false;
@@ -135,7 +135,7 @@ public class MinioService {
      * @param path        储存路径含完整名称： photo/image/123.jpg
      * @param contentType 文件类型：image/jpg
      * @param stream      文件流
-     * @return
+     * @return boolean result是否上传成功
      */
     public boolean uploadfile(String bucketName, String path, String contentType, InputStream stream) {
         boolean result = false;
@@ -326,8 +326,8 @@ public class MinioService {
     /**
      * 连接
      *
-     * @param bucketName
-     * @throws Exception
+     * @param bucketName 桶名
+     * @throws Exception 抛出异常
      */
     public void conneCtMinioClient(String bucketName) throws Exception {
         minioClient = MinioClient.builder()
@@ -339,9 +339,9 @@ public class MinioService {
     /**
      * 判断桶是否存在
      *
-     * @param bucketName
-     * @return
-     * @throws Exception
+     * @param bucketName 桶名
+     * @return boolean 是否存在
+     * @throws Exception 抛出异常
      */
     public boolean checkBucketExists(String bucketName) throws Exception {
         minioClient = MinioClient.builder()
@@ -355,7 +355,7 @@ public class MinioService {
      * 判断桶存不存在 并且创建
      *
      * @param bucketName
-     * @return
+     * @return boolean 是否存在不存在创建
      * @throws Exception
      */
     public boolean checkBucketExistsTOmakeBucket(String bucketName) {
@@ -380,10 +380,10 @@ public class MinioService {
     /**
      * 检测文件对象是否存在
      *
-     * @param bucketName
-     * @param objectName
-     * @return boolean
-     * @throws Exception
+     * @param bucketName 桶名
+     * @param objectName 文件路径
+     * @return boolean 检测文件对象是否存在
+     * @throws Exception 抛出异常
      */
     public boolean checkStatObjectExists(String bucketName, String objectName) {
         try {
@@ -413,7 +413,7 @@ public class MinioService {
      *
      * @param bucketName 桶名
      * @param objectName 文件对象名称
-     * @return
+     * @return boolean 判断文件是否存在
      */
     public boolean doesFileExist(String bucketName, String objectName) {
         try {
