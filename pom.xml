@@ -35,6 +35,12 @@
             <artifactId>mysql-connector-java</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!--腾讯云API TRTC音视频通话-->
+        <dependency>
+            <groupId>com.github.tencentyun</groupId>
+            <artifactId>tls-sig-api-v2</artifactId>
+            <version>2.0</version>
+        </dependency>
         <!--阿里数据源-->
         <dependency>
             <groupId>com.alibaba</groupId>

@@ -42,14 +42,12 @@ public class WebSocketLink {
 
     //推送数据给前台
     public static void push(Object obj, String... userids) {
-        System.out.println("接收数据!");
-        System.out.println(obj);
         try {
             if (userids == null || userids.length == 0) {
                 return;
             }
             String message = JSONObject.toJSONString(obj);
-            System.out.println(message);
+//            LogUtil.logMessage(message);
             for (String userid : userids) {
                 if (webSocketMapSession.containsKey(userid)) {
                     ArrayList<Session> sessionList = webSocketMapSession.get(userid);

@@ -1295,7 +1295,7 @@ public class UavController {
     public Result uploadMedia(@CurrentUser EfUser user, @RequestParam(value = "file") MultipartFile file, HttpServletRequest request) {
         try {
             String token = request.getHeader("token");
-            String uCid = user.getUCId().toString();
+//            String uCid = user.getUCId().toString();
 
             //region 取出参数
             HashMap<String, Object> map = RequestUtil.getRequestParam(request);
@@ -1413,7 +1413,7 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMediaResult")
-    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestParam String map, HttpServletRequest request) {
+    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "map") String map, HttpServletRequest request) {
         try {
             if (file == null || file.isEmpty()) {
                 return ResultUtil.error("上传分析照片失败，空文件！");

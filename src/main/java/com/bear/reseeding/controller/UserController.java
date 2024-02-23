@@ -1,13 +1,12 @@
 package com.bear.reseeding.controller;
 
-import cn.hutool.json.JSONObject;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.entity.*;
 import com.bear.reseeding.model.CurrentUser;
 import com.bear.reseeding.model.Result;
 import com.bear.reseeding.service.*;
 import com.bear.reseeding.utils.*;
-import com.google.gson.JsonObject;
+import com.tencentyun.TLSSigAPIv2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -17,10 +16,8 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.Calendar;
 
 /**
  * 用户管理
@@ -106,27 +103,32 @@ public class UserController {
 
 
     /**
-     * 安卓端登陆，返回用户对应公司的 EfSysteminfo 表的信息
+     * 安卓端登陆
      *
-     * @param loginName   登录名称
-     * @param password    密码,MD5加密后的密码
-     * @param machineCode 根据Android设备硬件生成机器码字符串ID
-     * @return Result{ EfSysteminfo }
+     * @param map    RsaPublicKey
+     *                UserId
+     *                UserPwd
+     *                ClientId
+     * @param request
+     * @return
      */
     @ResponseBody
     @PostMapping(value = "/appLogin")
-    public Result appLogin(@RequestParam(value = "loginName") String loginName, @RequestParam(value = "password") String password, @RequestParam(value = "machineCode") String machineCode, HttpServletRequest request) {
+    public Result appLogin(@RequestBody Map<String, String> map, HttpServletRequest request) {
         try {
             try {
                 Jedis jedis = new Jedis(host, port);
                 String ping = jedis.ping();
-                if (!"PONG".equalsIgnoreCase(ping)) {
+                if (!ping.equalsIgnoreCase("PONG")) {
                     return ResultUtil.error("数据服务未启动!");
                 }
             } catch (Exception e) {
                 return ResultUtil.error("数据服务未启动!");
             }
-            if ("".equals(loginName) || "".equals(password)) {
+            String loginName = map.getOrDefault("UserId", "").toString();
+            String password = map.getOrDefault("UserPwd", "").toString();
+            String clientId = map.getOrDefault("ClientId", "").toString();
+            if (loginName.equals("") || password.equals("")) {
                 return ResultUtil.error("请输入正确的账户信息!");
             }
             password = MD5Util.md5Encode(password + encryptMd5Soft);
@@ -147,9 +149,9 @@ public class UserController {
             if (date == null || date.getTime() < System.currentTimeMillis()) {
                 return ResultUtil.error("账号已过期!");
             }
-//            if (user.get() == null || user.getEfCompany().getCLimitDate() == null || user.getEfCompany().getCLimitDate().getTime() < System.currentTimeMillis()) {
-//                return ResultUtil.error("公司账户已过期!");
-//            }
+            if (user.getEfCompany() == null || user.getEfCompany().getCLimitDate() == null || user.getEfCompany().getCLimitDate().getTime() < System.currentTimeMillis()) {
+                return ResultUtil.error("公司账户已过期!");
+            }
             //region 保存登录记录
             String addr = request.getRemoteAddr();
             String ip = NetworkUtil.getIpAddr(request);
@@ -162,7 +164,7 @@ public class UserController {
             logined.setULoginTime(new Date());
             logined.setULoginName(user.getULoginName());
             logined.setUName(user.getUName());
-            logined.setUMachineCode(machineCode);
+            logined.setUMachineCode(clientId);
             logined.setULoginOutTime(new Date());
             logined.setUOnlineTime(1);
             logined.setUDescription("大疆APP登录");
@@ -173,42 +175,35 @@ public class UserController {
             }
             //endregion
             //region 返回token
-            String token = TokenUtil.sign(user);
-            EfSysteminfo efSysteminfo = new EfSysteminfo();
+            String token = JwtUtil.sign(user.getId().toString(), user.getULoginName(), user.getUName(), clientId, String.valueOf(user.getUCId()), String.valueOf(user.getURId()));
+            Map<String, Object> hashMap = new HashMap<String, Object>();
             if (token != null) {
                 if (redisUtils != null) {
-                    redisUtils.set(machineCode, "登录时间：" + System.currentTimeMillis(), 5L, TimeUnit.HOURS);
-                    redisUtils.set(machineCode + "_LoginIpWww", ip, 5L, TimeUnit.HOURS);
-                    redisUtils.set(machineCode + "_LoginIpLocal", addr, 5L, TimeUnit.HOURS);
-                    //token对应的用户信息
-                    redisUtils.set(machineCode + "_UserInfo", user, 5L, TimeUnit.HOURS);
-                    //登录时间
-                    redisUtils.set(machineCode + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS);
-                    //上次操作时间
-                    redisUtils.set(machineCode + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS);
+                    redisUtils.set(token, "登录时间：" + System.currentTimeMillis(), 5L, TimeUnit.HOURS);
+                    redisUtils.set(token + "_LoginIpWww", ip, 5L, TimeUnit.HOURS);
+                    redisUtils.set(token + "_LoginIpLocal", addr, 5L, TimeUnit.HOURS);
+                    redisUtils.set(token + "_UserInfo", user, 5L, TimeUnit.HOURS); //token对应的用户信息
+                    redisUtils.set(token + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //登录时间
+                    redisUtils.set(token + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //上次操作时间
                     if (logined != null) {
-                        //储存的登录记录ID
-                        redisUtils.set(machineCode + "_LoginedId", logined);
+                        redisUtils.set(token + "_LoginedId", logined); //储存的登录记录ID
                     }
+                    int roomId = (int) user.getUCId();
+                    //获取userSig
+                    String roomUserId = user.getUName() + "-" + DateUtil.timeStamp2Date(System.currentTimeMillis(), "HHmmssSSS");
+                    TLSSigAPIv2 api = new TLSSigAPIv2(EfStaticController.TxyTrtcSdkAppId, EfStaticController.TxyTrtcSecretKey);
+                    String userSig = api.genUserSig(roomUserId, EfStaticController.TxyTrtcExpireTime);
+
+                    hashMap.put("token", token);
+                    hashMap.put("roomId", roomId);
+                    hashMap.put("sdkAppId", EfStaticController.TxyTrtcSdkAppId);
+                    hashMap.put("userSign", userSig);
+                    hashMap.put("userName", user.getUName());
+                    hashMap.put("roomUserId", roomUserId);
                 }
-                //获取登录对象的公司id
-                Integer ucId = user.getUCId();
-                //通过ucId获取cSystemId
-                efSysteminfo = efSysteminfoService.queryById(ucId);
-//                    int roomId = (int) user.getUCId();
-                //获取userSig
-//                    String roomUserId = user.getUName() + "-" + DateUtil.timeStamp2Date(System.currentTimeMillis(), "HHmmssSSS");
-//                    TLSSigAPIv2 api = new TLSSigAPIv2(EfStaticController.TxyTrtcSdkAppId, EfStaticController.TxyTrtcSecretKey);
-//                    String userSig = api.genUserSig(roomUserId, EfStaticController.TxyTrtcExpireTime);
-//                    hashMap.put("token", token);
-//                    hashMap.put("roomId", roomId);
-//                    hashMap.put("userSign", userSig);
-//                    hashMap.put("userName", user.getUName());
-//                    hashMap.put("roomUserId", roomUserId);
-//                }
-//                user.setULoginPassword("");
-//                hashMap.put("user", user);
-                return ResultUtil.success(token, efSysteminfo);
+                user.setULoginPassword("");
+                hashMap.put("user", user);
+                return ResultUtil.success(token, hashMap);
             } else {
                 LogUtil.logWarn("登录完成, 生成Token失败！");
                 return ResultUtil.error("生成唯一标识失败！");
