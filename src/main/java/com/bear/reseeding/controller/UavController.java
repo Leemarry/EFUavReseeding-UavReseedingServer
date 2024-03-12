@@ -1811,7 +1811,7 @@ public class UavController {
     //region 数据增删查改
 
     /**
-     * 查询飞行架次 queryFlightNumber
+     * 查询飞行架次 (前台查询一个月的飞行架次信息）
      *
      * @param uavId     无人机编号
      * @param startTime
@@ -1858,7 +1858,7 @@ public class UavController {
     }
 
     /**
-     * 实时拍摄照片表 queryPhotoInfo
+     * 架次查询关联的实时拍摄照片表
      *
      * @param uavId
      * @param eachsortieId
@@ -1883,7 +1883,7 @@ public class UavController {
     }
 
     /**
-     * 查询草原空洞表 queryHoleInfo
+     * 查询草原空洞表
      *
      * @param uavId        无人机编号
      * @param eachsortieId 飞行架次
