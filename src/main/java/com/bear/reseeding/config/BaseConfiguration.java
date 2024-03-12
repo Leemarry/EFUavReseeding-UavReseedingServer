@@ -44,7 +44,7 @@ public class BaseConfiguration extends WebMvcConfigurationSupport {
             "/user/test",
             "/user/login", "/user/appLogin","/efUser/login",
             "/user/connect",
-            "/js/**", "/css/**", "/images/**", "/resource/**", "/mapresource/**"
+            "/js/**", "/css/**", "/images/**", "/resource/**","/resourceminio/**", "/mapresource/**"
     };
 
     /**

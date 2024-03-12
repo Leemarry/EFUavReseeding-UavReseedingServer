@@ -51,7 +51,7 @@ public interface EfUserLoginDao {
     /**
      * 批量新增数据（MyBatis原生foreach方法）
      *
-     * @param entities List<EfUserLogin> 实例对象列表
+     * @param entities 实例对象列表
      * @return 影响行数
      */
     int insertBatch(@Param("entities") List<EfUserLogin> entities);
@@ -59,7 +59,7 @@ public interface EfUserLoginDao {
     /**
      * 批量新增或按主键更新数据（MyBatis原生foreach方法）
      *
-     * @param entities List<EfUserLogin> 实例对象列表
+     * @param entities 实例对象列表
      * @return 影响行数
      */
     int insertOrUpdateBatch(@Param("entities") List<EfUserLogin> entities);

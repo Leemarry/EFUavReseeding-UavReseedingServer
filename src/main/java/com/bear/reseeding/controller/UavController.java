@@ -1898,13 +1898,11 @@ public class UavController {
             }
             // 查询 uavid eachsortieId 查询 实时拍摄空斑信息表
             List<EfCavity> efCavityList = efCavityService.queryByeachsortieIdOruavId(eachsortieId);
-
             return ResultUtil.success("查询飞行架次空斑列表信息成功", efCavityList);
         } catch (Exception e) {
             LogUtil.logError("查询获取飞行架次空斑列表数据异常：" + e.toString());
             return ResultUtil.error("查询获取飞行空斑列表数据异常,请联系管理员！");
         }
-
     }
 
     /**
