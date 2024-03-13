@@ -15,6 +15,7 @@ import com.bear.reseeding.entity.*;
 import com.bear.reseeding.model.CurrentUser;
 import com.bear.reseeding.eflink.EFLINK_MSG_3121;
 import com.bear.reseeding.eflink.EFLINK_MSG_3123;
+import com.bear.reseeding.model.OkHttpClientSingleton;
 import com.bear.reseeding.model.Result;
 import com.bear.reseeding.service.*;
 import com.bear.reseeding.task.TaskAnsisPhoto;
@@ -2081,61 +2082,74 @@ public class UavController {
     public Result confirmHandle(@CurrentUser EfUser efUser, @RequestParam("latitude") Integer latitude, @RequestParam("longitude") Integer longitude,
                                 @RequestParam("height") Integer height, @RequestParam("uavheight") Integer uavheight, @RequestBody(required = false) Map<String, Object> map) {
         try {
-            // 将参数和 Map 整合成 JSON 对象
+            // 参数校验
+            if (latitude == null || longitude == null || height == null || uavheight == null) {
+                return ResultUtil.error("缺少必要参数");
+            }
+
+            // 构建请求体
             Map<String, Object> jsonBody = new HashMap<>();
             jsonBody.put("original_latitude", latitude);
             jsonBody.put("original_longitude", longitude);
-            jsonBody.put("orginal_height", height);
+            jsonBody.put("original_height", height);
             jsonBody.put("reseed_uav_height", uavheight);
             jsonBody.put("reseed_machine_param", map);
 
             // 转换为 JSON 字符串
             ObjectMapper objectMapper = new ObjectMapper();
             String jsonString = objectMapper.writeValueAsString(jsonBody);
-            //发送Http请求
-            OkHttpClient client = new OkHttpClient();
+
+            // 发送Http请求
             MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
             okhttp3.RequestBody requestBody = okhttp3.RequestBody.create(mediaType, jsonString);
+
             Request request = new Request.Builder()
                     .url(HttpUrl)
                     .post(requestBody)
                     .build();
+
+            OkHttpClient client = OkHttpClientSingleton.getInstance(); // 单例模式获取 OkHttpClient 实例
             Response response = client.newCall(request).execute();
+
             if (response.isSuccessful()) {
-                //处理成功的情况
+                // 处理成功的情况
                 String responseBody = response.body().string();
                 Gson gson = new Gson();
-                Type type = new TypeToken<Map<String, Object>>() {
-                }.getType();
+                Type type = new TypeToken<Map<String, Object>>() {}.getType();
                 Map<String, Object> responseData = gson.fromJson(responseBody, type);
-                double gapSquare = Double.valueOf(map.getOrDefault("gap_square",0).toString());
-                double reseedAreaNum = Double.valueOf(map.getOrDefault("reseed_area_num",0).toString());
-                double reseedSquare = Double.valueOf(map.getOrDefault("reseed_square",0).toString());
-                int seedNum = Integer.valueOf(map.getOrDefault("seed_num",0).toString());
-                //处理记录保存至数据库
+
+                // 解析返回数据
+                double gapSquare = Double.valueOf(responseData.getOrDefault("gap_square", 0).toString());
+                double reseedAreaNum = Double.valueOf(responseData.getOrDefault("reseed_area_num", 0).toString());
+                double reseedSquare = Double.valueOf(responseData.getOrDefault("reseed_square", 0).toString());
+                int seedNum = Integer.valueOf(responseData.getOrDefault("seed_num", 0).toString());
+
+                // 保存处理记录至数据库
                 EfHandle efHandle = new EfHandle();
                 efHandle.setDate(new Date());
                 efHandle.setLat(latitude);
                 efHandle.setLng(longitude);
                 efHandle.setAlt(height);
                 efHandle.setFlyAlt(uavheight);
-                //回传分析后预览结果数据保存至数据库
                 efHandle.setGapSquare(gapSquare);
                 efHandle.setReseedAreaNum(reseedAreaNum);
                 efHandle.setReseedSquare(reseedSquare);
                 efHandle.setSeedNum(seedNum);
+
                 EfHandle insert = efHandleService.insert(efHandle);
-                if (Objects.isNull(insert)){
-                    //新增对象为空，新增失败
+                if (insert == null) {
                     return ResultUtil.error("保存处理数据失败！");
                 }
-                //把新增的数据Id返回给前端，方便前端下次调用时传回id以确保为同一条处理数据
-                responseData.put("insertId",insert.getId());
+
+                // 返回处理信息成功
+                responseData.put("insertId", insert.getId());
                 return ResultUtil.success("发送处理信息成功", responseData);
             } else {
                 return ResultUtil.error("Unexpected response code: " + response.code());
             }
         } catch (Exception e) {
+            // 异常处理
+            LogUtil.logError("发送处理信息失败"+ e);
             return ResultUtil.error("发送处理信息失败");
         }
     }
