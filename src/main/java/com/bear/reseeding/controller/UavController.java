@@ -105,10 +105,13 @@ public class UavController {
     private EfRelationCompanyUavService efRelationCompanyUavService;
 
     @Resource
-    private  EfHandleWaypointService efHandleWaypointService;
+    private EfHandleWaypointService efHandleWaypointService;
 
     @Resource
-    private  EfHandleBlockListService efHandleBlockListService;
+    private EfHandleBlockListService efHandleBlockListService;
+
+    @Resource
+    private EfHandleService efHandleService;
 
     /**
      * 无人机 与用户关联
@@ -2051,7 +2054,7 @@ public class UavController {
     @PostMapping(value = "/sendHandle")
     public Result sendHandle(@CurrentUser EfUser efUser) {
         try {
-            //todo  通过Mqtt发送消息让遥控器通过UDP发送"handle"
+            //todo  通过Mqtt发送消息让遥控器通过UDP发送"handle"至算法服务器
 
 
             return ResultUtil.success("发送处理信息成功");
@@ -2068,9 +2071,9 @@ public class UavController {
      * @param efUser
      * @param latitude  原点纬度
      * @param longitude 原点经度
-     * @param height  大地高
+     * @param height    大地高
      * @param uavheight 飞行高度
-     * @param map  补播机构参数
+     * @param map       补播机构参数
      * @return
      */
     @ResponseBody
@@ -2102,13 +2105,33 @@ public class UavController {
                 //处理成功的情况
                 String responseBody = response.body().string();
                 Gson gson = new Gson();
-                Type type = new TypeToken<Map<String, Object>>() {}.getType();
+                Type type = new TypeToken<Map<String, Object>>() {
+                }.getType();
                 Map<String, Object> responseData = gson.fromJson(responseBody, type);
+                double gapSquare = Double.valueOf(map.getOrDefault("gap_square",0).toString());
+                double reseedAreaNum = Double.valueOf(map.getOrDefault("reseed_area_num",0).toString());
+                double reseedSquare = Double.valueOf(map.getOrDefault("reseed_square",0).toString());
+                int seedNum = Integer.valueOf(map.getOrDefault("seed_num",0).toString());
                 //处理记录保存至数据库
                 EfHandle efHandle = new EfHandle();
-
-
-                return ResultUtil.success("发送处理信息成功",responseData);
+                efHandle.setDate(new Date());
+                efHandle.setLat(latitude);
+                efHandle.setLng(longitude);
+                efHandle.setAlt(height);
+                efHandle.setFlyAlt(uavheight);
+                //回传分析后预览结果数据保存至数据库
+                efHandle.setGapSquare(gapSquare);
+                efHandle.setReseedAreaNum(reseedAreaNum);
+                efHandle.setReseedSquare(reseedSquare);
+                efHandle.setSeedNum(seedNum);
+                EfHandle insert = efHandleService.insert(efHandle);
+                if (Objects.isNull(insert)){
+                    //新增对象为空，新增失败
+                    return ResultUtil.error("保存处理数据失败！");
+                }
+                //把新增的数据Id返回给前端，方便前端下次调用时传回id以确保为同一条处理数据
+                responseData.put("insertId",insert.getId());
+                return ResultUtil.success("发送处理信息成功", responseData);
             } else {
                 return ResultUtil.error("Unexpected response code: " + response.code());
             }
@@ -2119,6 +2142,7 @@ public class UavController {
 
     /**
      * 确认预览结果，请求算法服务，返回二次分析的最终结果(block_all,block_list)
+     *
      * @return
      */
     @ResponseBody
@@ -2127,13 +2151,12 @@ public class UavController {
         try {
 
 
-            //todo MQTT发送消息让遥控器的UDP发送5次处理信息JSON文件的路径（"handle test message-时间戳.json"）
+            //todo MQTT发送消息让遥控器的UDP发送5次处理信息JSON文件的路径（"handle test message-时间戳.json"）至算法服务器
             return ResultUtil.success("发送处理信息成功");
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");
         }
     }
-
 
 
     @ResponseBody
@@ -2246,7 +2269,7 @@ public class UavController {
                                     JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list EfHandleBlockList
                                     JSONArray reseedPointList = jsonObject.getJSONArray("reseed_point_list"); // 补播路径点列表JSON文件
                                     // blockAllArray
-                                    if(blockAllArray != null){
+                                    if (blockAllArray != null) {
                                         BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
                                         System.out.println(blockAll);
                                         synchronized (resultObject) {
@@ -2254,7 +2277,7 @@ public class UavController {
                                         }
                                     }
                                     // EfHandleBlockList
-                                    if(blockListArray != null){
+                                    if (blockListArray != null) {
                                         List<EfHandleBlockList> blockList = new ArrayList<>();
                                         for (int i = 0; i < blockListArray.size(); i++) {
                                             EfHandleBlockList block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), EfHandleBlockList.class);
@@ -2265,7 +2288,7 @@ public class UavController {
                                         }
                                     }
                                     // reseedPoint == EfHandleWaypoint
-                                    if(reseedPointList != null){
+                                    if (reseedPointList != null) {
                                         EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
                                         for (int i = 0; i < reseedPointList.size(); i++) {
                                             JSONArray entityValues = reseedPointList.getJSONArray(i);
@@ -2294,7 +2317,7 @@ public class UavController {
                         } else if (key.endsWith(".jpg")) {
                             byte[] bytes = byteArrayOutputStream.toByteArray();
                             // 使用CompletableFuture在新线程中执行异步任务
-                            executorService.submit(()  -> {
+                            executorService.submit(() -> {
                                 // 将字节数组转换为Base64字符串 data:image/png;base64,
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
@@ -2316,25 +2339,25 @@ public class UavController {
                 return ResultUtil.error("处理文件时出错");
             }
             // 故意 代码有问题 存储一个 handle_Id
-            Runnable runnableTask = ()->{
+            Runnable runnableTask = () -> {
                 try {
-                    redisUtils.set("handle_Id",1);
+                    redisUtils.set("handle_Id", 1);
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     taskCount.decrementAndGet();
                 }
             };
             executorService.submit(runnableTask);
             taskCount.incrementAndGet();
-            while (taskCount.get()>0){
+            while (taskCount.get() > 0) {
                 Thread.sleep(100);
             }
             // 从redis 获取id
             Object obj = redisUtils.get("handle_Id");
-            if(obj == null){
-                return  ResultUtil.error("当前未 获取handle_Id");
+            if (obj == null) {
+                return ResultUtil.error("当前未 获取handle_Id");
             }
             Integer handleId = (Integer) obj;
 
@@ -2342,7 +2365,7 @@ public class UavController {
             blockList.stream().forEach(block -> {
                 block.setHandleId(handleId);
                 int id = block.getId();
-                String imgStr = (String) resultObject.get(id+".jpg");// "l";
+                String imgStr = (String) resultObject.get(id + ".jpg");// "l";
                 block.setImg(imgStr);
             });
 //          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
@@ -2356,8 +2379,6 @@ public class UavController {
                 waypoint.setHandleId(handleId);
             });
 //            efHandleWaypointService.insertBatchByList(reseedPointlist);
-
-
 
 
             // 存储
@@ -2380,7 +2401,6 @@ public class UavController {
             executorService.shutdown();
         }
     }
-
 
 
     public static boolean isCompressedFile(String fileName) {

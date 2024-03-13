@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * 处理记录表(EfHandle)表服务接口
  *
- * @author cwk
+ * @author N.
  * @since 2024-03-13 16:10:44
  */
 public interface EfHandleService {
