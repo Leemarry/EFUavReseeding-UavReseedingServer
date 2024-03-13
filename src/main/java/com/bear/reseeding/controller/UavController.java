@@ -37,6 +37,10 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
 import io.minio.http.Method;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +51,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.plaf.synth.Region;
 import java.io.*;
+import java.lang.reflect.Type;
 import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -111,6 +116,9 @@ public class UavController {
 
     @Value("${BasePath:C://efuav/UavSystem/}")
     public String BasePath;
+
+    @Value("${spring.config.HttpUrl:\"http://192.168.137.110:5000/upload\"}")
+    public String HttpUrl;
 
 
     /**
@@ -2037,6 +2045,7 @@ public class UavController {
     @PostMapping(value = "/sendHandle")
     public Result sendHandle(@CurrentUser EfUser efUser) {
         try {
+            //todo  通过Mqtt发送消息让遥控器通过UDP发送"handle"
 
 
             return ResultUtil.success("发送处理信息成功");
@@ -2048,14 +2057,14 @@ public class UavController {
 
 
     /**
-     * 处理确认后接收请求
+     * 接收参数，请求算法服务，返回二次分析的预览结果(block_all)
      *
      * @param efUser
-     * @param latitude
-     * @param longitude
-     * @param height
-     * @param uavheight
-     * @param map
+     * @param latitude  原点纬度
+     * @param longitude 原点经度
+     * @param height  大地高
+     * @param uavheight 飞行高度
+     * @param map  补播机构参数
      * @return
      */
     @ResponseBody
@@ -2063,26 +2072,62 @@ public class UavController {
     public Result confirmHandle(@CurrentUser EfUser efUser, @RequestParam("latitude") Integer latitude, @RequestParam("longitude") Integer longitude,
                                 @RequestParam("height") Integer height, @RequestParam("uavheight") Integer uavheight, @RequestBody(required = false) Map<String, Object> map) {
         try {
-//            //线程 开启 发送UDP线程与接收UDP线程；
-//            int threads= 5;
-//            ExecutorService executorService = Executors.newFixedThreadPool(threads);
-//            executorService.submit(new UdpSendReceiver.TalkSender(5555, 9997, "localhost"));
-//            Future<byte []> future =   executorService.submit(new UdpSendReceiver.TalkReceiver(9998,5555));
-//            byte[] data=  future.get();  // 接收到数据
-//            // 如果是 一个空的 byte
-//            if(data.length<=0){
-//                return ResultUtil.error("未接收到数据！");
-//            }
-//            //
-//            executorService.shutdown();
+            // 将参数和 Map 整合成 JSON 对象
+            Map<String, Object> jsonBody = new HashMap<>();
+            jsonBody.put("original_latitude", latitude);
+            jsonBody.put("original_longitude", longitude);
+            jsonBody.put("orginal_height", height);
+            jsonBody.put("reseed_uav_height", uavheight);
+            jsonBody.put("reseed_machine_param", map);
+
+            // 转换为 JSON 字符串
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonString = objectMapper.writeValueAsString(jsonBody);
+            //发送Http请求
+            OkHttpClient client = new OkHttpClient();
+            MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+            okhttp3.RequestBody requestBody = okhttp3.RequestBody.create(mediaType, jsonString);
+            Request request = new Request.Builder()
+                    .url(HttpUrl)
+                    .post(requestBody)
+                    .build();
+            Response response = client.newCall(request).execute();
+            if (response.isSuccessful()) {
+                //处理成功的情况
+                String responseBody = response.body().string();
+                Gson gson = new Gson();
+                Type type = new TypeToken<Map<String, Object>>() {}.getType();
+                Map<String, Object> responseData = gson.fromJson(responseBody, type);
+                //处理记录保存至数据库
+                EfHandle efHandle = new EfHandle();
 
 
-            return ResultUtil.error("发送处理信息失败");
+                return ResultUtil.success("发送处理信息成功",responseData);
+            } else {
+                return ResultUtil.error("Unexpected response code: " + response.code());
+            }
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");
         }
-
     }
+
+    /**
+     * 确认预览结果，请求算法服务，返回二次分析的最终结果(block_all,block_list)
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/finalHandle")
+    public Result finalHandle() {
+        try {
+
+
+            //todo MQTT发送消息让遥控器的UDP发送5次处理信息JSON文件的路径（"handle test message-时间戳.json"）
+            return ResultUtil.success("发送处理信息成功");
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        }
+    }
+
 
 
     @ResponseBody
