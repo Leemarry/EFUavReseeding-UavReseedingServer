@@ -2,7 +2,9 @@ package com.bear.reseeding.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+
 import static org.json.JSONObject.*;
+
 import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.EfLinkUtil;
@@ -1422,29 +1424,32 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadMediaResult")
-    public Result uploadMediaResult(@RequestParam(value = "file") MultipartFile file, @RequestParam(value = "map") String map, HttpServletRequest request) {
+    public Result uploadMediaResult(@RequestParam("photo") MultipartFile photo, @RequestParam(value = "jsonFile") MultipartFile jsonFile, HttpServletRequest request) {
         try {
-            if (file == null || file.isEmpty()) {
-                return ResultUtil.error("上传分析照片失败，空文件！");
+            if (photo == null || photo.isEmpty() || jsonFile == null || jsonFile.isEmpty()) {
+                return ResultUtil.error("上传分析照片失败，文件为空！");
             }
+            // 读取 JSON 文件内容为字符串
+            String jsonContent = new String(jsonFile.getBytes());
+
             Gson gson = new Gson();
             Map<String, Object> paramMap = null;
             try {
-                paramMap = gson.fromJson(map, new TypeToken<Map<String, Object>>() {
+                paramMap = gson.fromJson(jsonContent, new TypeToken<Map<String, Object>>() {
                 }.getType());
             } catch (JsonSyntaxException e) {
-                LogUtil.logError("上传分析照片异常：参数格式不正确！" + e.toString());
-                return ResultUtil.error("上传分析照片异常：参数格式不正确！");
+                LogUtil.logError("上传分析照片异常：JSON 参数格式不正确！" + e.toString());
+                return ResultUtil.error("上传分析照片异常：JSON 参数格式不正确！");
             }
             // 开启线程存储照片
             // 获取文件流字节数组
-            byte[] fileStream = BytesUtil.inputStreamToByteArray(file.getInputStream());
+            byte[] fileStream = BytesUtil.inputStreamToByteArray(photo.getInputStream());
             paramMap.put("fileStream", fileStream);
-            taskAnsisPhoto.saveSeedingPhoto(file, paramMap);
+            taskAnsisPhoto.saveSeedingPhoto(photo, paramMap);
             return ResultUtil.success();
         } catch (Exception e) {
             LogUtil.logError("上传分析照片异常：" + e.toString());
-            return ResultUtil.error("上传分析照片异常,请联系管理员!");
+            return ResultUtil.error("上传分析照片异常，请联系管理员!");
         }
     }
 
@@ -1999,7 +2004,6 @@ public class UavController {
     }
 
     /**
-     * c
      * 查询 航点任务表 信息 时间
      */
     @ResponseBody
@@ -2028,26 +2032,14 @@ public class UavController {
 
     //endregion
 
-    // #region 二次处理
+    // region 二次处理
     @ResponseBody
     @PostMapping(value = "/sendHandle")
     public Result sendHandle(@CurrentUser EfUser efUser) {
         try {
-//            //线程 开启 发送UDP线程与接收UDP线程；
-//            int threads= 5;
-//            ExecutorService executorService = Executors.newFixedThreadPool(threads);
-//            executorService.submit(new UdpSendReceiver.TalkSender(5555, 9997, "localhost"));
-//            Future<byte []> future =   executorService.submit(new UdpSendReceiver.TalkReceiver(9998,5555));
-//            byte[] data=  future.get();  // 接收到数据
-//            // 如果是 一个空的 byte
-//            if(data.length<=0){
-//                return ResultUtil.error("未接收到数据！");
-//            }
-//            //
-//            executorService.shutdown();
 
 
-            return ResultUtil.error("发送处理信息失败");
+            return ResultUtil.success("发送处理信息成功");
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");
         }
@@ -2095,39 +2087,39 @@ public class UavController {
 
     @ResponseBody
     @PostMapping(value = "/secondaryAnalysis")
-    public Result secondaryAnalysis(@CurrentUser EfUser efUser,@RequestParam(value = "file", required = false) MultipartFile file) {
+    public Result secondaryAnalysis(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
         try {
             org.json.JSONObject jsonObject = new org.json.JSONObject();
             int numThread = 3;
             ExecutorService executorService = Executors.newFixedThreadPool(numThread);
             boolean isZIP = isCompressedFile(file.getOriginalFilename());
-            if(!isZIP){
+            if (!isZIP) {
                 return ResultUtil.error("请发送数据压缩包");
             }
             // 将 MultipartFile 转换为字节数组输入流
             try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
                  ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
                 ZipEntry entry;
-                while ((entry=zipInputStream.getNextEntry()) !=null){
+                while ((entry = zipInputStream.getNextEntry()) != null) {
                     String key = entry.getName();
                     // 创建字节流
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    if(!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".json")){
+                    if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".json")) {
                         // 读取
                         byte[] buffer = new byte[1024];
                         int bytesRead;
-                        while ((bytesRead = zipInputStream.read(buffer)) > 0){
-                            byteArrayOutputStream.write(buffer,0,bytesRead);
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                            byteArrayOutputStream.write(buffer, 0, bytesRead);
                         }
                         // 获取json 数据
 
 
-                    }else if(!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".jpg")){
+                    } else if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".jpg")) {
                         // 读取
                         byte[] buffer = new byte[1024];
                         int bytesRead;
-                        while ((bytesRead = zipInputStream.read(buffer)) > 0){
-                            byteArrayOutputStream.write(buffer,0,bytesRead);
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                            byteArrayOutputStream.write(buffer, 0, bytesRead);
                         }
                         byte[] bytes = byteArrayOutputStream.toByteArray();
                         // 创建 MinioUploader 对象并连接到 Minio 对象存储
@@ -2153,7 +2145,7 @@ public class UavController {
                         URL url = new URL(fileUrl);
 
 
-                        jsonObject.put(key,fileUrl);
+                        jsonObject.put(key, fileUrl);
 
                     }
 
@@ -2161,7 +2153,7 @@ public class UavController {
 
             }
 
-            return ResultUtil.success("处理数据",jsonObject);
+            return ResultUtil.success("处理数据", jsonObject);
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");
         }
@@ -2193,8 +2185,6 @@ public class UavController {
                         while ((bytesRead = zipInputStream.read(buffer)) > 0) {
                             byteArrayOutputStream.write(buffer, 0, bytesRead);
                         }
-
-
                         String key = entry.getName().toLowerCase();
                         if (key.endsWith(".json")) {
                             executorService.submit(() -> {
@@ -2204,20 +2194,18 @@ public class UavController {
                                     JSONArray blockAllArray = jsonObject.getJSONArray("block_all"); // 所有地块 统计
                                     JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list
                                     JSONArray reseedPointList = jsonObject.getJSONArray("reseed_point_list"); // 补播路径点列表JSON文件
-                                    if(blockAllArray != null){
+                                    if (blockAllArray != null) {
                                         BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
                                         System.out.println(blockAll);
                                     }
-                                    if(blockListArray != null){
+                                    if (blockListArray != null) {
                                         List<Block> blockList = new ArrayList<>();
                                         for (int i = 0; i < blockListArray.size(); i++) {
                                             Block block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), Block.class);
                                             blockList.add(block);
                                         }
                                     }
-
-
-                                    if(reseedPointList != null){
+                                    if (reseedPointList != null) {
                                         reseedPoint[] entityArray = new reseedPoint[reseedPointList.size()];
                                         for (int i = 0; i < reseedPointList.size(); i++) {
                                             JSONArray entityValues = reseedPointList.getJSONArray(i);
@@ -2225,12 +2213,9 @@ public class UavController {
                                             double prop2 = entityValues.getDouble(1);
                                             double prop3 = entityValues.getDouble(2);
                                             Integer prop4 = entityValues.getInteger(3);
-
                                             entityArray[i] = new reseedPoint(prop1, prop2, prop3, prop4);
                                         }
                                     }
-
-
                                     synchronized (resultObject) {
                                         resultObject.put(key, jsonObject);
                                     }
@@ -2244,7 +2229,7 @@ public class UavController {
                         } else if (key.endsWith(".jpg")) {
                             byte[] bytes = byteArrayOutputStream.toByteArray();
                             // 使用CompletableFuture在新线程中执行异步任务
-                            executorService.submit(()  -> {
+                            executorService.submit(() -> {
                                 // 将字节数组转换为Base64字符串 data:image/png;base64,
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
@@ -2274,7 +2259,6 @@ public class UavController {
             executorService.shutdown();
         }
     }
-
 
 
     public static boolean isCompressedFile(String fileName) {

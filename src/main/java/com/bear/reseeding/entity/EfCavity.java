@@ -17,7 +17,7 @@ public class EfCavity implements Serializable {
     /**
      * 空洞名称，一般不需要
      */
-    private String cavityName;
+    private int cavityName;
     /**
      * 所在纬度
      */
@@ -64,12 +64,12 @@ public class EfCavity implements Serializable {
         this.id = id;
     }
 
-    public String getCavityName() {
+    public Integer getCavityName() {
         return cavityName;
     }
 
-    public void setCavityName(String cavityName) {
-        this.cavityName = cavityName;
+    public void setCavityName(int cavityName) {
+        this.cavityName = Integer.valueOf(cavityName);
     }
 
     public Double getLat() {
