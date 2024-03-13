@@ -2,6 +2,7 @@ package com.bear.reseeding.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import static org.json.JSONObject.*;
 import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.EfLinkUtil;
@@ -29,6 +30,11 @@ import com.tencentcloudapi.live.v20180801.models.CreateRecordTaskRequest;
 import com.tencentcloudapi.live.v20180801.models.CreateRecordTaskResponse;
 import com.tencentcloudapi.live.v20180801.models.StopRecordTaskRequest;
 import com.tencentcloudapi.live.v20180801.models.StopRecordTaskResponse;
+import io.minio.GetPresignedObjectUrlArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
+import io.minio.errors.MinioException;
+import io.minio.http.Method;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +45,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.plaf.synth.Region;
 import java.io.*;
+import java.net.URL;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.io.File;
@@ -46,10 +55,10 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * 无人机管理
@@ -2018,5 +2027,264 @@ public class UavController {
 
 
     //endregion
+
+    // #region 二次处理
+    @ResponseBody
+    @PostMapping(value = "/sendHandle")
+    public Result sendHandle(@CurrentUser EfUser efUser) {
+        try {
+//            //线程 开启 发送UDP线程与接收UDP线程；
+//            int threads= 5;
+//            ExecutorService executorService = Executors.newFixedThreadPool(threads);
+//            executorService.submit(new UdpSendReceiver.TalkSender(5555, 9997, "localhost"));
+//            Future<byte []> future =   executorService.submit(new UdpSendReceiver.TalkReceiver(9998,5555));
+//            byte[] data=  future.get();  // 接收到数据
+//            // 如果是 一个空的 byte
+//            if(data.length<=0){
+//                return ResultUtil.error("未接收到数据！");
+//            }
+//            //
+//            executorService.shutdown();
+
+
+            return ResultUtil.error("发送处理信息失败");
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        }
+
+    }
+
+
+    /**
+     * 处理确认后接收请求
+     *
+     * @param efUser
+     * @param latitude
+     * @param longitude
+     * @param height
+     * @param uavheight
+     * @param map
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/confirmHandle")
+    public Result confirmHandle(@CurrentUser EfUser efUser, @RequestParam("latitude") Integer latitude, @RequestParam("longitude") Integer longitude,
+                                @RequestParam("height") Integer height, @RequestParam("uavheight") Integer uavheight, @RequestBody(required = false) Map<String, Object> map) {
+        try {
+//            //线程 开启 发送UDP线程与接收UDP线程；
+//            int threads= 5;
+//            ExecutorService executorService = Executors.newFixedThreadPool(threads);
+//            executorService.submit(new UdpSendReceiver.TalkSender(5555, 9997, "localhost"));
+//            Future<byte []> future =   executorService.submit(new UdpSendReceiver.TalkReceiver(9998,5555));
+//            byte[] data=  future.get();  // 接收到数据
+//            // 如果是 一个空的 byte
+//            if(data.length<=0){
+//                return ResultUtil.error("未接收到数据！");
+//            }
+//            //
+//            executorService.shutdown();
+
+
+            return ResultUtil.error("发送处理信息失败");
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        }
+
+    }
+
+
+    @ResponseBody
+    @PostMapping(value = "/secondaryAnalysis")
+    public Result secondaryAnalysis(@CurrentUser EfUser efUser,@RequestParam(value = "file", required = false) MultipartFile file) {
+        try {
+            org.json.JSONObject jsonObject = new org.json.JSONObject();
+            int numThread = 3;
+            ExecutorService executorService = Executors.newFixedThreadPool(numThread);
+            boolean isZIP = isCompressedFile(file.getOriginalFilename());
+            if(!isZIP){
+                return ResultUtil.error("请发送数据压缩包");
+            }
+            // 将 MultipartFile 转换为字节数组输入流
+            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
+                ZipEntry entry;
+                while ((entry=zipInputStream.getNextEntry()) !=null){
+                    String key = entry.getName();
+                    // 创建字节流
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    if(!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".json")){
+                        // 读取
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0){
+                            byteArrayOutputStream.write(buffer,0,bytesRead);
+                        }
+                        // 获取json 数据
+
+
+                    }else if(!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".jpg")){
+                        // 读取
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0){
+                            byteArrayOutputStream.write(buffer,0,bytesRead);
+                        }
+                        byte[] bytes = byteArrayOutputStream.toByteArray();
+                        // 创建 MinioUploader 对象并连接到 Minio 对象存储
+                        MinioClient minioClient = MinioClient.builder()
+                                .endpoint("http://127.0.0.1:9090")
+                                .credentials("gNkgwJSo4EyFyxHuG5mz", "IieYrz9poS8JsEFXzoo7PG7yhmHK9dqZbaVG1khn")
+                                .build();
+                        //  写入文件
+                        minioClient.putObject(
+                                PutObjectArgs.builder()
+                                        .bucket("ceshi")
+                                        .object(key)
+                                        .stream(new ByteArrayInputStream(bytes), bytes.length, -1)
+                                        .build());
+                        // 返回存入路径
+                        String fileUrl = minioClient.getPresignedObjectUrl(
+                                GetPresignedObjectUrlArgs.builder()
+                                        .method(Method.PUT)
+                                        .bucket("ceshi")
+                                        .object(key)
+                                        .build()
+                        );
+                        URL url = new URL(fileUrl);
+
+
+                        jsonObject.put(key,fileUrl);
+
+                    }
+
+                }
+
+            }
+
+            return ResultUtil.success("处理数据",jsonObject);
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        }
+
+    }
+
+
+    @PostMapping(value = "/secondaryAnalysiss")
+    public Result secondaryAnalysiss(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
+        int numThread = 3;
+        ExecutorService executorService = Executors.newFixedThreadPool(numThread);
+        try {
+            JSONObject resultObject = new JSONObject();
+            boolean isZIP = isCompressedFile(file.getOriginalFilename());
+            if (!isZIP) {
+                return ResultUtil.error("请发送数据压缩包");
+            }
+
+            // 将 MultipartFile 转换为字节数组输入流
+            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
+                ZipEntry entry;
+                AtomicInteger taskCount = new AtomicInteger(0);
+                while ((entry = zipInputStream.getNextEntry()) != null) {
+                    if (!entry.isDirectory()) {
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                            byteArrayOutputStream.write(buffer, 0, bytesRead);
+                        }
+
+
+                        String key = entry.getName().toLowerCase();
+                        if (key.endsWith(".json")) {
+                            executorService.submit(() -> {
+                                try {
+                                    // 获取json 数据
+                                    JSONObject jsonObject = JSONObject.parseObject(byteArrayOutputStream.toString("UTF-8"));
+                                    JSONArray blockAllArray = jsonObject.getJSONArray("block_all"); // 所有地块 统计
+                                    JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list
+                                    JSONArray reseedPointList = jsonObject.getJSONArray("reseed_point_list"); // 补播路径点列表JSON文件
+                                    if(blockAllArray != null){
+                                        BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
+                                        System.out.println(blockAll);
+                                    }
+                                    if(blockListArray != null){
+                                        List<Block> blockList = new ArrayList<>();
+                                        for (int i = 0; i < blockListArray.size(); i++) {
+                                            Block block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), Block.class);
+                                            blockList.add(block);
+                                        }
+                                    }
+
+
+                                    if(reseedPointList != null){
+                                        reseedPoint[] entityArray = new reseedPoint[reseedPointList.size()];
+                                        for (int i = 0; i < reseedPointList.size(); i++) {
+                                            JSONArray entityValues = reseedPointList.getJSONArray(i);
+                                            double prop1 = entityValues.getDouble(0);
+                                            double prop2 = entityValues.getDouble(1);
+                                            double prop3 = entityValues.getDouble(2);
+                                            Integer prop4 = entityValues.getInteger(3);
+
+                                            entityArray[i] = new reseedPoint(prop1, prop2, prop3, prop4);
+                                        }
+                                    }
+
+
+                                    synchronized (resultObject) {
+                                        resultObject.put(key, jsonObject);
+                                    }
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                } finally {
+                                    taskCount.decrementAndGet();
+                                }
+                            });
+                            taskCount.incrementAndGet();
+                        } else if (key.endsWith(".jpg")) {
+                            byte[] bytes = byteArrayOutputStream.toByteArray();
+                            // 使用CompletableFuture在新线程中执行异步任务
+                            executorService.submit(()  -> {
+                                // 将字节数组转换为Base64字符串 data:image/png;base64,
+                                String base64Image = Base64.getEncoder().encodeToString(bytes);
+                                // 执行您的操作，例如将Base64字符串存入resultObject
+                                synchronized (resultObject) {
+                                    resultObject.put(key, base64Image);
+                                }
+                                // 任务完成后，减少任务计数
+                                taskCount.decrementAndGet();
+                            });
+                        }
+                    }
+                }
+
+                // 等待所有任务完成
+                while (taskCount.get() > 0) {
+                    Thread.sleep(100);
+                }
+            } catch (Exception e) {
+                return ResultUtil.error("处理文件时出错");
+            }
+
+            return ResultUtil.success("处理数据", resultObject);
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        } finally {
+            // 关闭线程池和 MinioClient
+            executorService.shutdown();
+        }
+    }
+
+
+
+    public static boolean isCompressedFile(String fileName) {
+        String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
+        return extension.equalsIgnoreCase("zip") ||
+                extension.equalsIgnoreCase("rar") ||
+                extension.equalsIgnoreCase("7z");
+    }
+
+
+    // #endregion
 }
 
