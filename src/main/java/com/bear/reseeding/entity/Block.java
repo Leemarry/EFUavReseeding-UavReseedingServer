@@ -6,6 +6,9 @@ public class Block {
     private double gapSquare;
     private int reseedAreaNum;
     private double reseedSquare;
+    private double centreLatitude;
+    private double centreLongitude;
+    private int seedNum;
 
     public int getId() {
         return id;
@@ -63,7 +66,5 @@ public class Block {
         this.seedNum = seedNum;
     }
 
-    private double centreLatitude;
-    private double centreLongitude;
-    private int seedNum;
+
 }

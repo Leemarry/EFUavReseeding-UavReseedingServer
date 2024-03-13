@@ -104,6 +104,12 @@ public class UavController {
     @Resource
     private EfRelationCompanyUavService efRelationCompanyUavService;
 
+    @Resource
+    private  EfHandleWaypointService efHandleWaypointService;
+
+    @Resource
+    private  EfHandleBlockListService efHandleBlockListService;
+
     /**
      * 无人机 与用户关联
      */
@@ -2216,12 +2222,12 @@ public class UavController {
             if (!isZIP) {
                 return ResultUtil.error("请发送数据压缩包");
             }
-
+            AtomicInteger taskCount = new AtomicInteger(0);
             // 将 MultipartFile 转换为字节数组输入流
             try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
                  ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
                 ZipEntry entry;
-                AtomicInteger taskCount = new AtomicInteger(0);
+
                 while ((entry = zipInputStream.getNextEntry()) != null) {
                     if (!entry.isDirectory()) {
                         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -2237,30 +2243,44 @@ public class UavController {
                                     // 获取json 数据
                                     JSONObject jsonObject = JSONObject.parseObject(byteArrayOutputStream.toString("UTF-8"));
                                     JSONArray blockAllArray = jsonObject.getJSONArray("block_all"); // 所有地块 统计
-                                    JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list
+                                    JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list EfHandleBlockList
                                     JSONArray reseedPointList = jsonObject.getJSONArray("reseed_point_list"); // 补播路径点列表JSON文件
-                                    if (blockAllArray != null) {
+                                    // blockAllArray
+                                    if(blockAllArray != null){
                                         BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
                                         System.out.println(blockAll);
+                                        synchronized (resultObject) {
+                                            resultObject.put("BlockAll", blockAll);
+                                        }
                                     }
-                                    if (blockListArray != null) {
-                                        List<Block> blockList = new ArrayList<>();
+                                    // EfHandleBlockList
+                                    if(blockListArray != null){
+                                        List<EfHandleBlockList> blockList = new ArrayList<>();
                                         for (int i = 0; i < blockListArray.size(); i++) {
-                                            Block block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), Block.class);
+                                            EfHandleBlockList block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), EfHandleBlockList.class);
                                             blockList.add(block);
                                         }
-                                    }
-                                    if (reseedPointList != null) {
-                                        reseedPoint[] entityArray = new reseedPoint[reseedPointList.size()];
-                                        for (int i = 0; i < reseedPointList.size(); i++) {
-                                            JSONArray entityValues = reseedPointList.getJSONArray(i);
-                                            double prop1 = entityValues.getDouble(0);
-                                            double prop2 = entityValues.getDouble(1);
-                                            double prop3 = entityValues.getDouble(2);
-                                            Integer prop4 = entityValues.getInteger(3);
-                                            entityArray[i] = new reseedPoint(prop1, prop2, prop3, prop4);
+                                        synchronized (resultObject) {
+                                            resultObject.put("BlockList", blockList);
                                         }
                                     }
+                                    // reseedPoint == EfHandleWaypoint
+                                    if(reseedPointList != null){
+                                        EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
+                                        for (int i = 0; i < reseedPointList.size(); i++) {
+                                            JSONArray entityValues = reseedPointList.getJSONArray(i);
+                                            double prop1 = entityValues.getDouble(0); // 经度
+                                            double prop2 = entityValues.getDouble(1);  // 纬度
+                                            double prop3 = entityValues.getDouble(2); // 地高
+                                            Integer prop4 = entityValues.getInteger(3); // 路径补播所需草种数
+
+                                            reseedPoints[i] = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
+                                        }
+                                        synchronized (resultObject) {
+                                            resultObject.put("reseedPointList", reseedPoints);
+                                        }
+                                    }
+
                                     synchronized (resultObject) {
                                         resultObject.put(key, jsonObject);
                                     }
@@ -2274,7 +2294,7 @@ public class UavController {
                         } else if (key.endsWith(".jpg")) {
                             byte[] bytes = byteArrayOutputStream.toByteArray();
                             // 使用CompletableFuture在新线程中执行异步任务
-                            executorService.submit(() -> {
+                            executorService.submit(()  -> {
                                 // 将字节数组转换为Base64字符串 data:image/png;base64,
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
@@ -2284,10 +2304,10 @@ public class UavController {
                                 // 任务完成后，减少任务计数
                                 taskCount.decrementAndGet();
                             });
+                            taskCount.incrementAndGet();
                         }
                     }
                 }
-
                 // 等待所有任务完成
                 while (taskCount.get() > 0) {
                     Thread.sleep(100);
@@ -2295,6 +2315,62 @@ public class UavController {
             } catch (Exception e) {
                 return ResultUtil.error("处理文件时出错");
             }
+            // 故意 代码有问题 存储一个 handle_Id
+            Runnable runnableTask = ()->{
+                try {
+                    redisUtils.set("handle_Id",1);
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }finally {
+                    taskCount.decrementAndGet();
+                }
+            };
+            executorService.submit(runnableTask);
+            taskCount.incrementAndGet();
+            while (taskCount.get()>0){
+                Thread.sleep(100);
+            }
+            // 从redis 获取id
+            Object obj = redisUtils.get("handle_Id");
+            if(obj == null){
+                return  ResultUtil.error("当前未 获取handle_Id");
+            }
+            Integer handleId = (Integer) obj;
+
+            List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
+            blockList.stream().forEach(block -> {
+                block.setHandleId(handleId);
+                int id = block.getId();
+                String imgStr = (String) resultObject.get(id+".jpg");// "l";
+                block.setImg(imgStr);
+            });
+//          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
+
+
+            BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
+
+
+            List<EfHandleWaypoint> reseedPointlist = (List<EfHandleWaypoint>) resultObject.get("reseedPointList");
+            reseedPointlist.stream().forEach(waypoint -> {
+                waypoint.setHandleId(handleId);
+            });
+//            efHandleWaypointService.insertBatchByList(reseedPointlist);
+
+
+
+
+            // 存储
+//            Callable<EfPvBoardGroup> task1 = new Callable<EfPvBoardGroup>() {
+//                @Override
+//                public EfPvBoardGroup call() throws Exception {
+//                    //查询组串信息
+//                    EfPvBoardGroup efPvBoardGroup = efPvBoardGroupService.queryBygroupId(Sn, groupId);
+//                    return efPvBoardGroup;
+//                }
+//            };
+//            Future<EfPvBoardGroup> future1 = executorService.submit(task1);
+
 
             return ResultUtil.success("处理数据", resultObject);
         } catch (Exception e) {
@@ -2304,6 +2380,7 @@ public class UavController {
             executorService.shutdown();
         }
     }
+
 
 
     public static boolean isCompressedFile(String fileName) {

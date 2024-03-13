@@ -13,8 +13,6 @@ public class reseedPoint {
 
     private Integer seednum;
 
-//    public reseedPoint(double prop1, double prop2, double prop3, Integer prop4) {
-//    }
 
     public reseedPoint(double prop1, double prop2, double prop3, Integer prop4) {
         this.latitude = prop1;
