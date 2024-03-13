@@ -79,7 +79,7 @@ minio:
   BucketNameKmz: efuavkmz
   BucketNameWord: efuavword
   BucketNameModel: efuavmodel
-  Endpoint: http://8.134.196.47:9000
+  Endpoint: http://8.148.10.90:9000
 TxyTrtc:
   TxyTrtcSdkAppId: 1400739024
   TxyTrtcExpireTime: 604800
