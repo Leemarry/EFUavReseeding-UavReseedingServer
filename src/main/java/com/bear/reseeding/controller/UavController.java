@@ -2395,17 +2395,55 @@ public class UavController {
     }
 
 
-    @PostMapping(value = "/secondaryAnalysi")
-    public Result secondaryAnalysi(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
+    /**
+     *  查询某一个段时间内处理数据
+     *
+     * @param efUser
+     * @param startTime 查询时间开始
+     * @param endTime   查询时间结束
+     * @return
+     */
+    @PostMapping(value = "/queryHandle")
+    public Result queryHandle(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = false) long startTime, @RequestParam(value = "endTime", required = false) long endTime ) {
         try{
-            List<Student> stundenList = new ArrayList<>();
-            // Adding three individuals to the list
-            stundenList.add(new Student(1, "Alice", 20));
-            stundenList.add(new Student(2, "Bob", 22));
-            stundenList.add(new Student(3, "Charlie", 21));
 
-//            Integer a =  efHandleWaypointService.insertBatchByList(reseedPointlist);
+
+            return  ResultUtil.error("返回List");
+        }catch (Exception e){
+
             return  ResultUtil.error("失败");
+        }
+    }
+
+    /**
+     *通过处理ID 查询作业地块信息列表
+     * @param efUser
+     * @param handleId 查询时间开始
+     * @return
+     */
+    @PostMapping(value = "/queryBlockList")
+    public Result queryBlockList(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = true) Integer handleId ) {
+        try{
+
+
+            return  ResultUtil.error("返回List");
+        }catch (Exception e){
+
+            return  ResultUtil.error("失败");
+        }
+    }
+
+    /**
+     *通过处理ID 查询播种路径点列表
+     * @param efUser
+     * @param handleId 查询时间开始
+     * @return
+     */
+    @PostMapping(value = "/queryPointList")
+    public Result queryPointList(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = true) Integer handleId ) {
+        try{
+
+            return  ResultUtil.error("返回List");
         }catch (Exception e){
 
             return  ResultUtil.error("失败");
