@@ -2304,7 +2304,7 @@ public class UavController {
                                     JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list EfHandleBlockList
                                     JSONArray reseedPointList = jsonObject.getJSONArray("reseed_point_list"); // 补播路径点列表JSON文件
                                     // blockAllArray
-                                    if (blockAllArray != null) {
+                                    if(blockAllArray != null){
                                         BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
                                         System.out.println(blockAll);
                                         synchronized (resultObject) {
@@ -2312,7 +2312,7 @@ public class UavController {
                                         }
                                     }
                                     // EfHandleBlockList
-                                    if (blockListArray != null) {
+                                    if(blockListArray != null){
                                         List<EfHandleBlockList> blockList = new ArrayList<>();
                                         for (int i = 0; i < blockListArray.size(); i++) {
                                             EfHandleBlockList block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), EfHandleBlockList.class);
@@ -2323,16 +2323,18 @@ public class UavController {
                                         }
                                     }
                                     // reseedPoint == EfHandleWaypoint
-                                    if (reseedPointList != null) {
-                                        EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
+                                    if(reseedPointList != null){
+                                        List<EfHandleWaypoint> reseedPoints = new ArrayList<>();
+//                                        EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
                                         for (int i = 0; i < reseedPointList.size(); i++) {
                                             JSONArray entityValues = reseedPointList.getJSONArray(i);
                                             double prop1 = entityValues.getDouble(0); // 经度
                                             double prop2 = entityValues.getDouble(1);  // 纬度
                                             double prop3 = entityValues.getDouble(2); // 地高
                                             Integer prop4 = entityValues.getInteger(3); // 路径补播所需草种数
-
-                                            reseedPoints[i] = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
+                                            EfHandleWaypoint Waypoint = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
+                                            reseedPoints.add(Waypoint);
+//                                            reseedPoints[i] = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
                                         }
                                         synchronized (resultObject) {
                                             resultObject.put("reseedPointList", reseedPoints);
@@ -2352,12 +2354,12 @@ public class UavController {
                         } else if (key.endsWith(".jpg")) {
                             byte[] bytes = byteArrayOutputStream.toByteArray();
                             // 使用CompletableFuture在新线程中执行异步任务
-                            executorService.submit(() -> {
+                            executorService.submit(()  -> {
                                 // 将字节数组转换为Base64字符串 data:image/png;base64,
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
                                 synchronized (resultObject) {
-                                    resultObject.put(key, base64Image);
+//                                    resultObject.put(key, base64Image);
                                 }
                                 // 任务完成后，减少任务计数
                                 taskCount.decrementAndGet();
@@ -2394,7 +2396,9 @@ public class UavController {
             if (obj == null) {
                 return ResultUtil.error("当前未 获取handle_Id");
             }
+            // 重新
             Integer handleId = (Integer) obj;
+
 
             List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
             blockList.stream().forEach(block -> {
@@ -2403,7 +2407,7 @@ public class UavController {
                 String imgStr = (String) resultObject.get(id + ".jpg");// "l";
                 block.setImg(imgStr);
             });
-//          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
+          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
 
 
             BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
@@ -2413,7 +2417,9 @@ public class UavController {
             reseedPointlist.stream().forEach(waypoint -> {
                 waypoint.setHandleId(handleId);
             });
-//            efHandleWaypointService.insertBatchByList(reseedPointlist);
+            Integer a =  efHandleWaypointService.insertBatchByList(reseedPointlist);
+
+
 
 
             // 存储
@@ -2438,6 +2444,7 @@ public class UavController {
     }
 
 
+
     public static boolean isCompressedFile(String fileName) {
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
         return extension.equalsIgnoreCase("zip") ||
@@ -2445,6 +2452,61 @@ public class UavController {
                 extension.equalsIgnoreCase("7z");
     }
 
+
+    /**
+     *  查询某一个段时间内处理数据
+     *
+     * @param efUser
+     * @param startTime 查询时间开始
+     * @param endTime   查询时间结束
+     * @return
+     */
+    @PostMapping(value = "/queryHandle")
+    public Result queryHandle(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = false) long startTime, @RequestParam(value = "endTime", required = false) long endTime ) {
+        try{
+
+
+            return  ResultUtil.error("返回List");
+        }catch (Exception e){
+
+            return  ResultUtil.error("失败");
+        }
+    }
+
+    /**
+     *通过处理ID 查询作业地块信息列表
+     * @param efUser
+     * @param handleId 查询时间开始
+     * @return
+     */
+    @PostMapping(value = "/queryBlockList")
+    public Result queryBlockList(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = true) Integer handleId ) {
+        try{
+
+
+            return  ResultUtil.error("返回List");
+        }catch (Exception e){
+
+            return  ResultUtil.error("失败");
+        }
+    }
+
+    /**
+     *通过处理ID 查询播种路径点列表
+     * @param efUser
+     * @param handleId 查询时间开始
+     * @return
+     */
+    @PostMapping(value = "/queryPointList")
+    public Result queryPointList(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = true) Integer handleId ) {
+        try{
+
+            return  ResultUtil.error("返回List");
+        }catch (Exception e){
+
+            return  ResultUtil.error("失败");
+        }
+    }
 
     // #endregion
 }

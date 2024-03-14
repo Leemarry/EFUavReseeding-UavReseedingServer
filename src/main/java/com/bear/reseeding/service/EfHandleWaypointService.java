@@ -14,5 +14,7 @@ public interface EfHandleWaypointService {
     Integer insertBatchByList(List<EfHandleWaypoint> efHandleWaypoints);
 
 
+
+
     Integer insertByList(List<EfHandleWaypoint> efHandleWaypoints);
 }
