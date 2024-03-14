@@ -32,7 +32,7 @@ public class EfHandle implements Serializable {
      */
     private double alt;
     /**
-     * 飞行高度
+     * 补播无人机高度
      */
     private double flyAlt;
     /**

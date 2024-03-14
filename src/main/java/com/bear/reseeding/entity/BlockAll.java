@@ -5,6 +5,9 @@ public class BlockAll {
     private String id;
     private double gapSquare;
     private int reseedAreaNum;
+    private double reseedSquare;
+    private int seedNum;
+    private int handleId;
 
     public String getId() {
         return id;
@@ -46,6 +49,11 @@ public class BlockAll {
         this.seedNum = seedNum;
     }
 
-    private double reseedSquare;
-    private int seedNum;
+    public int getHandleId() {
+        return handleId;
+    }
+
+    public void setHandleId(int handleId) {
+        this.handleId = handleId;
+    }
 }

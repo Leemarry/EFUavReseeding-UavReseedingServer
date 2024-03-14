@@ -9,12 +9,10 @@ import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.EfLinkUtil;
 import com.bear.reseeding.datalink.MqttUtil;
-import com.bear.reseeding.eflink.EFLINK_MSG_3050;
+import com.bear.reseeding.eflink.*;
 import com.bear.reseeding.eflink.enums.EF_PARKING_APRON_ACK;
 import com.bear.reseeding.entity.*;
 import com.bear.reseeding.model.CurrentUser;
-import com.bear.reseeding.eflink.EFLINK_MSG_3121;
-import com.bear.reseeding.eflink.EFLINK_MSG_3123;
 import com.bear.reseeding.model.OkHttpClientSingleton;
 import com.bear.reseeding.model.Result;
 import com.bear.reseeding.service.*;
@@ -2051,25 +2049,9 @@ public class UavController {
     //endregion
 
     // region 二次处理
-    @ResponseBody
-    @PostMapping(value = "/sendHandle")
-    public Result sendHandle(@CurrentUser EfUser efUser) {
-        try {
-            //todo  通过Mqtt发送消息让遥控器通过UDP发送"handle"至算法服务器
-
-
-            return ResultUtil.success("发送处理信息成功");
-        } catch (Exception e) {
-            return ResultUtil.error("发送处理信息失败");
-        }
-
-    }
-
-
     /**
-     * 接收参数，请求算法服务，返回二次分析的预览结果(block_all)
+     * 接收参数，二次分析的预览结果(block_all)
      *
-     * @param efUser
      * @param latitude  原点纬度
      * @param longitude 原点经度
      * @param height    大地高
@@ -2079,93 +2061,132 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/confirmHandle")
-    public Result confirmHandle(@CurrentUser EfUser efUser, @RequestParam("latitude") Integer latitude, @RequestParam("longitude") Integer longitude,
+    public Result confirmHandle(@RequestParam(value = "uavId") String uavId, @CurrentUser EfUser efUser, @RequestParam("latitude") Integer latitude, @RequestParam("longitude") Integer longitude,
                                 @RequestParam("height") Integer height, @RequestParam("uavheight") Integer uavheight, @RequestBody(required = false) Map<String, Object> map) {
         try {
-            // 参数校验
-            if (latitude == null || longitude == null || height == null || uavheight == null) {
-                return ResultUtil.error("缺少必要参数");
+            //处理记录保存,用于生成唯一id当做handleId
+            EfHandle efHandle = new EfHandle();
+            efHandle.setDate(new Date());
+            efHandle.setLat(latitude);
+            efHandle.setLng(longitude);
+            efHandle.setAlt(height);
+            efHandle.setFlyAlt(uavheight);
+            EfHandle insert = efHandleService.insert(efHandle);
+            if (insert == null) {
+                return ResultUtil.error("处理记录保存失败");
             }
-
-            // 构建请求体
-            Map<String, Object> jsonBody = new HashMap<>();
-            jsonBody.put("original_latitude", latitude);
-            jsonBody.put("original_longitude", longitude);
-            jsonBody.put("original_height", height);
-            jsonBody.put("reseed_uav_height", uavheight);
-            jsonBody.put("reseed_machine_param", map);
-
-            // 转换为 JSON 字符串
-            ObjectMapper objectMapper = new ObjectMapper();
-            String jsonString = objectMapper.writeValueAsString(jsonBody);
-
-            // 发送Http请求
-            MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
-            okhttp3.RequestBody requestBody = okhttp3.RequestBody.create(mediaType, jsonString);
-
-            Request request = new Request.Builder()
-                    .url(HttpUrl)
-                    .post(requestBody)
-                    .build();
-
-            OkHttpClient client = OkHttpClientSingleton.getInstance(); // 单例模式获取 OkHttpClient 实例
-            Response response = client.newCall(request).execute();
-
-            if (response.isSuccessful()) {
-                // 处理成功的情况
-                String responseBody = response.body().string();
-                Gson gson = new Gson();
-                Type type = new TypeToken<Map<String, Object>>() {}.getType();
-                Map<String, Object> responseData = gson.fromJson(responseBody, type);
-
-                // 解析返回数据
-                double gapSquare = Double.valueOf(responseData.getOrDefault("gap_square", 0).toString());
-                double reseedAreaNum = Double.valueOf(responseData.getOrDefault("reseed_area_num", 0).toString());
-                double reseedSquare = Double.valueOf(responseData.getOrDefault("reseed_square", 0).toString());
-                int seedNum = Integer.valueOf(responseData.getOrDefault("seed_num", 0).toString());
-
-                // 保存处理记录至数据库
-                EfHandle efHandle = new EfHandle();
-                efHandle.setDate(new Date());
-                efHandle.setLat(latitude);
-                efHandle.setLng(longitude);
-                efHandle.setAlt(height);
-                efHandle.setFlyAlt(uavheight);
-                efHandle.setGapSquare(gapSquare);
-                efHandle.setReseedAreaNum(reseedAreaNum);
-                efHandle.setReseedSquare(reseedSquare);
-                efHandle.setSeedNum(seedNum);
-
-                EfHandle insert = efHandleService.insert(efHandle);
-                if (insert == null) {
-                    return ResultUtil.error("保存处理数据失败！");
-                }
-
-                // 返回处理信息成功
-                responseData.put("insertId", insert.getId());
-                return ResultUtil.success("发送处理信息成功", responseData);
-            } else {
-                return ResultUtil.error("Unexpected response code: " + response.code());
+            //打包19010--开始处理数据包
+            byte tag = (byte) (new Random().nextInt() & 0xFF);
+            EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
+            eflink_msg_19010.setHandleId(insert.getId());
+            eflink_msg_19010.setTag(tag);
+            eflink_msg_19010.setOriginal_latitude(latitude);
+            eflink_msg_19010.setOriginal_longitude(longitude);
+            eflink_msg_19010.setOrginal_height(height);
+            eflink_msg_19010.setReseed_uav_height(uavheight);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
+            //推送到mqtt
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
             }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 19010 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+
+            return ResultUtil.success("发送处理信息成功", insert);
         } catch (Exception e) {
             // 异常处理
-            LogUtil.logError("发送处理信息失败"+ e);
-            return ResultUtil.error("发送处理信息失败");
+            LogUtil.logError("发送处理信息异常" + e);
+            return ResultUtil.error("发送处理信息异常！");
         }
     }
 
     /**
-     * 确认预览结果，请求算法服务，返回二次分析的最终结果(block_all,block_list)
+     * 算法服务返回二次分析预览结果(block_all)
+     *
+     * @param blockAll 预览结果对象
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/previewHandle")
+    public Result previewHandle(@RequestBody BlockAll blockAll) {
+        try {
+            if (blockAll == null) {
+                return ResultUtil.error("接收二次分析预览结果失败！");
+            } else {
+                int handleId = blockAll.getHandleId();
+                // 根据handleId查询指定处理记录
+                EfHandle efHandle = efHandleService.queryById(handleId);
+                if (efHandle == null) {
+                    return ResultUtil.error("查询处理记录失败！");
+                }
+                efHandle.setGapSquare(blockAll.getGapSquare());
+                efHandle.setReseedSquare(blockAll.getReseedSquare());
+                efHandle.setReseedAreaNum(blockAll.getReseedAreaNum());
+                efHandle.setSeedNum(blockAll.getSeedNum());
+                // 更新处理记录
+                EfHandle update = efHandleService.update(efHandle);
+                if (update == null) {
+                    return ResultUtil.error("更新处理记录失败！");
+                }
+                return ResultUtil.success("接收二次分析预览结果成功。", efHandle);
+            }
+        } catch (Exception e) {
+            LogUtil.logError("接收二次分析预览结果异常" + e);
+            return ResultUtil.error("接收二次分析预览结果异常！");
+        }
+    }
+
+
+    /**
+     * 确认预览结果，请求算法服务器发送二次分析的最终结果(block_all,block_list)
      *
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/finalHandle")
-    public Result finalHandle() {
+    public Result finalHandle(@RequestParam(value = "handleId") int handleId, @RequestParam(value = "uavId") String uavId) {
         try {
+            //打包19011--确认上传数据包
+            byte tag = (byte) (new Random().nextInt() & 0xFF);
+            EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
+            eflink_msg_19011.setHandleId(handleId);
+            eflink_msg_19011.setTag(tag);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
+            //推送到mqtt
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
+            }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 19011 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+            return ResultUtil.success("确认预览信息成功");
+        } catch (Exception e) {
+            LogUtil.logError("确认预览信息异常！" + e);
+            return ResultUtil.error("确认预览信息异常");
+        }
+    }
 
+    /**
+     * 接收保存二次分析的最终结果(block_all, block_list)
+     *
+     * @param file 上传的压缩包文件
+     * @return 返回保存处理信息的结果
+     */
+    @ResponseBody
+    @PostMapping(value = "/saveHandle")
+    public Result saveHandle(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResultUtil.error("上传的压缩包不能为空！");
+            }
+            // 处理上传的压缩包文件
 
-            //todo MQTT发送消息让遥控器的UDP发送5次处理信息JSON文件的路径（"handle test message-时间戳.json"）至算法服务器
+            // 在发送处理信息前的其他逻辑
             return ResultUtil.success("发送处理信息成功");
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");
