@@ -3,10 +3,8 @@ package com.bear.reseeding.controller;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.model.Result;
 import com.bear.reseeding.utils.LogUtil;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * @Auther: bear
@@ -54,5 +52,21 @@ public class ADebugController {
             LogUtil.logMessage("已关闭调试日志输出!");
         }
         return ResultUtil.success();
+    }
+
+    @ResponseBody
+    @PostMapping(value = "/upload")
+    public Result upload(@RequestParam(value = "file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResultUtil.error("上传照片失败，空文件！");
+            }
+            // 获取文件名-大小
+            String fileName = file.getOriginalFilename();
+            return ResultUtil.success(fileName);
+        } catch (Exception e) {
+            LogUtil.logError("测试异常：" + e.toString());
+            return ResultUtil.error("测试异常,请联系管理员!");
+        }
     }
 }
