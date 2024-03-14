@@ -32,7 +32,7 @@
         limit #{offset}, #{limit}
     </select>
 
-    <!--   queryByeachsortieIdOruavId -->
+
     <select id="queryByeachsortieIdOruavId" resultMap="EfCavityMap">
         select
         id, cavity_name, lat, lng, alt, altabs, size, level, seeding_count, eachsortie_id, photo_id

@@ -433,7 +433,8 @@ public class TaskAnsisPhoto {
                     efCavity.setAltabs(efCavityAlt);
                     efCavity.setSize(efCavitySquare);
                     efCavity.setLevel(Integer.valueOf(efCavityLevel));
-                    efCavity.setCavityName(efCavityId);
+//                    efCavity.setCavityName(efCavityId);
+                    efCavity.setId(efCavityId);
                     efCavity.setSeedingCount((int) efCavitySeedNum);
                     efCavity.setEachsortieId(efUavEachsortieId); // 飞行架次
                     efCavity.setPhotoId(photoId);

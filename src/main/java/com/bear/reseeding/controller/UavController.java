@@ -2266,15 +2266,17 @@ public class UavController {
                                     }
                                     // reseedPoint == EfHandleWaypoint
                                     if(reseedPointList != null){
-                                        EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
+                                        List<EfHandleWaypoint> reseedPoints = new ArrayList<>();
+//                                        EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
                                         for (int i = 0; i < reseedPointList.size(); i++) {
                                             JSONArray entityValues = reseedPointList.getJSONArray(i);
                                             double prop1 = entityValues.getDouble(0); // 经度
                                             double prop2 = entityValues.getDouble(1);  // 纬度
                                             double prop3 = entityValues.getDouble(2); // 地高
                                             Integer prop4 = entityValues.getInteger(3); // 路径补播所需草种数
-
-                                            reseedPoints[i] = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
+                                            EfHandleWaypoint Waypoint = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
+                                            reseedPoints.add(Waypoint);
+//                                            reseedPoints[i] = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
                                         }
                                         synchronized (resultObject) {
                                             resultObject.put("reseedPointList", reseedPoints);
@@ -2299,7 +2301,7 @@ public class UavController {
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
                                 synchronized (resultObject) {
-                                    resultObject.put(key, base64Image);
+//                                    resultObject.put(key, base64Image);
                                 }
                                 // 任务完成后，减少任务计数
                                 taskCount.decrementAndGet();
@@ -2336,7 +2338,9 @@ public class UavController {
             if(obj == null){
                 return  ResultUtil.error("当前未 获取handle_Id");
             }
+            // 重新
             Integer handleId = (Integer) obj;
+
 
             List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
             blockList.stream().forEach(block -> {
@@ -2345,7 +2349,7 @@ public class UavController {
                 String imgStr = (String) resultObject.get(id+".jpg");// "l";
                 block.setImg(imgStr);
             });
-//          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
+          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
 
 
             BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
@@ -2355,7 +2359,7 @@ public class UavController {
             reseedPointlist.stream().forEach(waypoint -> {
                 waypoint.setHandleId(handleId);
             });
-//            efHandleWaypointService.insertBatchByList(reseedPointlist);
+            Integer a =  efHandleWaypointService.insertBatchByList(reseedPointlist);
 
 
 
@@ -2390,6 +2394,23 @@ public class UavController {
                 extension.equalsIgnoreCase("7z");
     }
 
+
+    @PostMapping(value = "/secondaryAnalysi")
+    public Result secondaryAnalysi(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
+        try{
+            List<Student> stundenList = new ArrayList<>();
+            // Adding three individuals to the list
+            stundenList.add(new Student(1, "Alice", 20));
+            stundenList.add(new Student(2, "Bob", 22));
+            stundenList.add(new Student(3, "Charlie", 21));
+
+//            Integer a =  efHandleWaypointService.insertBatchByList(reseedPointlist);
+            return  ResultUtil.error("失败");
+        }catch (Exception e){
+
+            return  ResultUtil.error("失败");
+        }
+    }
 
     // #endregion
 }
