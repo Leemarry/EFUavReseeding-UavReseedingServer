@@ -1053,7 +1053,7 @@ public class UavController {
      * 上传航点任务给无人机
      *
      * @param uavId      无人机ID
-     *                   param mission 数组信息
+     * @param mission    数组信息
      * @param altType    高度类型：0 使用相对高度，1使用海拔高度
      * @param takeoffAlt 安全起飞高度，相对于无人机当前位置的高度，单位米  相对高度
      * @param homeAlt    起飞点海拔（如果传1，并且使用海拔高度飞行，则自动获取无人机起飞点海拔高度 多边形绘制无法使用）
@@ -1699,6 +1699,38 @@ public class UavController {
     }
     //endregion
 
+    //region 补种无人机航线处理
+
+    /**
+     * 上传航点任务给无人机
+     *
+     * @return 成功/失败
+     */
+    @ResponseBody
+    @PostMapping(value = "/uploadRouteTask")
+    public Result uploadRouteTask(@RequestParam("uavId") String uavId,@RequestBody List<byte[]> WaypointEfList,@RequestParam("altType") int altType,HttpServletRequest request) {
+        try {
+            if (WaypointEfList == null || WaypointEfList.size() <= 0) {
+                return ResultUtil.error("航线为空！");
+            }
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+
+            return ResultUtil.success("上传巡检航线成功。");
+        } catch (Exception e) {
+            LogUtil.logError("上传航点任务至无人机异常：" + e.toString());
+            return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
+        }
+    }
+
+
+    //endregion
+
     //region 视频处理
 
     /**
@@ -2062,8 +2094,8 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/confirmHandle")
-    public Result confirmHandle(@RequestParam(value = "uavId") String uavId, @CurrentUser EfUser efUser, @RequestParam("latitude") Integer latitude, @RequestParam("longitude") Integer longitude,
-                                @RequestParam("height") Integer height, @RequestParam("uavheight") Integer uavheight, @RequestBody(required = false) Map<String, Object> map) {
+    public Result confirmHandle(@RequestParam(value = "uavId") String uavId, @CurrentUser EfUser efUser, @RequestParam("latitude") double latitude, @RequestParam("longitude") double longitude,
+                                @RequestParam("height") float height, @RequestParam("uavheight") float uavheight, @RequestBody(required = false) Map<String, Object> map) {
         try {
             //处理记录保存,用于生成唯一id当做handleId
             EfHandle efHandle = new EfHandle();
@@ -2140,7 +2172,6 @@ public class UavController {
         }
     }
 
-
     /**
      * 确认预览结果，请求算法服务器发送二次分析的最终结果(block_all,block_list)
      *
@@ -2171,29 +2202,6 @@ public class UavController {
             return ResultUtil.error("确认预览信息异常");
         }
     }
-
-    /**
-     * 接收保存二次分析的最终结果(block_all, block_list)
-     *
-     * @param file 上传的压缩包文件
-     * @return 返回保存处理信息的结果
-     */
-    @ResponseBody
-    @PostMapping(value = "/saveHandle")
-    public Result saveHandle(@RequestParam("file") MultipartFile file) {
-        try {
-            if (file.isEmpty()) {
-                return ResultUtil.error("上传的压缩包不能为空！");
-            }
-            // 处理上传的压缩包文件
-
-            // 在发送处理信息前的其他逻辑
-            return ResultUtil.success("发送处理信息成功");
-        } catch (Exception e) {
-            return ResultUtil.error("发送处理信息失败");
-        }
-    }
-
 
     @ResponseBody
     @PostMapping(value = "/secondaryAnalysis")
@@ -2455,8 +2463,8 @@ public class UavController {
      * 查询某一个段时间内处理数据
      *
      * @param efUser    当前用户
-     * @param startTime 查询时间开始
-     * @param endTime   查询时间结束
+     * @param startTime 查询时间开始（时间戳）
+     * @param endTime   查询时间结束（时间戳）
      * @return 返回查询结果
      */
     @PostMapping(value = "/queryHandle")
@@ -2466,8 +2474,11 @@ public class UavController {
             if (startTime >= endTime) {
                 return ResultUtil.error("开始时间应早于结束时间");
             }
+            //处理时间戳
+            Date startDate = new Date(startTime);
+            Date endDate = new Date(endTime);
 
-            List<EfHandle> efHandleList = efHandleService.queryByTime(startTime, endTime);
+            List<EfHandle> efHandleList = efHandleService.queryByTime(startDate, endDate);
 
             // 查询结果判空处理
             if (efHandleList != null && !efHandleList.isEmpty()) {

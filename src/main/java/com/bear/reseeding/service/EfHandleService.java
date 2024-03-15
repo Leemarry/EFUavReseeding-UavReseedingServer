@@ -2,6 +2,7 @@ package com.bear.reseeding.service;
 
 import com.bear.reseeding.entity.EfHandle;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -56,9 +57,9 @@ public interface EfHandleService {
     /**
      * 根据时间段查询数据
      *
-     * @param startTime 开始时间
-     * @param endTime   结束时间
+     * @param startDate 开始时间
+     * @param endDate   结束时间
      * @return 实例对象list
      */
-    List<EfHandle> queryByTime(long startTime, long endTime);
+    List<EfHandle> queryByTime(Date startDate, Date endDate);
 }

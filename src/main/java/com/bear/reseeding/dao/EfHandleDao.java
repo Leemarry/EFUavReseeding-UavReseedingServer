@@ -3,6 +3,7 @@ package com.bear.reseeding.dao;
 import com.bear.reseeding.entity.EfHandle;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -82,10 +83,10 @@ public interface EfHandleDao {
     /**
      * 根据时间段查询数据
      *
-     * @param startTime 开始时间
-     * @param endTime   结束时间
+     * @param startDate 开始时间
+     * @param endDate   结束时间
      * @return 实例对象list
      */
-    List<EfHandle> queryByTime(@Param("startTime") long startTime, @Param("endTime") long endTime);
+    List<EfHandle> queryByTime(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
 }
 

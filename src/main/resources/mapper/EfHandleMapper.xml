@@ -92,9 +92,10 @@
         </where>
     </select>
     <!--时间段查询数据-->
-    <select id="queryByTime" resultMap="EfHandleMap" parameterType="List">
+    <select id="queryByTime" resultMap="EfHandleMap" parameterType="Map">
         select * from ef_handle
-        where date between #{startTime} and #{endTime}
+        where date between #{startDate} and #{endDate}
+        order by date desc
     </select>
 
     <!--新增所有列-->

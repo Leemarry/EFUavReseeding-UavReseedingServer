@@ -6,6 +6,7 @@ import com.bear.reseeding.service.EfHandleService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -80,12 +81,12 @@ public class EfHandleServiceImpl implements EfHandleService {
     /**
      * 根据时间段查询数据
      *
-     * @param startTime 开始时间
-     * @param endTime   结束时间
+     * @param startDate 开始时间
+     * @param endDate   结束时间
      * @return 实例对象list
      */
     @Override
-    public List<EfHandle> queryByTime(long startTime, long endTime) {
-        return this.efHandleDao.queryByTime(startTime,endTime);
+    public List<EfHandle> queryByTime(Date startDate, Date endDate) {
+        return this.efHandleDao.queryByTime(startDate,endDate);
     }
 }

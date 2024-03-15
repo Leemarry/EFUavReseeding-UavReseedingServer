@@ -14,7 +14,7 @@ public class EFLINK_MSG_19010 {
     /**
      * 内容段数据长度
      */
-    public final int EFLINK_MSG_LENGTH = 26;
+    public final int EFLINK_MSG_LENGTH = 30;
     /**
      * 版本
      */
@@ -30,11 +30,11 @@ public class EFLINK_MSG_19010 {
     /**
      * 原点纬度
      */
-    int original_latitude;
+    double original_latitude;
     /**
      * 原点经度
      */
-    int original_longitude;
+    double original_longitude;
     /**
      * 原点大地高
      */
@@ -70,15 +70,15 @@ public class EFLINK_MSG_19010 {
     }
 
     public void InitPacket(byte[] packet, int index) {
-        if (packet != null && packet.length >= index + 29) {
+        if (packet != null && packet.length >= index + EFLINK_MSG_LENGTH) {
             ByteBuffer buffer = ByteBuffer.wrap(packet);
             buffer.order(ByteOrder.LITTLE_ENDIAN);
             buffer.position(index);
             VersionInside = buffer.get();
             Tag = buffer.get();
             HandleId = buffer.getInt();
-            original_latitude = buffer.getInt();
-            original_longitude = buffer.getInt();
+            original_latitude = buffer.getDouble();
+            original_longitude = buffer.getDouble();
             orginal_height = buffer.getFloat();
             reseed_uav_height = buffer.getFloat();
             reseed_machine_param = buffer.getFloat();
@@ -92,8 +92,8 @@ public class EFLINK_MSG_19010 {
         buffer.put(VersionInside);
         buffer.put(Tag);
         buffer.putInt(HandleId);
-        buffer.putInt(original_latitude);
-        buffer.putInt(original_longitude);
+        buffer.putDouble(original_latitude);
+        buffer.putDouble(original_longitude);
         buffer.putFloat(orginal_height);
         buffer.putFloat(reseed_uav_height);
         buffer.putFloat(reseed_machine_param);
@@ -124,19 +124,19 @@ public class EFLINK_MSG_19010 {
         HandleId = handleId;
     }
 
-    public int getOriginal_latitude() {
+    public double getOriginal_latitude() {
         return original_latitude;
     }
 
-    public void setOriginal_latitude(int original_latitude) {
+    public void setOriginal_latitude(double original_latitude) {
         this.original_latitude = original_latitude;
     }
 
-    public int getOriginal_longitude() {
+    public double getOriginal_longitude() {
         return original_longitude;
     }
 
-    public void setOriginal_longitude(int original_longitude) {
+    public void setOriginal_longitude(double original_longitude) {
         this.original_longitude = original_longitude;
     }
 
