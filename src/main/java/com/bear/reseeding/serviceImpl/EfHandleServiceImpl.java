@@ -76,4 +76,16 @@ public class EfHandleServiceImpl implements EfHandleService {
     public boolean deleteById(Integer id) {
         return this.efHandleDao.deleteById(id) > 0;
     }
+
+    /**
+     * 根据时间段查询数据
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 实例对象list
+     */
+    @Override
+    public List<EfHandle> queryByTime(long startTime, long endTime) {
+        return this.efHandleDao.queryByTime(startTime,endTime);
+    }
 }

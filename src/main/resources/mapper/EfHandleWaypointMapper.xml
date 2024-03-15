@@ -9,7 +9,6 @@
         <result property="seedNum" column="seed_num" jdbcType="INTEGER"/>
         <result property="flyTimes" column="fly_times" jdbcType="INTEGER"/>
         <result property="handleId" column="handle_id" jdbcType="INTEGER"/>
-
     </resultMap>
 
     <!-- java项目www.fhadmin.org -->
@@ -27,5 +26,10 @@
         </foreach>
 
     </insert>
+    <!--根据handleId查询-->
+    <select id="queryByHandleId" resultMap="EfCompanyMap" parameterType="int">
+        SELECT * FROM ef_handle_waypoint
+        WHERE handle_id = #{handleId}
+    </select>
 
 </mapper>

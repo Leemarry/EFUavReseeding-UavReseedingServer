@@ -2049,6 +2049,7 @@ public class UavController {
     //endregion
 
     // region 二次处理
+
     /**
      * 接收参数，二次分析的预览结果(block_all)
      *
@@ -2304,7 +2305,7 @@ public class UavController {
                                     JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list EfHandleBlockList
                                     JSONArray reseedPointList = jsonObject.getJSONArray("reseed_point_list"); // 补播路径点列表JSON文件
                                     // blockAllArray
-                                    if(blockAllArray != null){
+                                    if (blockAllArray != null) {
                                         BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
                                         System.out.println(blockAll);
                                         synchronized (resultObject) {
@@ -2312,7 +2313,7 @@ public class UavController {
                                         }
                                     }
                                     // EfHandleBlockList
-                                    if(blockListArray != null){
+                                    if (blockListArray != null) {
                                         List<EfHandleBlockList> blockList = new ArrayList<>();
                                         for (int i = 0; i < blockListArray.size(); i++) {
                                             EfHandleBlockList block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), EfHandleBlockList.class);
@@ -2323,7 +2324,7 @@ public class UavController {
                                         }
                                     }
                                     // reseedPoint == EfHandleWaypoint
-                                    if(reseedPointList != null){
+                                    if (reseedPointList != null) {
                                         List<EfHandleWaypoint> reseedPoints = new ArrayList<>();
 //                                        EfHandleWaypoint[] reseedPoints = new EfHandleWaypoint[reseedPointList.size()];
                                         for (int i = 0; i < reseedPointList.size(); i++) {
@@ -2354,7 +2355,7 @@ public class UavController {
                         } else if (key.endsWith(".jpg")) {
                             byte[] bytes = byteArrayOutputStream.toByteArray();
                             // 使用CompletableFuture在新线程中执行异步任务
-                            executorService.submit(()  -> {
+                            executorService.submit(() -> {
                                 // 将字节数组转换为Base64字符串 data:image/png;base64,
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
@@ -2407,7 +2408,7 @@ public class UavController {
                 String imgStr = (String) resultObject.get(id + ".jpg");// "l";
                 block.setImg(imgStr);
             });
-          Integer s =  efHandleBlockListService.insertBatchByList(blockList);
+            Integer s = efHandleBlockListService.insertBatchByList(blockList);
 
 
             BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
@@ -2417,9 +2418,7 @@ public class UavController {
             reseedPointlist.stream().forEach(waypoint -> {
                 waypoint.setHandleId(handleId);
             });
-            Integer a =  efHandleWaypointService.insertBatchByList(reseedPointlist);
-
-
+            Integer a = efHandleWaypointService.insertBatchByList(reseedPointlist);
 
 
             // 存储
@@ -2444,7 +2443,6 @@ public class UavController {
     }
 
 
-
     public static boolean isCompressedFile(String fileName) {
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
         return extension.equalsIgnoreCase("zip") ||
@@ -2454,60 +2452,92 @@ public class UavController {
 
 
     /**
-     *  查询某一个段时间内处理数据
+     * 查询某一个段时间内处理数据
      *
-     * @param efUser
+     * @param efUser    当前用户
      * @param startTime 查询时间开始
      * @param endTime   查询时间结束
-     * @return
+     * @return 返回查询结果
      */
     @PostMapping(value = "/queryHandle")
-    public Result queryHandle(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = false) long startTime, @RequestParam(value = "endTime", required = false) long endTime ) {
-        try{
+    public Result queryHandle(@CurrentUser EfUser efUser, @RequestParam(value = "startTime") long startTime, @RequestParam(value = "endTime") long endTime) {
+        try {
+            // 参数验证：确保开始时间早于结束时间
+            if (startTime >= endTime) {
+                return ResultUtil.error("开始时间应早于结束时间");
+            }
 
+            List<EfHandle> efHandleList = efHandleService.queryByTime(startTime, endTime);
 
-            return  ResultUtil.error("返回List");
-        }catch (Exception e){
-
-            return  ResultUtil.error("失败");
+            // 查询结果判空处理
+            if (efHandleList != null && !efHandleList.isEmpty()) {
+                return ResultUtil.success("查询完成", efHandleList);
+            } else {
+                return ResultUtil.success("未查询到符合条件的处理数据", Collections.emptyList());
+            }
+        } catch (Exception e) {
+            LogUtil.logError("查询一段时间内的处理数据异常" + e);
+            return ResultUtil.error("查询异常");
         }
     }
 
     /**
-     *通过处理ID 查询作业地块信息列表
-     * @param efUser
-     * @param handleId 查询时间开始
-     * @return
+     * 通过处理ID查询作业地块信息列表
+     *
+     * @param efUser   当前用户
+     * @param handleId 处理记录ID
+     * @return 返回查询结果
      */
     @PostMapping(value = "/queryBlockList")
-    public Result queryBlockList(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = true) Integer handleId ) {
-        try{
+    public Result queryBlockList(@CurrentUser EfUser efUser, @RequestParam(value = "handleId") int handleId) {
+        try {
+            // 参数验证：确保 handleId 大于 0
+            if (handleId <= 0) {
+                return ResultUtil.error("处理记录ID不合法");
+            }
 
+            List<EfHandleBlockList> efHandleBlockLists = efHandleBlockListService.queryByHandleId(handleId);
 
-            return  ResultUtil.error("返回List");
-        }catch (Exception e){
-
-            return  ResultUtil.error("失败");
+            // 查询结果判空处理
+            if (efHandleBlockLists != null && !efHandleBlockLists.isEmpty()) {
+                return ResultUtil.success("查询成功", efHandleBlockLists);
+            } else {
+                return ResultUtil.success("未查询到符合条件的作业地块信息", Collections.emptyList());
+            }
+        } catch (Exception e) {
+            LogUtil.logError("查询作业地块信息列表异常" + e);
+            return ResultUtil.error("查询异常");
         }
     }
 
     /**
-     *通过处理ID 查询播种路径点列表
-     * @param efUser
-     * @param handleId 查询时间开始
-     * @return
+     * 通过处理ID查询播种路径点列表
+     *
+     * @param efUser   当前用户
+     * @param handleId 处理记录ID
+     * @return 返回查询结果
      */
     @PostMapping(value = "/queryPointList")
-    public Result queryPointList(@CurrentUser EfUser efUser,   @RequestParam(value = "startTime", required = true) Integer handleId ) {
-        try{
+    public Result queryPointList(@CurrentUser EfUser efUser, @RequestParam(value = "handleId") int handleId) {
+        try {
+            // 参数验证：确保 handleId 大于 0
+            if (handleId <= 0) {
+                return ResultUtil.error("处理记录ID不合法");
+            }
 
-            return  ResultUtil.error("返回List");
-        }catch (Exception e){
+            List<EfHandleWaypoint> efHandleWaypoints = efHandleWaypointService.queryByHandleId(handleId);
 
-            return  ResultUtil.error("失败");
+            // 查询结果判空处理
+            if (efHandleWaypoints != null && !efHandleWaypoints.isEmpty()) {
+                return ResultUtil.success("查询成功", efHandleWaypoints);
+            } else {
+                return ResultUtil.success("未查询到符合条件的播种路径点信息", Collections.emptyList());
+            }
+        } catch (Exception e) {
+            LogUtil.logError("查询播种路径点列表异常" + e);
+            return ResultUtil.error("查询异常");
         }
     }
-
     // #endregion
 }
 

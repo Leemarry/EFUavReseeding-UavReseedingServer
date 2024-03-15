@@ -1,6 +1,8 @@
 package com.bear.reseeding.dao;
+
 import com.bear.reseeding.entity.EfHandle;
 import org.apache.ibatis.annotations.Param;
+
 import java.util.List;
 
 /**
@@ -22,8 +24,8 @@ public interface EfHandleDao {
     /**
      * 查询指定行数据
      *
-     * @param  
-     * @param  
+     * @param
+     * @param
      * @return 对象列表
      */
     List<EfHandle> queryAllByLimit(@Param("offset") int offset, @Param("limit") int limit);
@@ -77,5 +79,13 @@ public interface EfHandleDao {
      */
     int deleteById(Integer id);
 
+    /**
+     * 根据时间段查询数据
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 实例对象list
+     */
+    List<EfHandle> queryByTime(@Param("startTime") long startTime, @Param("endTime") long endTime);
 }
 

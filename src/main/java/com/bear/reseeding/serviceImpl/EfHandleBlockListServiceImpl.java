@@ -20,6 +20,16 @@ public class EfHandleBlockListServiceImpl implements EfHandleBlockListService {
         return efHandleBlockListDao.insertBatchByList(blockList);
     }
 
+    /**
+     * 根据HandleId查询作业地块处理信息
+     *
+     * @param handleId 处理记录Id
+     * @return 实例对象list
+     */
+    @Override
+    public List<EfHandleBlockList> queryByHandleId(Integer handleId) {
+        return efHandleBlockListDao.queryByHandleId(handleId);
+    }
 
 
 }

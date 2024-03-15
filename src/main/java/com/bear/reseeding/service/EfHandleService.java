@@ -53,4 +53,12 @@ public interface EfHandleService {
      */
     boolean deleteById(Integer id);
 
+    /**
+     * 根据时间段查询数据
+     *
+     * @param startTime 开始时间
+     * @param endTime   结束时间
+     * @return 实例对象list
+     */
+    List<EfHandle> queryByTime(long startTime, long endTime);
 }

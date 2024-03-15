@@ -40,5 +40,16 @@ public class EfHandleWaypointServiceImpl implements EfHandleWaypointService {
 //        return efHandleWaypointDao.insertByList(efHandleWaypoints);
     }
 
+    /**
+     * 根据HandleId查询播种路径点列表
+     *
+     * @param handleId 处理记录ID
+     * @return 实例对象list
+     */
+    @Override
+    public List<EfHandleWaypoint> queryByHandleId(int handleId) {
+        return efHandleWaypointDao.queryByHandleId(handleId);
+    }
+
 
 }

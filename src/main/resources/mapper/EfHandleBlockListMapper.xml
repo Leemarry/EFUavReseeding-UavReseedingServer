@@ -8,19 +8,26 @@
         <result property="centreLongitude" column="centre_longitude" jdbcType="DOUBLE"/>
         <result property="seedNum" column="seed_num" jdbcType="INTEGER"/>
         <result property="reseedAreaNum" column="reseed_area_num" jdbcType="INTEGER"/>
-        <result property="reseedSquare" column="reseed_square" jdbcType="DOUBLE" />
+        <result property="reseedSquare" column="reseed_square" jdbcType="DOUBLE"/>
         <result property="handleId" column="handle_id" jdbcType="INTEGER"/>
-        <result property="img" column="img"  jdbcType="LONGVARCHAR" />
+        <result property="img" column="img" jdbcType="LONGVARCHAR"/>
     </resultMap>
 
 
     <!-- 使用foreach 批量新增    -->
     <insert id="insertBatchByList">
-        INSERT INTO ef_handle_block_list (id,gap_square,centre_latitude,centre_longitude,seed_num,reseed_area_num,reseed_square,handle_id,img) VALUES
+        INSERT INTO ef_handle_block_list
+        (id,gap_square,centre_latitude,centre_longitude,seed_num,reseed_area_num,reseed_square,handle_id,img) VALUES
         <foreach collection="blockList" item="entity" separator=",">
             (#{entity.id},#{entity.gapSquare},#{entity.centreLatitude},#{entity.centreLongitude},#{entity.seedNum},#{entity.reseedAreaNum},#{entity.reseedSquare},#{entity.handleId},#{entity.img})
         </foreach>
     </insert>
+
+    <!--根据handleId查询实例数据-->
+    <select id="queryByHandleId" resultMap="EfCompanyMap" parameterType="int">
+        SELECT * FROM ef_handle_block_list
+        WHERE handle_id = #{handleId}
+    </select>
 
 
 </mapper>

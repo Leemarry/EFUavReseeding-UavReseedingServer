@@ -91,6 +91,11 @@
             </if>
         </where>
     </select>
+    <!--时间段查询数据-->
+    <select id="queryByTime" resultMap="EfHandleMap" parameterType="List">
+        select * from ef_handle
+        where date between #{startTime} and #{endTime}
+    </select>
 
     <!--新增所有列-->
     <insert id="insert" keyProperty="id" useGeneratedKeys="true">
