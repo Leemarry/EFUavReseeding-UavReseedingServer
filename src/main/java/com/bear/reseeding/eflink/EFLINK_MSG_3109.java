@@ -38,6 +38,10 @@ public class EFLINK_MSG_3109 implements Serializable {
     private int PacketIndex;
     private List<WaypointDji> waypointDjiList;
 
+    public boolean isLastPacket() {
+        // 判断是否是最后一个包
+        return (PacketIndex + 1) * WpCount >= WpsCount;
+    }
 
     public EFLINK_MSG_3109() {
     }

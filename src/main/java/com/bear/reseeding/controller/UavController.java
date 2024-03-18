@@ -1750,10 +1750,9 @@ public class UavController {
             eflink_msg_3102.setMissionGotoWaypointMode(missionGotoWaypointMode);
             eflink_msg_3102.setMissionHeadingMode(missionHeadingMode);
             eflink_msg_3102.setMissionRepeatTimes(missionRepeatTimes);
-
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3102.EFLINK_MSG_ID, eflink_msg_3102.packet());
             //region EFLINK_MSG_3102请求上传 等待ACK
             EFLINK_MSG_3105 eflink_msg_3105 = new EFLINK_MSG_3105();
-            byte[] packet = EfLinkUtil.Packet(eflink_msg_3102.EFLINK_MSG_ID, eflink_msg_3102.packet());
             long timeout = System.currentTimeMillis();
             String key = uavId + "_" + eflink_msg_3105.EFLINK_MSG_ID + "_" + tag;
             boolean goon = false;
@@ -1871,11 +1870,105 @@ public class UavController {
         }
     }
 
-//    @ResponseBody
-//    @PostMapping(value = "/downloadRouteTask")
-//    public Result downloadRouteTask(@RequestParam("uavId") String uavId, HttpServletRequest request) {
-//
-//    }
+    /**
+     * 补种无人机航线下载
+     *
+     * @param uavId 无人机ID
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/downloadRouteTask")
+    public Result downloadRouteTask(@RequestParam("uavId") String uavId, HttpServletRequest request) {
+        try {
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机！");
+            }
+            // 根据无人机id获取无人机sn
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId);
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            // EFLINK_MSG_3107请求下载航线
+            int tag = ((byte) new Random().nextInt()) & 0xFF;
+            EFLINK_MSG_3107 eflink_msg_3107 = new EFLINK_MSG_3107();
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_3107.EFLINK_MSG_ID, eflink_msg_3107.packet());
+            // 等待EFLINK_MSG_3110ACK回复
+            EFLINK_MSG_3110 eflink_msg_3110 = new EFLINK_MSG_3110();
+            long timeout = System.currentTimeMillis();
+            String key = uavId + "_" + eflink_msg_3107.EFLINK_MSG_ID + "_" + tag;
+            boolean goon = false;
+            String error = "未知错误！";
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (ack != null) {
+                    eflink_msg_3110 = (EFLINK_MSG_3110) ack;
+                    if (eflink_msg_3110.getResult() == 1) {
+                        goon = true;
+                        break;
+                    } else if (eflink_msg_3110.getResult() == 0) {
+                        error = "下载航线任务文件失败，请重试！";
+                        break;
+                    } else {
+                        error = "无人机未准备好，请待会再试！";
+                        break;
+                    }
+                }
+                if (timeout + 20000 < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(200);
+            }
+
+            if (!goon) {
+                return ResultUtil.error(error);
+            } else {
+                // 得到回复ACK开始获取航线描述包 EFLINK_MSG_3108
+                EFLINK_MSG_3108 eflink_msg_31081 = new EFLINK_MSG_3108();
+                long start = System.currentTimeMillis();
+                EFLINK_MSG_3108 eflink_msg_3108 = null;
+                while (true) {
+                    Object ack3108 = redisUtils.get(uavId + "_" + eflink_msg_31081.EFLINK_MSG_ID);
+                    if (ack3108 != null) {
+                        eflink_msg_3108 = (EFLINK_MSG_3108) ack3108;
+                        break;
+                    }
+                    if (System.currentTimeMillis() - start > 20000) {
+                        return ResultUtil.error("获取航线描述超时！");
+                    }
+                    Thread.sleep(200);
+                }
+
+                // 开始下载航点内容
+                EFLINK_MSG_3109 eflink_msg_3109 = new EFLINK_MSG_3109();
+                ArrayList<WaypointDji> waypointList = new ArrayList<>();
+
+                String waypointKey = uavId + "_" + eflink_msg_3109.EFLINK_MSG_ID + "_" + eflink_msg_3108.getTag();
+                start = System.currentTimeMillis();
+                while (true) {
+                    Object ack3109 = redisUtils.get(waypointKey);
+                    if (ack3109 != null) {
+                        eflink_msg_3109 = (EFLINK_MSG_3109) ack3109;
+                        waypointList.addAll(eflink_msg_3109.getWaypointDjiList());
+                        if (eflink_msg_3109.isLastPacket()) {
+                            break; // 如果是最后一个包，则跳出循环
+                        }
+                    }
+                    if (System.currentTimeMillis() - start > 20000) {
+                        return ResultUtil.error("获取航点数据超时！");
+                    }
+                    Thread.sleep(200);
+                }
+                // 返回航点航线数据
+                return ResultUtil.success("航线下载完成！", waypointList);
+            }
+        } catch (Exception e) {
+            return ResultUtil.error("航线下载异常，请联系管理员！");
+        }
+    }
 
 
     //endregion
