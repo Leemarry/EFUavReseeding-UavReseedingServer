@@ -32,6 +32,9 @@ public class EFLINK_MSG_3105 implements Serializable {
      */
     private int Result;
 
+    public EFLINK_MSG_3105() {
+    }
+
     public EFLINK_MSG_3105(int tag, int result) {
         Tag = tag;
         Result = result;
