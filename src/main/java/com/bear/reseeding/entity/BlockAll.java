@@ -8,6 +8,15 @@ public class BlockAll {
     private double reseedSquare;
     private int seedNum;
     private int handleId;
+    private String handleUuid;
+
+    public String getHandleUuid() {
+        return handleUuid;
+    }
+
+    public void setHandleUuid(String handleUuid) {
+        this.handleUuid = handleUuid;
+    }
 
     public String getId() {
         return id;

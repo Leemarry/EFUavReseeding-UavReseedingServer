@@ -1,6 +1,7 @@
 package com.bear.reseeding.controller;
 
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 
 import static org.json.JSONObject.*;
@@ -9,6 +10,8 @@ import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.datalink.EfLinkUtil;
 import com.bear.reseeding.datalink.MqttUtil;
+import com.bear.reseeding.datalink.WebSocketLink;
+import com.bear.reseeding.datalink.WebSocketLinks;
 import com.bear.reseeding.eflink.*;
 import com.bear.reseeding.eflink.enums.EF_PARKING_APRON_ACK;
 import com.bear.reseeding.entity.*;
@@ -40,8 +43,11 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 import org.apache.commons.io.FilenameUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.Cursor;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,6 +60,7 @@ import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.io.File;
 import java.util.Calendar;
@@ -95,6 +102,9 @@ public class UavController {
 
     @Resource
     private EfTaskKmzService efTaskKmzService;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     /**
      * 无人机与公司关联
@@ -2309,10 +2319,8 @@ public class UavController {
             String startTimeStr = dateFormat.format(new Date(startTime));
             String endTimeStr = dateFormat.format(new Date(endTime));
             List<EfTaskKmz> efTaskKmzList = efTaskKmzService.queryByUcidAndTime(Ucid, startTimeStr, endTimeStr);
-            if (efTaskKmzList.size() >= 0) {
-                return ResultUtil.success("查询航线任务列表信息成功！", efTaskKmzList);
-            }
-            return ResultUtil.error("查询航线任务列表信息失败！请联系管理员！");
+
+            return ResultUtil.success("查询航线任务列表信息成功！", efTaskKmzList);
         } catch (Exception e) {
             LogUtil.logError("查询无人机类型失败");
             return ResultUtil.error("查询无人机类型异常,请联系管理员！");
@@ -2331,13 +2339,14 @@ public class UavController {
      * @param longitude 原点经度
      * @param height    大地高
      * @param uavheight 飞行高度
+     * @param HandleUuid 处理唯一标识符UUID
      * @param map       补播机构参数
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/confirmHandle")
     public Result confirmHandle(@RequestParam(value = "uavId") String uavId, @CurrentUser EfUser efUser, @RequestParam("latitude") double latitude, @RequestParam("longitude") double longitude,
-                                @RequestParam("height") float height, @RequestParam("uavheight") float uavheight, @RequestBody(required = false) Map<String, Object> map) {
+                                @RequestParam("height") float height, @RequestParam("uavheight") float uavheight, @RequestParam("HandleUuid") String HandleUuid, @RequestBody(required = false) Map<String, Object> map) {
         try {
             //处理记录保存,用于生成唯一id当做handleId
             EfHandle efHandle = new EfHandle();
@@ -2346,31 +2355,79 @@ public class UavController {
             efHandle.setLng(longitude);
             efHandle.setAlt(height);
             efHandle.setFlyAlt(uavheight);
-            EfHandle insert = efHandleService.insert(efHandle);
-            if (insert == null) {
-                return ResultUtil.error("处理记录保存失败");
-            }
-            //打包19010--开始处理数据包
-            byte tag = (byte) (new Random().nextInt() & 0xFF);
-            EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
-            eflink_msg_19010.setHandleId(insert.getId());
-            eflink_msg_19010.setTag(tag);
-            eflink_msg_19010.setOriginal_latitude(latitude);
-            eflink_msg_19010.setOriginal_longitude(longitude);
-            eflink_msg_19010.setOrginal_height(height);
-            eflink_msg_19010.setReseed_uav_height(uavheight);
-            byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
-            //推送到mqtt
-            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-            if (obj == null) {
-                return ResultUtil.error("无人机不在线！");
-            }
-            String uavSn = obj.toString();
-            String key = uavSn + "_" + 19010 + "_" + tag;
-            redisUtils.remove(key);
-            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+//            long time = System.currentTimeMillis(); //
+//            efHandle.setId((int) time);
 
-            return ResultUtil.success("发送处理信息成功", insert);
+            int userid = efUser.getId();
+            // 前端页面就是不确认（或者确实存在问题），那你已经往数据库存储了
+            RLock lock = redissonClient.getLock("set_handle_id");
+            boolean isLocked = false;
+            try {
+                 isLocked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+                if (isLocked) {
+                    // 执行需要保护的代码
+                    Boolean a = redisUtils.hmSet( HandleUuid, String.valueOf(userid), JSONObject.toJSONString(efHandle), 3, TimeUnit.HOURS);
+                    System.out.println(a);
+                } else {
+                    // 未获得锁，处理锁定失败的情况
+                    System.out.println(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
+                }
+            } finally {
+                // 判断当前线程是否持有锁
+                if (isLocked && lock.isHeldByCurrentThread()) {
+                    //释放当前锁
+                    lock.unlock();
+                    System.out.println(Thread.currentThread().getName() + "释放锁"+ LocalDateTime.now());
+                }
+            }
+
+            // 您从redis获取
+            HashMap<Object, Object> hashMap = redisUtils.GetAllHash( HandleUuid);
+            Integer lenght = hashMap.size();
+            // 使用 for-each 循环遍历 HashMap
+            Object key = null;
+            Object value = null;
+            for (Map.Entry<Object, Object> entry : hashMap.entrySet()) {
+                // 获取键和值
+                key = entry.getKey();
+                value = entry.getValue();
+
+                // 打印每个键值对
+                System.out.println("Key: " + key + ", Value: " + value);
+            }
+
+            EfHandle efHandleObj = JSONObject.parseObject(value.toString(), EfHandle.class);
+
+
+//            id --- handleId- msg
+//            现在是自己服务器有一个处理接口a 接收到用户id 和处理id  需要暂时保存用户id和处理id 发送到另一个服务器b进行处理，b处理完调用另一个接口将处理id 和处理消息msg
+//            发到自己服务器 保存处理消息  知道处理id需要将对应处理消息msg发送前台用户 相当于用户id 和处理id和处理消息msg 为一组 怎么做这存储结构
+
+//            EfHandle insert = efHandleService.insert(efHandle);
+//            if (insert == null) {
+//                return ResultUtil.error("处理记录保存失败");
+//            }
+//            //打包19010--开始处理数据包
+//            byte tag = (byte) (new Random().nextInt() & 0xFF);
+//            EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
+//            eflink_msg_19010.setHandleId(insert.getId());
+//            eflink_msg_19010.setTag(tag);
+//            eflink_msg_19010.setOriginal_latitude(latitude);
+//            eflink_msg_19010.setOriginal_longitude(longitude);
+//            eflink_msg_19010.setOrginal_height(height);
+//            eflink_msg_19010.setReseed_uav_height(uavheight);
+//            byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
+//            //推送到mqtt
+//            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+//            if (obj == null) {
+//                return ResultUtil.error("无人机不在线！");
+//            }
+//            String uavSn = obj.toString();
+//            String key = uavSn + "_" + 19010 + "_" + tag;
+//            redisUtils.remove(key);
+//            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+
+            return ResultUtil.success("发送处理信息成功", efHandle);
         } catch (Exception e) {
             // 异常处理
             LogUtil.logError("发送处理信息异常" + e);
@@ -2390,24 +2447,85 @@ public class UavController {
         try {
             if (blockAll == null) {
                 return ResultUtil.error("接收二次分析预览结果失败！");
-            } else {
-                int handleId = blockAll.getHandleId();
-                // 根据handleId查询指定处理记录
-                EfHandle efHandle = efHandleService.queryById(handleId);
-                if (efHandle == null) {
-                    return ResultUtil.error("查询处理记录失败！");
-                }
-                efHandle.setGapSquare(blockAll.getGapSquare());
-                efHandle.setReseedSquare(blockAll.getReseedSquare());
-                efHandle.setReseedAreaNum(blockAll.getReseedAreaNum());
-                efHandle.setSeedNum(blockAll.getSeedNum());
-                // 更新处理记录
-                EfHandle update = efHandleService.update(efHandle);
-                if (update == null) {
-                    return ResultUtil.error("更新处理记录失败！");
-                }
-                return ResultUtil.success("接收二次分析预览结果成功。", efHandle);
             }
+            String HandleUuid = blockAll.getHandleUuid();
+//                // 根据handleId查询指定处理记录
+//                EfHandle efHandle = efHandleService.queryById(handleId);
+//                if (efHandle == null) {
+//                    return ResultUtil.error("查询处理记录失败！");
+//                }
+//                efHandle.setGapSquare(blockAll.getGapSquare());
+//                efHandle.setReseedSquare(blockAll.getReseedSquare());
+//                efHandle.setReseedAreaNum(blockAll.getReseedAreaNum());
+//                efHandle.setSeedNum(blockAll.getSeedNum());
+//                // 更新处理记录
+//                EfHandle update = efHandleService.update(efHandle);
+//                if (update == null) {
+//                    return ResultUtil.error("更新处理记录失败！");
+//                }
+//                return ResultUtil.success("接收二次分析预览结果成功。", efHandle);
+            Object userId = null;
+            ArrayList<String> ownerUsers = new ArrayList<>();
+            Boolean isExistRedis =false; // 数据在不在 redis
+            // 从redis 获取 确认后才新增
+            RLock lock = redissonClient.getLock("set_handle_id");
+             // lock.lock(10, TimeUnit.SECONDS);
+            Boolean isLocked =false;
+            try {
+                isLocked = lock.tryLock(10, 30, TimeUnit.SECONDS);
+                if (isLocked) {
+                    HashMap<Object, Object> hashMap = redisUtils.GetAllHash(HandleUuid);
+                    if (hashMap == null || hashMap.isEmpty()) {
+                        return ResultUtil.error("查询处理记录失败！");
+                    }
+                    isExistRedis = true ; // 存在
+                    // 使用 for-each 循环遍历 HashMap
+                    Object efHandle = null;
+                    for (Map.Entry<Object, Object> entry : hashMap.entrySet()) {
+                        // 获取键和值
+                        userId = entry.getKey();
+                        ownerUsers.add((String) userId);
+                        efHandle = entry.getValue();
+                        // 打印每个键值对
+                        System.out.println("Key: " + userId + ", Value: " + efHandle);
+                    }
+
+                    try {
+                        EfHandle efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
+                        efHandleObj.setGapSquare(blockAll.getGapSquare());
+                        efHandleObj.setReseedSquare(blockAll.getReseedSquare());
+                        efHandleObj.setReseedAreaNum(blockAll.getReseedAreaNum());
+                        efHandleObj.setSeedNum(blockAll.getSeedNum());
+                        Boolean success = redisUtils.hmSet(HandleUuid, String.valueOf(userId), JSONObject.toJSONString(efHandleObj), 3, TimeUnit.HOURS); // 注意缓存时间--算法服务器处理
+                        if (!success) {
+                            return ResultUtil.error("更新处理记录失败！");
+                        }
+                    } catch (JSONException e) {
+                        return ResultUtil.error("解析 JSON 失败：" + e.getMessage());
+                    }
+                } else {
+                    // 未获得锁，处理锁定失败的情况
+                    System.out.println(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                if (isLocked && lock.isHeldByCurrentThread()) {
+                    //释放当前锁
+                    lock.unlock();
+                    System.out.println(Thread.currentThread().getName() + "释放锁"+ LocalDateTime.now());
+                }
+            }
+            //通过Ws推送云平台--blockAll (推送用户为处理用户userid,推送包blockall--不在线保存消息队列-在线推送)
+            if(!isExistRedis){
+                return ResultUtil.success("接收二次分析预览结果成功。不推送");
+            }
+
+            /**5000--作为推送接口id**/
+            WebSocketLink.push(ResultUtil.success(5000, "uavIdSystem", "block-all", "realtimedata"), ownerUsers); // 推送blockAll到对应的用户列
+
+            return ResultUtil.success("接收二次分析预览结果成功!");
+
         } catch (Exception e) {
             LogUtil.logError("接收二次分析预览结果异常" + e);
             return ResultUtil.error("接收二次分析预览结果异常！");
@@ -2444,6 +2562,7 @@ public class UavController {
             return ResultUtil.error("确认预览信息异常");
         }
     }
+
 
     @ResponseBody
     @PostMapping(value = "/secondaryAnalysis")
@@ -2791,6 +2910,35 @@ public class UavController {
             return ResultUtil.error("查询异常");
         }
     }
+
+    /**
+     * 测试Ws
+     *
+     * @param efUser
+     * @param msg
+     * @return
+     */
+    @PostMapping(value = "/sendWs")
+    public Result sendWs(@CurrentUser EfUser efUser, @RequestParam(value = "msg") String msg) {
+        try {
+            String[] owerUsers = new String[0];
+            String uavIdSystem = "ceshi123";
+            Object obj = "1,2";
+//             obj = redisUtils.hmGet("rel_uavid_userid", uavIdSystem); //无人机ID获取用户ID  2,1,
+            if (obj != null) {
+                String delims = "[,]+";
+                owerUsers = obj.toString().split(delims);
+            }
+
+            String ownerUser = Arrays.toString(owerUsers);
+            WebSocketLink.push(ResultUtil.success(5000, uavIdSystem, "block-all", "realtimedata"), owerUsers); // 推送blockAll到对应的用户列
+            return ResultUtil.success(msg);
+        } catch (Exception e) {
+            LogUtil.logError("查询播种路径点列表异常" + e);
+            return ResultUtil.error("查询异常");
+        }
+    }
+
     // #endregion
 }
 

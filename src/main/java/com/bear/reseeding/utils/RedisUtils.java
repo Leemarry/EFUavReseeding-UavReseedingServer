@@ -3,12 +3,7 @@ package com.bear.reseeding.utils;
 import com.bear.reseeding.entity.EfRelationUavsn;
 import com.bear.reseeding.service.EfRelationUavsnService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.ListOperations;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.core.SetOperations;
-import org.springframework.data.redis.core.ValueOperations;
-import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.*;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
@@ -185,7 +180,43 @@ public class RedisUtils {
             LogUtil.logError(e.toString());
         }
     }
+    /**
+     * 哈希 添加 设置有效时间
+     *
+     * @param key
+     * @param hashKey
+     * @param value
+     * @param expireTime
+     * @param timeUnit
+     */
+    public boolean hmSet(String key, Object hashKey, Object value, long expireTime, TimeUnit timeUnit) {
+        boolean result = false;
+        try {
+            HashOperations<String, Object, Object> hash = redisTemplate.opsForHash();
+            hash.put(key, hashKey, value);
+            redisTemplate.expire(key, expireTime, timeUnit);
+            result = true;
+        } catch (Exception e) {
+            LogUtil.logError(e.toString());
+        }
+        return result;
+    }
 
+
+    // 获取所有Hash数据
+    public HashMap<Object, Object> GetAllHash(String key) {
+        HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+        HashMap<Object, Object> obj= (HashMap<Object, Object>) hashOps.entries(key);
+        Cursor<Map.Entry<Object, Object>> cursor = hashOps.scan(key, ScanOptions.NONE);
+        Map<Object, Object> allUsers = new HashMap<>();
+        while (cursor.hasNext()) {
+            Map.Entry<Object, Object> entry = cursor.next();
+            Object keyObj = entry.getKey();
+            Object valueObj = entry.getValue();
+            allUsers.put(keyObj, valueObj);
+        }
+        return obj;
+    }
     /**
      * 哈希获取数据
      *
