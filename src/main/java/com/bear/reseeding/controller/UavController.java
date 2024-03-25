@@ -2310,7 +2310,7 @@ public class UavController {
                     // 打包19010--开始处理数据包
                     byte tag = (byte) (new Random().nextInt() & 0xFF);
                     EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
-                    eflink_msg_19010.setHandleId(Integer.parseInt(handleUuid));
+                    eflink_msg_19010.setHandleId(handleUuid);
                     eflink_msg_19010.setTag(tag);
                     eflink_msg_19010.setOriginal_latitude(latitude);
                     eflink_msg_19010.setOriginal_longitude(longitude);
@@ -2475,7 +2475,7 @@ public class UavController {
                     // 打包19011--确认上传数据包
                     byte tag = (byte) (new Random().nextInt() & 0xFF);
                     EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
-                    eflink_msg_19011.setHandleId(Integer.parseInt(handleUuid));
+                    eflink_msg_19011.setHandleId(handleUuid);
                     eflink_msg_19011.setTag(tag);
                     byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
                     // 推送到mqtt

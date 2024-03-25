@@ -2,6 +2,7 @@ package com.bear.reseeding.eflink;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 草原补种项目——开始处理数据
@@ -14,7 +15,7 @@ public class EFLINK_MSG_19010 {
     /**
      * 内容段数据长度
      */
-    public final int EFLINK_MSG_LENGTH = 30;
+    public final int EFLINK_MSG_LENGTH = 54;
     /**
      * 版本
      */
@@ -26,7 +27,7 @@ public class EFLINK_MSG_19010 {
     /**
      * 处理编号
      */
-    int HandleId;
+    String HandleId;
     /**
      * 原点纬度
      */
@@ -51,7 +52,7 @@ public class EFLINK_MSG_19010 {
     public EFLINK_MSG_19010() {
     }
 
-    public EFLINK_MSG_19010(byte tag, byte versionInside, int handleId, int originalLatitude, int originalLongitude, float orginalHeight, float reseedUavHeight, float reseedMachineParam) {
+    public EFLINK_MSG_19010(byte tag, byte versionInside, String handleId, int originalLatitude, int originalLongitude, float orginalHeight, float reseedUavHeight, float reseedMachineParam) {
         Tag = tag;
         VersionInside = versionInside;
         HandleId = handleId;
@@ -76,7 +77,9 @@ public class EFLINK_MSG_19010 {
             buffer.position(index);
             VersionInside = buffer.get();
             Tag = buffer.get();
-            HandleId = buffer.getInt();
+            byte[] handleIdBytes = new byte[4]; // 假设 handleId 占用 4 个字节
+            buffer.get(handleIdBytes); // 读取 handleId 的字节数据
+            HandleId = new String(handleIdBytes, StandardCharsets.UTF_8); // 将字节数组转换为字符串
             original_latitude = buffer.getDouble();
             original_longitude = buffer.getDouble();
             orginal_height = buffer.getFloat();
@@ -91,7 +94,8 @@ public class EFLINK_MSG_19010 {
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         buffer.put(VersionInside);
         buffer.put(Tag);
-        buffer.putInt(HandleId);
+        byte[] handleIdBytes = HandleId.getBytes(StandardCharsets.UTF_8); // 将字符串转换为字节数组
+        buffer.put(handleIdBytes); // 写入 handleId 的字节数据
         buffer.putDouble(original_latitude);
         buffer.putDouble(original_longitude);
         buffer.putFloat(orginal_height);
@@ -116,11 +120,11 @@ public class EFLINK_MSG_19010 {
         Tag = tag;
     }
 
-    public int getHandleId() {
+    public String getHandleId() {
         return HandleId;
     }
 
-    public void setHandleId(int handleId) {
+    public void setHandleId(String handleId) {
         HandleId = handleId;
     }
 
