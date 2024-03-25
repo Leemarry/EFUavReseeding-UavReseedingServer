@@ -61,6 +61,8 @@ import javax.swing.plaf.synth.Region;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.net.URL;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -2287,8 +2289,6 @@ public class UavController {
             efHandle.setAlt(height);
             efHandle.setFlyAlt(uavheight);
             efHandle.setHandleUuid(handleUuid);
-//            long time = System.currentTimeMillis(); //
-//            efHandle.setId((int) time);
 
             Integer userid = efUser.getId();
             // 前端页面就是不确认（或者确实存在问题），那你已经往数据库存储了
@@ -2528,7 +2528,7 @@ public class UavController {
             AtomicInteger taskCount = new AtomicInteger(0);
             // 将 MultipartFile 转换为字节数组输入流
             try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
-                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream,  Charset.forName("GBK"))) {
                 ZipEntry entry;
 
                 while ((entry = zipInputStream.getNextEntry()) != null) {
@@ -2617,12 +2617,22 @@ public class UavController {
                     Thread.sleep(100);
                 }
             } catch (Exception e) {
-                return ResultUtil.error("处理文件时出错");
+                return ResultUtil.error("处理文件时出错:"+ e);
+            }finally {
+
             }
-            // 故意 代码有问题 存储一个 handle_Id
+            // 从redis 获取
+            String useridStr = String.valueOf(efUser.getId());
+            // 获取BlockAll对象
+            JSONObject blockAllObject = resultObject.getJSONObject("BlockAll");
+            // 获取handleUuid属性值
+            String handleUuid = blockAllObject.getString("handleUuid");
+
+            // 上 故意 代码有问题 存储一个 handle_Id
             Runnable runnableTask = () -> {
                 try {
-                    redisUtils.set("handle_Id", 1);
+                    Boolean success = redisUtils.hmSet(handleUuid, useridStr, JSONObject.toJSONString(blockAllObject), 3, TimeUnit.HOURS);
+
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -2635,13 +2645,8 @@ public class UavController {
             while (taskCount.get() > 0) {
                 Thread.sleep(100);
             }
-            // 故意 代码有问题 存储一个 handle_Id
-            // 从redis 获取
-            String useridStr = String.valueOf(efUser.getId());
-            // 获取BlockAll对象
-            JSONObject blockAllObject = resultObject.getJSONObject("BlockAll");
-            // 获取handleUuid属性值
-            String handleUuid = blockAllObject.getString("handleUuid");
+            // 下 故意 代码有问题 存储一个 handle_Id
+
             RLock lock = redissonClient.getLock(handleLock);
             boolean isLocked= true;
             try{
@@ -2706,7 +2711,8 @@ public class UavController {
 //            };
 //            Future<EfPvBoardGroup> future1 = executorService.submit(task1);
 
-
+            /**5000--作为推送接口id**/
+//            WebSocketLink.push(ResultUtil.success(5001, "blockList", "blockList", efHandleObj), ownerUsers); // 推送blockList到对应的用户列
             return ResultUtil.success("处理数据", resultObject);
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");

@@ -2,14 +2,10 @@ package com.bear.reseeding.test.UDPTest;
 
 
 import org.json.JSONObject;
-import com.bear.reseeding.test.ExecutorServiceExample;
-import com.bear.reseeding.test.UDPTest.DemoTalk.TalkReceiver;
 //import com.bear.reseeding.test.UDPTest.DemoTalk.TalkReceivers;
 import com.bear.reseeding.test.UDPTest.DemoTalk.TalkSender;
 import com.bear.reseeding.utils.UdpSendReceiver;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.concurrent.*;
 

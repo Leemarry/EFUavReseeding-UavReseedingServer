@@ -39,5 +39,6 @@ public class CompletionServices {
         System.out.println("所有子线程执行完成xxx");
 
         service.shutdown(); // 关闭线程池
+        System.out.println("所有子线程执行完成xxx");
     }
 }
