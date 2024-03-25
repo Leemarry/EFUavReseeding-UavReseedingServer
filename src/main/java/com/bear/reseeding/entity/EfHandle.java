@@ -16,6 +16,10 @@ public class EfHandle implements Serializable {
      */
     private Integer id;
     /**
+     * 用于前端匹配的唯一标识符
+     */
+    private String handleUuid;
+    /**
      * 处理时间
      */
     private Date date;
@@ -76,6 +80,13 @@ public class EfHandle implements Serializable {
      */
     private String imgLevel;
 
+    public String getHandleUuid() {
+        return handleUuid;
+    }
+
+    public void setHandleUuid(String handleUuid) {
+        this.handleUuid = handleUuid;
+    }
 
     public Integer getId() {
         return id;

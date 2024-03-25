@@ -51,7 +51,7 @@ spring:
     timeout: 30000
     pool:
       # 链接池最大链接数（使用负值表示没有限制）
-      max-active: 8
+      max-active: 3
       # 链接池最大阻塞等待时间（使用负值表示没有限制）
       max-wait: -1
       # 链接池中的最大空闲链接

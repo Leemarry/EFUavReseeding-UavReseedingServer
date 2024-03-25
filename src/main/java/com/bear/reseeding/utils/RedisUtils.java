@@ -202,20 +202,54 @@ public class RedisUtils {
         return result;
     }
 
+    /**
+     *
+     * @param key
+     * @param hashKey
+     * @param value
+     * @param expireTime
+     * @param timeUnit
+     * @return
+     */
+    public boolean isHashExists(String key, Object hashKey, Object value, long expireTime, TimeUnit timeUnit) {
+        boolean result = false;
+        try {
+            HashOperations<String, Object, Object> hash = redisTemplate.opsForHash();
+            if (redisTemplate.hasKey(key) && hash.hasKey(key, hashKey)) {
+                redisTemplate.expire(key, expireTime, timeUnit);
+                result = true;
+            } else {
+                hash.put(key, hashKey, value);
+                redisTemplate.expire(key, expireTime, timeUnit);
+                result = true;
+            }
+        } catch (Exception e) {
+            LogUtil.logError(e.toString());
+        }
+        return result;
+    }
 
     // 获取所有Hash数据
     public HashMap<Object, Object> GetAllHash(String key) {
         HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
         HashMap<Object, Object> obj= (HashMap<Object, Object>) hashOps.entries(key);
-        Cursor<Map.Entry<Object, Object>> cursor = hashOps.scan(key, ScanOptions.NONE);
-        Map<Object, Object> allUsers = new HashMap<>();
-        while (cursor.hasNext()) {
-            Map.Entry<Object, Object> entry = cursor.next();
-            Object keyObj = entry.getKey();
-            Object valueObj = entry.getValue();
-            allUsers.put(keyObj, valueObj);
-        }
+//        Cursor<Map.Entry<Object, Object>> cursor = hashOps.scan(key, ScanOptions.NONE);
+//        Map<Object, Object> allUsers = new HashMap<>();
+//        while (cursor.hasNext()) {
+//            Map.Entry<Object, Object> entry = cursor.next();
+//            Object keyObj = entry.getKey();
+//            Object valueObj = entry.getValue();
+//            allUsers.put(keyObj, valueObj);
+//        }
         return obj;
+    }
+
+    // 判断哈希表是否存在并删除
+    public void deleteHashIfExists(String hashKey) {
+//        HashOperations<String, String, User> hashOps = redisTemplate.opsForHash();
+//        if (redisTemplate.hasKey(hashKey)) {
+//            redisTemplate.delete(hashKey);
+//        }
     }
     /**
      * 哈希获取数据

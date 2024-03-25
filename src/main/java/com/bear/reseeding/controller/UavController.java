@@ -48,6 +48,9 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.Cursor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -137,6 +140,8 @@ public class UavController {
     @Value("${spring.config.HttpUrl:\"http://192.168.137.110:5000/upload\"}")
     public String HttpUrl;
 
+    @Value("${handle-lock}")
+    private String handleLock;
 
     /**
      * minio
@@ -1478,45 +1483,6 @@ public class UavController {
         }
     }
 
-    @ResponseBody
-    @PostMapping(value = "/uploadMediaResults")
-    public Result uploadMediaResults(@RequestParam(value = "file") MultipartFile file, HttpServletRequest request) {
-        try {
-            if (file.isEmpty()) {
-                return ResultUtil.error("上传分析照片失败，空文件！");
-            }
-
-            // 获取文件名-大小
-            String fileName = file.getOriginalFilename();
-            long fileSize = file.getSize();
-            // 创建一时间为文件夹
-            Date time = new Date();
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
-            String FolderName = dateFormat.format(time) + "-result";
-            // 指定文件存储路径
-            String filePath = "photo/uav/" + "/imgage/" + FolderName + "/";
-
-            try {
-                File dest = new File(BasePath + filePath, fileName);
-                if (!dest.exists()) {
-                    boolean res = dest.mkdirs();
-                    if (!res) {
-                        LogUtil.logWarn("创建目录失败！");
-                    }
-                }
-                // 存储文件
-                file.transferTo(dest);
-                LogUtil.logWarn("储存到本地 BasePath ！！！");
-            } catch (IOException e) {
-                e.printStackTrace();
-                LogUtil.logWarn("储存到本地 BasePath ！！！");
-            }
-            return ResultUtil.success();
-        } catch (Exception e) {
-            LogUtil.logError("上传分析照片异常：" + e.toString());
-            return ResultUtil.error("上传分析照片异常,请联系管理员!");
-        }
-    }
 
     //endregion
 
@@ -2339,64 +2305,49 @@ public class UavController {
      * @param longitude 原点经度
      * @param height    大地高
      * @param uavheight 飞行高度
-     * @param HandleUuid 处理唯一标识符UUID
+     * @param handleUuid 处理唯一标识符UUID
      * @param map       补播机构参数
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/confirmHandle")
     public Result confirmHandle(@RequestParam(value = "uavId") String uavId, @CurrentUser EfUser efUser, @RequestParam("latitude") double latitude, @RequestParam("longitude") double longitude,
-                                @RequestParam("height") float height, @RequestParam("uavheight") float uavheight, @RequestParam("HandleUuid") String HandleUuid, @RequestBody(required = false) Map<String, Object> map) {
+                                @RequestParam("height") float height, @RequestParam("uavheight") float uavheight, @RequestParam("handleUuid") String handleUuid,@RequestParam("handleDate") long handleDate, @RequestBody(required = false) Map<String, Object> map) {
         try {
             //处理记录保存,用于生成唯一id当做handleId
             EfHandle efHandle = new EfHandle();
-            efHandle.setDate(new Date());
+            efHandle.setDate(new Date(handleDate));
             efHandle.setLat(latitude);
             efHandle.setLng(longitude);
             efHandle.setAlt(height);
             efHandle.setFlyAlt(uavheight);
+            efHandle.setHandleUuid(handleUuid);
 //            long time = System.currentTimeMillis(); //
 //            efHandle.setId((int) time);
 
-            int userid = efUser.getId();
+            Integer userid = efUser.getId();
             // 前端页面就是不确认（或者确实存在问题），那你已经往数据库存储了
-            RLock lock = redissonClient.getLock("set_handle_id");
+            RLock lock = redissonClient.getLock(handleLock);
             boolean isLocked = false;
             try {
                  isLocked = lock.tryLock(10, 30, TimeUnit.SECONDS);
                 if (isLocked) {
-                    // 执行需要保护的代码
-                    Boolean a = redisUtils.hmSet( HandleUuid, String.valueOf(userid), JSONObject.toJSONString(efHandle), 3, TimeUnit.HOURS);
-                    System.out.println(a);
+                    Boolean success = redisUtils.hmSet( handleUuid, String.valueOf(userid), JSONObject.toJSONString(efHandle), 3, TimeUnit.HOURS);
+                    if(!success){
+                        return  ResultUtil.error("发送处理信息异常！");
+                    }
                 } else {
-                    // 未获得锁，处理锁定失败的情况
                     System.out.println(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
                 }
             } finally {
                 // 判断当前线程是否持有锁
-                if (isLocked && lock.isHeldByCurrentThread()) {
-                    //释放当前锁
+                if(isLocked&&lock.isHeldByCurrentThread()){
                     lock.unlock();
                     System.out.println(Thread.currentThread().getName() + "释放锁"+ LocalDateTime.now());
                 }
             }
 
-            // 您从redis获取
-            HashMap<Object, Object> hashMap = redisUtils.GetAllHash( HandleUuid);
-            Integer lenght = hashMap.size();
-            // 使用 for-each 循环遍历 HashMap
-            Object key = null;
-            Object value = null;
-            for (Map.Entry<Object, Object> entry : hashMap.entrySet()) {
-                // 获取键和值
-                key = entry.getKey();
-                value = entry.getValue();
-
-                // 打印每个键值对
-                System.out.println("Key: " + key + ", Value: " + value);
-            }
-
-            EfHandle efHandleObj = JSONObject.parseObject(value.toString(), EfHandle.class);
+//            RedissonLock1();
 
 
 //            id --- handleId- msg
@@ -2410,7 +2361,7 @@ public class UavController {
 //            //打包19010--开始处理数据包
 //            byte tag = (byte) (new Random().nextInt() & 0xFF);
 //            EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
-//            eflink_msg_19010.setHandleId(insert.getId());
+//            eflink_msg_19010.setHandleId(insert.getId());  // handleUuid
 //            eflink_msg_19010.setTag(tag);
 //            eflink_msg_19010.setOriginal_latitude(latitude);
 //            eflink_msg_19010.setOriginal_longitude(longitude);
@@ -2427,7 +2378,7 @@ public class UavController {
 //            redisUtils.remove(key);
 //            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
 
-            return ResultUtil.success("发送处理信息成功", efHandle);
+            return ResultUtil.success(Thread.currentThread().getName() +"发送处理信息成功");
         } catch (Exception e) {
             // 异常处理
             LogUtil.logError("发送处理信息异常" + e);
@@ -2435,12 +2386,13 @@ public class UavController {
         }
     }
 
-    /**
-     * 算法服务返回二次分析预览结果(block_all)
-     *
-     * @param blockAll 预览结果对象
-     * @return
-     */
+
+        /**
+         * 算法服务返回二次分析预览结果(block_all)
+         *
+         * @param blockAll 预览结果对象
+         * @return
+         */
     @ResponseBody
     @PostMapping(value = "/previewHandle")
     public Result previewHandle(@RequestBody BlockAll blockAll) {
@@ -2465,10 +2417,11 @@ public class UavController {
 //                }
 //                return ResultUtil.success("接收二次分析预览结果成功。", efHandle);
             Object userId = null;
+            EfHandle efHandleObj =null;
             ArrayList<String> ownerUsers = new ArrayList<>();
             Boolean isExistRedis =false; // 数据在不在 redis
             // 从redis 获取 确认后才新增
-            RLock lock = redissonClient.getLock("set_handle_id");
+            RLock lock = redissonClient.getLock(handleLock);
              // lock.lock(10, TimeUnit.SECONDS);
             Boolean isLocked =false;
             try {
@@ -2486,12 +2439,10 @@ public class UavController {
                         userId = entry.getKey();
                         ownerUsers.add((String) userId);
                         efHandle = entry.getValue();
-                        // 打印每个键值对
-                        System.out.println("Key: " + userId + ", Value: " + efHandle);
                     }
 
                     try {
-                        EfHandle efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
+                        efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
                         efHandleObj.setGapSquare(blockAll.getGapSquare());
                         efHandleObj.setReseedSquare(blockAll.getReseedSquare());
                         efHandleObj.setReseedAreaNum(blockAll.getReseedAreaNum());
@@ -2510,7 +2461,7 @@ public class UavController {
             }catch (Exception e){
                 e.printStackTrace();
             }finally {
-                if (isLocked && lock.isHeldByCurrentThread()) {
+                if (isLocked) {
                     //释放当前锁
                     lock.unlock();
                     System.out.println(Thread.currentThread().getName() + "释放锁"+ LocalDateTime.now());
@@ -2522,8 +2473,7 @@ public class UavController {
             }
 
             /**5000--作为推送接口id**/
-            WebSocketLink.push(ResultUtil.success(5000, "uavIdSystem", "block-all", "realtimedata"), ownerUsers); // 推送blockAll到对应的用户列
-
+            WebSocketLink.push(ResultUtil.success(5000, "blockAll", "block-all", efHandleObj), ownerUsers); // 推送blockAll到对应的用户列
             return ResultUtil.success("接收二次分析预览结果成功!");
 
         } catch (Exception e) {
@@ -2532,31 +2482,60 @@ public class UavController {
         }
     }
 
+
+
+
     /**
      * 确认预览结果，请求算法服务器发送二次分析的最终结果(block_all,block_list)
      *
      * @return
      */
     @ResponseBody
-    @PostMapping(value = "/finalHandle")
-    public Result finalHandle(@RequestParam(value = "handleId") int handleId, @RequestParam(value = "uavId") String uavId) {
+    @RequestMapping(value = "/finalHandle",method = RequestMethod.POST)
+    public Result finalHandle(@CurrentUser EfUser efUser, @RequestParam("handleUuid") String handleUuid, @RequestParam(value = "uavId",required = false) String uavId ,@RequestBody EfHandle efHandle) {
         try {
-            //打包19011--确认上传数据包
-            byte tag = (byte) (new Random().nextInt() & 0xFF);
-            EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
-            eflink_msg_19011.setHandleId(handleId);
-            eflink_msg_19011.setTag(tag);
-            byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
-            //推送到mqtt
-            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-            if (obj == null) {
-                return ResultUtil.error("无人机不在线！");
+            EfHandle efHandleObj =null;
+            String  useridStr = String.valueOf(efUser.getId());
+            // 确认无误后，才能存储
+            RLock lock = redissonClient.getLock(handleLock);
+            boolean isLocked=false;
+            try{
+                isLocked = lock.tryLock(5,10,TimeUnit.SECONDS);
+                if(isLocked){
+                    Boolean success = redisUtils.isHashExists( handleUuid, useridStr, JSONObject.toJSONString(efHandle), 3, TimeUnit.HOURS);
+                    if(!success){
+                        return  ResultUtil.error("发送处理信息异常！");
+                    }
+                    System.out.println(Thread.currentThread().getName() + "释放锁"+ LocalDateTime.now());
+                }else {
+                    System.out.println(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
+                }
+            }catch (Exception e){
+                LogUtil.logMessage(e.toString());
+                e.printStackTrace();
+            }finally {
+                if(isLocked&&lock.isHeldByCurrentThread()){
+                    lock.unlock();
+                }
             }
-            String uavSn = obj.toString();
-            String key = uavSn + "_" + 19011 + "_" + tag;
-            redisUtils.remove(key);
-            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
-            return ResultUtil.success("确认预览信息成功");
+
+            // 执行其他
+//            //打包19011--确认上传数据包
+//            byte tag = (byte) (new Random().nextInt() & 0xFF);
+//            EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
+//            eflink_msg_19011.setHandleId(handleId);
+//            eflink_msg_19011.setTag(tag);
+//            byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
+//            //推送到mqtt
+//            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+//            if (obj == null) {
+//                return ResultUtil.error("无人机不在线！");
+//            }
+//            String uavSn = obj.toString();
+//            String key = uavSn + "_" + 19011 + "_" + tag;
+//            redisUtils.remove(key);
+//            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+            return ResultUtil.success("确认预览信息成功",efHandleObj);
         } catch (Exception e) {
             LogUtil.logError("确认预览信息异常！" + e);
             return ResultUtil.error("确认预览信息异常");
@@ -2564,82 +2543,13 @@ public class UavController {
     }
 
 
-    @ResponseBody
-    @PostMapping(value = "/secondaryAnalysis")
-    public Result secondaryAnalysis(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
-        try {
-            org.json.JSONObject jsonObject = new org.json.JSONObject();
-            int numThread = 3;
-            ExecutorService executorService = Executors.newFixedThreadPool(numThread);
-            boolean isZIP = isCompressedFile(file.getOriginalFilename());
-            if (!isZIP) {
-                return ResultUtil.error("请发送数据压缩包");
-            }
-            // 将 MultipartFile 转换为字节数组输入流
-            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
-                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream)) {
-                ZipEntry entry;
-                while ((entry = zipInputStream.getNextEntry()) != null) {
-                    String key = entry.getName();
-                    // 创建字节流
-                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".json")) {
-                        // 读取
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
-                            byteArrayOutputStream.write(buffer, 0, bytesRead);
-                        }
-                        // 获取json 数据
-
-
-                    } else if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".jpg")) {
-                        // 读取
-                        byte[] buffer = new byte[1024];
-                        int bytesRead;
-                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
-                            byteArrayOutputStream.write(buffer, 0, bytesRead);
-                        }
-                        byte[] bytes = byteArrayOutputStream.toByteArray();
-                        // 创建 MinioUploader 对象并连接到 Minio 对象存储
-                        MinioClient minioClient = MinioClient.builder()
-                                .endpoint("http://127.0.0.1:9090")
-                                .credentials("gNkgwJSo4EyFyxHuG5mz", "IieYrz9poS8JsEFXzoo7PG7yhmHK9dqZbaVG1khn")
-                                .build();
-                        //  写入文件
-                        minioClient.putObject(
-                                PutObjectArgs.builder()
-                                        .bucket("ceshi")
-                                        .object(key)
-                                        .stream(new ByteArrayInputStream(bytes), bytes.length, -1)
-                                        .build());
-                        // 返回存入路径
-                        String fileUrl = minioClient.getPresignedObjectUrl(
-                                GetPresignedObjectUrlArgs.builder()
-                                        .method(Method.PUT)
-                                        .bucket("ceshi")
-                                        .object(key)
-                                        .build()
-                        );
-                        URL url = new URL(fileUrl);
-
-
-                        jsonObject.put(key, fileUrl);
-
-                    }
-
-                }
-
-            }
-
-            return ResultUtil.success("处理数据", jsonObject);
-        } catch (Exception e) {
-            return ResultUtil.error("发送处理信息失败");
-        }
-
-    }
-
-
+    /**
+     * 算法服务器第二次调用接口： 返回二次分析的结果文件压缩包
+     *
+     * @param efUser
+     * @param file
+     * @return
+     */
     @PostMapping(value = "/secondaryAnalysiss")
     public Result secondaryAnalysiss(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
         int numThread = 3;
@@ -2676,7 +2586,6 @@ public class UavController {
                                     // blockAllArray
                                     if (blockAllArray != null) {
                                         BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
-                                        System.out.println(blockAll);
                                         synchronized (resultObject) {
                                             resultObject.put("BlockAll", blockAll);
                                         }
@@ -2704,7 +2613,7 @@ public class UavController {
                                             Integer prop4 = entityValues.getInteger(3); // 路径补播所需草种数
                                             EfHandleWaypoint Waypoint = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
                                             reseedPoints.add(Waypoint);
-//                                            reseedPoints[i] = new EfHandleWaypoint(prop1, prop2, prop3, prop4);
+
                                         }
                                         synchronized (resultObject) {
                                             resultObject.put("reseedPointList", reseedPoints);
@@ -2729,7 +2638,7 @@ public class UavController {
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
                                 synchronized (resultObject) {
-//                                    resultObject.put(key, base64Image);
+                                    resultObject.put(key, base64Image);
                                 }
                                 // 任务完成后，减少任务计数
                                 taskCount.decrementAndGet();
@@ -2761,33 +2670,64 @@ public class UavController {
             while (taskCount.get() > 0) {
                 Thread.sleep(100);
             }
-            // 从redis 获取id
-            Object obj = redisUtils.get("handle_Id");
-            if (obj == null) {
-                return ResultUtil.error("当前未 获取handle_Id");
+            // 故意 代码有问题 存储一个 handle_Id
+            // 从redis 获取
+            String useridStr = String.valueOf(efUser.getId());
+            // 获取BlockAll对象
+            JSONObject blockAllObject = resultObject.getJSONObject("BlockAll");
+            // 获取handleUuid属性值
+            String handleUuid = blockAllObject.getString("handleUuid");
+            RLock lock = redissonClient.getLock(handleLock);
+            boolean isLocked= true;
+            try{
+                isLocked = lock.tryLock(5,15,TimeUnit.SECONDS);
+                if(isLocked){
+                    Object efHandle = redisUtils.hmGet(handleUuid,useridStr);
+                    if(efHandle==null){
+                        LogUtil.logMessage("redis缓存处理信息已过期");
+                        return ResultUtil.error("处理信息过期！");
+                    }
+//                    efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
+                    System.out.println(Thread.currentThread().getName() + "释放锁"+ LocalDateTime.now());
+                }else {
+                    // 未获得锁，处理锁定失败的情况
+                    System.out.println(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
+                }
+
+            }catch (Exception e){
+                LogUtil.logMessage(e.toString());
+                e.printStackTrace();
+            }finally {
+                if(isLocked && lock.isHeldByCurrentThread()){
+                    lock.unlock();
+                }
             }
-            // 重新
-            Integer handleId = (Integer) obj;
+//            Object obj = redisUtils.get("handle_Id");
+//            if (obj == null) {
+//                return ResultUtil.error("当前未 获取handle_Id");
+//            }
+//            // 重新
+//            Integer handleId = (Integer) obj;
 
 
-            List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
-            blockList.stream().forEach(block -> {
-                block.setHandleId(handleId);
-                int id = block.getId();
-                String imgStr = (String) resultObject.get(id + ".jpg");// "l";
-                block.setImg(imgStr);
-            });
-            Integer s = efHandleBlockListService.insertBatchByList(blockList);
-
-
-            BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
-
-
-            List<EfHandleWaypoint> reseedPointlist = (List<EfHandleWaypoint>) resultObject.get("reseedPointList");
-            reseedPointlist.stream().forEach(waypoint -> {
-                waypoint.setHandleId(handleId);
-            });
-            Integer a = efHandleWaypointService.insertBatchByList(reseedPointlist);
+//            List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
+//            blockList.stream().forEach(block -> {
+//                block.setHandleId(handleId);
+//                int id = block.getId();
+//                String imgStr = (String) resultObject.get(id + ".jpg");// "l";
+//                block.setImg(imgStr);
+//            });
+//            Integer s = efHandleBlockListService.insertBatchByList(blockList);
+//
+//
+//            BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
+//
+//
+//            List<EfHandleWaypoint> reseedPointlist = (List<EfHandleWaypoint>) resultObject.get("reseedPointList");
+//            reseedPointlist.stream().forEach(waypoint -> {
+//                waypoint.setHandleId(handleId);
+//            });
+//            Integer a = efHandleWaypointService.insertBatchByList(reseedPointlist);
 
 
             // 存储

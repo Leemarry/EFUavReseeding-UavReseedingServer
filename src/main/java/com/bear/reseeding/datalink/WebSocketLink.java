@@ -6,6 +6,7 @@ import com.bear.reseeding.utils.LogUtil;
 import com.bear.reseeding.utils.RedisUtils;
 import com.bear.reseeding.utils.TokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -85,6 +86,9 @@ public class WebSocketLink {
     }
 
 
+    public static  void putMessageQueue(){
+
+    }
     //推送数据给前台 java 用户 用户名 里面要放 用户id 和 msg
     public static void push(Object obj, ArrayList<String> userids) {
         try {
@@ -122,7 +126,7 @@ public class WebSocketLink {
                         Queue<String> queue = userMessageQueueMap.get(userid);
                         userMessageQueueMap.get(userid).offer(message);
                     } else {
-                        Queue<String> newQueue = new LinkedList<>();
+                        Queue<String> newQueue = new ConcurrentLinkedQueue<>();
                         newQueue.offer(message);
                         userMessageQueueMap.put(userid, newQueue);
                     }
