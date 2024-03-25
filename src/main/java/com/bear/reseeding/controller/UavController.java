@@ -1714,22 +1714,24 @@ public class UavController {
      * @param missionGotoWaypointMode      定义飞机如何从当前位置前往第一个航点。默认值为SAFELY。
      * @param missionHeadingMode           机在航点之间移动时的航向。默认值为AUTO。
      * @param missionRepeatTimes           任务执行可以重复多次。值范围是[1，255]。如果选择255，则任务将继续执行直到stopMission被调用或发生任何错误。其他值表示任务的确切执行时间。
-     * @param waypointEfList               任务集合，按先后顺序排列,
+     * @param missionWpCount               航线航点数
+     * @param map                          wpsInfo 航线表
+     *                                     wpsDetail 详情表
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/uploadRouteTask")
     public Result uploadWps(@RequestParam("uavId") String uavId,
-                            @RequestParam("missionType") byte missionType,
-                            @RequestParam("speed") int speed,
-                            @RequestParam("maxSpeed") int maxSpeed,
-                            @RequestParam("missionOnRCSignalLostEnabled") byte missionOnRCSignalLostEnabled,
-                            @RequestParam("missionFinishedAction") byte missionFinishedAction,
-                            @RequestParam("missionFlightPathMode") byte missionFlightPathMode,
-                            @RequestParam("missionGotoWaypointMode") byte missionGotoWaypointMode,
-                            @RequestParam("missionHeadingMode") byte missionHeadingMode,
-                            @RequestParam("missionRepeatTimes") byte missionRepeatTimes,
-                            @RequestBody List<WaypointEf> waypointEfList) {
+                            @RequestParam("speed") Float speed,
+                            @RequestParam("maxSpeed") Float maxSpeed,
+                            @RequestParam("missionOnRCSignalLostEnabled") int missionOnRCSignalLostEnabled,
+                            @RequestParam("missionFinishedAction") int missionFinishedAction,
+                            @RequestParam("missionFlightPathMode") int missionFlightPathMode,
+                            @RequestParam("missionGotoWaypointMode") int missionGotoWaypointMode,
+                            @RequestParam("missionHeadingMode") int missionHeadingMode,
+                            @RequestParam("missionRepeatTimes") int missionRepeatTimes,
+                            @RequestParam("missionWpCount") int missionWpCount,
+                            @RequestBody Map<String, Object> map) {
         try {
             if (uavId.equals("")) {
                 return ResultUtil.error("请选择无人机！");
@@ -1739,38 +1741,37 @@ public class UavController {
                 uavId = obj.toString();
             }
 
-            if (waypointEfList == null || waypointEfList.isEmpty()) {
+            Object wpsInfo = map.getOrDefault("wpsInfo", "");
+            Object wpsDetail = map.getOrDefault("wpsDetail", "");
+            if (wpsInfo == null || wpsDetail == null) {
                 return ResultUtil.error("航线信息错误！");
             }
+            Map object = (Map) (wpsInfo);
+            String wps = JSONObject.toJSONString(wpsDetail);
+            JSONArray array = JSONObject.parseArray(wps);
 
             int tag = ((byte) new Random().nextInt()) & 0xFF;
             EFLINK_MSG_3102 eflinkMsg3102 = new EFLINK_MSG_3102();
             eflinkMsg3102.setTag(tag);
-            eflinkMsg3102.setMissionType(missionType);
-            eflinkMsg3102.setWpsCount(waypointEfList.size());
-            eflinkMsg3102.setSpeed(speed);
-            eflinkMsg3102.setMaxSpeed(maxSpeed);
+            eflinkMsg3102.setMissionType(0);
+            eflinkMsg3102.setWpsCount(missionWpCount);
+            eflinkMsg3102.setSpeed((int) (speed * 100));
+            eflinkMsg3102.setMaxSpeed((int) (maxSpeed * 100));
             eflinkMsg3102.setMissionOnRCSignalLostEnabled(missionOnRCSignalLostEnabled);
             eflinkMsg3102.setMissionFinishedAction(missionFinishedAction);
             eflinkMsg3102.setMissionFlightPathMode(missionFlightPathMode);
             eflinkMsg3102.setMissionGotoWaypointMode(missionGotoWaypointMode);
             eflinkMsg3102.setMissionHeadingMode(missionHeadingMode);
             eflinkMsg3102.setMissionRepeatTimes(missionRepeatTimes);
-
             //打包
             byte[] packet = EfLinkUtil.Packet(eflinkMsg3102.EFLINK_MSG_ID, eflinkMsg3102.packet());
-
             // region 请求上传任务，等待无人机回复
             long timeout = System.currentTimeMillis();
             String key = uavId + "_" + tag;
             boolean goon = false;
             String error = "未知错误！";
             redisUtils.remove(key);
-            if (missionType == 0) {
-                MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-            } else if (missionType == 1) {
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
-            }
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
             while (true) {
                 Object ack = redisUtils.get(key);
                 if (ack != null) {
@@ -1795,20 +1796,45 @@ public class UavController {
             EFLINK_MSG_3103 eflinkMsg3103 = new EFLINK_MSG_3103();
             eflinkMsg3103.setTag(tag);
             eflinkMsg3103.setMissionType(0);
-            eflinkMsg3103.setWpCount(waypointEfList.size());
-            eflinkMsg3103.setWpsCount(waypointEfList.size());
+            eflinkMsg3103.setWpCount(missionWpCount);
+            eflinkMsg3103.setWpsCount(missionWpCount);
             eflinkMsg3103.setPacketCount(1);
             eflinkMsg3103.setPacketIndex(0);
+            List<WaypointEf> waypointEfList = new ArrayList<>();
+            //region 循环航点赋值
+            for (int i = 0; i < array.size(); i++) {
+                JSONObject map1 = array.getJSONObject(i);
+                int wpIndex = Integer.parseInt(map1.get("wpIndex").toString());
+                Double wpLat = Double.valueOf(map1.getOrDefault("wpLat", "0").toString());
+                Double wpLng = Double.valueOf(map1.getOrDefault("wpLng", "0").toString());
+                Double wpAlt = Double.valueOf(map1.getOrDefault("wpAlt", "0").toString());
+                Double wpAltAbs = Double.valueOf(map1.getOrDefault("wpAltAbs", "0").toString());
+                int wpAction = Integer.parseInt(map1.getOrDefault("wpAction", 0).toString());
+                String wpDjiActions = map1.getOrDefault("wpDjiActions", "").toString();
+                Double wpParm1 = Double.valueOf(map1.getOrDefault("wpParm1", "0").toString());
+                Double wpParm2 = Double.valueOf(map1.getOrDefault("wpParm2", "0").toString());
+                Double wpParm3 = Double.valueOf(map1.getOrDefault("wpParm3", "0").toString());
+                Double wpParm4 = Double.valueOf(map1.getOrDefault("wpParm4", "0").toString());
+                WaypointEf waypointEf = new WaypointEf();
+                waypointEf.setWpNo(wpIndex);
+                waypointEf.setCommand(wpAction);
+                waypointEf.setLat((int) (wpLat * 1e7d));
+                waypointEf.setLng((int) (wpLng * 1e7d));
+                waypointEf.setAltRel((int) (wpAlt * 100));
+                waypointEf.setParm1(Float.parseFloat(String.valueOf(wpParm1)));
+                waypointEf.setParm2(Float.parseFloat(String.valueOf(wpParm2)));
+                waypointEf.setParm3(Float.parseFloat(String.valueOf(wpParm3)));
+                waypointEf.setParm4(Float.parseFloat(String.valueOf(wpParm4)));
+                waypointEfList.add(waypointEf);
+                eflinkMsg3103.setWaypointEfList(waypointEfList);
+            }
             eflinkMsg3103.setWaypointEfList(waypointEfList);
 
             packet = EfLinkUtil.Packet(eflinkMsg3103.EFLINK_MSG_ID, eflinkMsg3103.packet());
 
             //推送mqtt
-            if (missionType == 0) {
-                MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
-            } else if (missionType == 1) {
-                MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
-            }
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+
             return ResultUtil.success("任务已同步到客户端！");
         } catch (Exception e) {
             LogUtil.logError("上传航线给无人机出错：" + e.toString());
