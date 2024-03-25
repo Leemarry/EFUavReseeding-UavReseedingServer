@@ -1715,8 +1715,7 @@ public class UavController {
      * @param missionHeadingMode           机在航点之间移动时的航向。默认值为AUTO。
      * @param missionRepeatTimes           任务执行可以重复多次。值范围是[1，255]。如果选择255，则任务将继续执行直到stopMission被调用或发生任何错误。其他值表示任务的确切执行时间。
      * @param missionWpCount               航线航点数
-     * @param map                          wpsInfo 航线表
-     *                                     wpsDetail 详情表
+     * @param wpsDetailMap                    航点详情表
      * @return
      */
     @ResponseBody
@@ -1731,7 +1730,7 @@ public class UavController {
                             @RequestParam("missionHeadingMode") int missionHeadingMode,
                             @RequestParam("missionRepeatTimes") int missionRepeatTimes,
                             @RequestParam("missionWpCount") int missionWpCount,
-                            @RequestBody Map<String, Object> map) {
+                            @RequestBody Map<String, Object> wpsDetailMap) {
         try {
             if (uavId.equals("")) {
                 return ResultUtil.error("请选择无人机！");
@@ -1740,13 +1739,10 @@ public class UavController {
             if (obj != null) {
                 uavId = obj.toString();
             }
-
-            Object wpsInfo = map.getOrDefault("wpsInfo", "");
-            Object wpsDetail = map.getOrDefault("wpsDetail", "");
-            if (wpsInfo == null || wpsDetail == null) {
+            Object wpsDetail = wpsDetailMap.getOrDefault("wpsDetail", "");
+            if (wpsDetail == null) {
                 return ResultUtil.error("航线信息错误！");
             }
-            Map object = (Map) (wpsInfo);
             String wps = JSONObject.toJSONString(wpsDetail);
             JSONArray array = JSONObject.parseArray(wps);
 
@@ -1804,27 +1800,25 @@ public class UavController {
             //region 循环航点赋值
             for (int i = 0; i < array.size(); i++) {
                 JSONObject map1 = array.getJSONObject(i);
-                int wpIndex = Integer.parseInt(map1.get("wpIndex").toString());
-                Double wpLat = Double.valueOf(map1.getOrDefault("wpLat", "0").toString());
-                Double wpLng = Double.valueOf(map1.getOrDefault("wpLng", "0").toString());
-                Double wpAlt = Double.valueOf(map1.getOrDefault("wpAlt", "0").toString());
-                Double wpAltAbs = Double.valueOf(map1.getOrDefault("wpAltAbs", "0").toString());
-                int wpAction = Integer.parseInt(map1.getOrDefault("wpAction", 0).toString());
-                String wpDjiActions = map1.getOrDefault("wpDjiActions", "").toString();
-                Double wpParm1 = Double.valueOf(map1.getOrDefault("wpParm1", "0").toString());
-                Double wpParm2 = Double.valueOf(map1.getOrDefault("wpParm2", "0").toString());
-                Double wpParm3 = Double.valueOf(map1.getOrDefault("wpParm3", "0").toString());
-                Double wpParm4 = Double.valueOf(map1.getOrDefault("wpParm4", "0").toString());
+                int WpNo = Integer.parseInt(map1.get("WpNo").toString());
+                int Command = Integer.parseInt(map1.get("Command").toString());
+                Double Lat = Double.valueOf(map1.getOrDefault("Lat", "0").toString());
+                Double Lng = Double.valueOf(map1.getOrDefault("Lng", "0").toString());
+                Double AltRel = Double.valueOf(map1.getOrDefault("AltRel", "0").toString());
+                Double Parm1 = Double.valueOf(map1.getOrDefault("Parm1", "0").toString());
+                Double Parm2 = Double.valueOf(map1.getOrDefault("Parm2", "0").toString());
+                Double Parm3 = Double.valueOf(map1.getOrDefault("Parm3", "0").toString());
+                Double Parm4 = Double.valueOf(map1.getOrDefault("Parm4", "0").toString());
                 WaypointEf waypointEf = new WaypointEf();
-                waypointEf.setWpNo(wpIndex);
-                waypointEf.setCommand(wpAction);
-                waypointEf.setLat((int) (wpLat * 1e7d));
-                waypointEf.setLng((int) (wpLng * 1e7d));
-                waypointEf.setAltRel((int) (wpAlt * 100));
-                waypointEf.setParm1(Float.parseFloat(String.valueOf(wpParm1)));
-                waypointEf.setParm2(Float.parseFloat(String.valueOf(wpParm2)));
-                waypointEf.setParm3(Float.parseFloat(String.valueOf(wpParm3)));
-                waypointEf.setParm4(Float.parseFloat(String.valueOf(wpParm4)));
+                waypointEf.setWpNo(WpNo);
+                waypointEf.setCommand(Command);
+                waypointEf.setLat((int) (Lat * 1e7d));
+                waypointEf.setLng((int) (Lng * 1e7d));
+                waypointEf.setAltRel((int) (AltRel * 100));
+                waypointEf.setParm1(Float.parseFloat(String.valueOf(Parm1)));
+                waypointEf.setParm2(Float.parseFloat(String.valueOf(Parm2)));
+                waypointEf.setParm3(Float.parseFloat(String.valueOf(Parm3)));
+                waypointEf.setParm4(Float.parseFloat(String.valueOf(Parm4)));
                 waypointEfList.add(waypointEf);
                 eflinkMsg3103.setWaypointEfList(waypointEfList);
             }
