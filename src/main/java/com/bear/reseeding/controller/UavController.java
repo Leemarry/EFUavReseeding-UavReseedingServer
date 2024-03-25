@@ -2309,28 +2309,6 @@ public class UavController {
                         return ResultUtil.error("发送处理信息异常！");
                     }
 
-                    // 打包19010--开始处理数据包
-                    byte tag = (byte) (new Random().nextInt() & 0xFF);
-                    EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
-                    eflink_msg_19010.setHandleId(handleUuid);
-                    eflink_msg_19010.setTag(tag);
-                    eflink_msg_19010.setOriginal_latitude(latitude);
-                    eflink_msg_19010.setOriginal_longitude(longitude);
-                    eflink_msg_19010.setOrginal_height(height);
-                    eflink_msg_19010.setReseed_uav_height(uavheight);
-                    byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
-
-                    // 推送到mqtt
-                    Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-                    if (obj == null) {
-                        return ResultUtil.error("无人机不在线！");
-                    }
-
-                    String uavSn = obj.toString();
-                    String key = uavSn + "_" + 19010 + "_" + tag;
-                    redisUtils.remove(key);
-                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
-
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 } else {
                     LogUtil.logMessage(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
@@ -2341,6 +2319,29 @@ public class UavController {
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 }
             }
+
+            // 打包19010--开始处理数据包
+            byte tag = (byte) (new Random().nextInt() & 0xFF);
+            EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
+            eflink_msg_19010.setHandleId(handleUuid);
+            eflink_msg_19010.setTag(tag);
+            eflink_msg_19010.setOriginal_latitude(latitude);
+            eflink_msg_19010.setOriginal_longitude(longitude);
+            eflink_msg_19010.setOrginal_height(height);
+            eflink_msg_19010.setReseed_uav_height(uavheight);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
+
+            // 推送到mqtt
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
+            }
+
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 19010 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+
             return ResultUtil.success(Thread.currentThread().getName() + "发送处理信息成功");
         } catch (Exception e) {
             // 异常处理
@@ -2353,32 +2354,34 @@ public class UavController {
     /**
      * 算法服务返回二次分析预览结果(block_all)
      *
-     * @param blockAll 预览结果对象
+     * @param jsonFile 预览结果对象
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/previewHandle")
-    public Result previewHandle(@RequestBody BlockAll blockAll) {
+    public Result previewHandle(@RequestBody MultipartFile jsonFile) {
         try {
+            // 获取文件内容为字节数组
+            byte[] fileBytes = jsonFile.getBytes();
+            // 将字节数组转换为字符串
+            String jsonData = new String(fileBytes);
+            // 解析 JSON 数据
+            JSONObject jsonObject = JSONObject.parseObject(jsonData);
+
+            JSONArray blockAllArray = jsonObject.getJSONArray("block_all");
+            JSONObject blockAllObj = blockAllArray.getJSONObject(0);
+
+
+            String HandleUuid = blockAllObj.getString("handleUuid");
+
+            BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
+
             if (blockAll == null) {
                 return ResultUtil.error("接收二次分析预览结果失败！");
             }
-            String HandleUuid = blockAll.getHandleUuid();
-//                // 根据handleId查询指定处理记录
-//                EfHandle efHandle = efHandleService.queryById(handleId);
-//                if (efHandle == null) {
-//                    return ResultUtil.error("查询处理记录失败！");
-//                }
-//                efHandle.setGapSquare(blockAll.getGapSquare());
-//                efHandle.setReseedSquare(blockAll.getReseedSquare());
-//                efHandle.setReseedAreaNum(blockAll.getReseedAreaNum());
-//                efHandle.setSeedNum(blockAll.getSeedNum());
-//                // 更新处理记录
-//                EfHandle update = efHandleService.update(efHandle);
-//                if (update == null) {
-//                    return ResultUtil.error("更新处理记录失败！");
-//                }
-//                return ResultUtil.success("接收二次分析预览结果成功。", efHandle);
+
+
+
             Object userId = null;
             EfHandle efHandleObj = null;
             ArrayList<String> ownerUsers = new ArrayList<>();
@@ -2474,21 +2477,6 @@ public class UavController {
                     if (!success) {
                         return ResultUtil.error("发送处理信息异常！");
                     }
-                    // 打包19011--确认上传数据包
-                    byte tag = (byte) (new Random().nextInt() & 0xFF);
-                    EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
-                    eflink_msg_19011.setHandleId(handleUuid);
-                    eflink_msg_19011.setTag(tag);
-                    byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
-                    // 推送到mqtt
-                    Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-                    if (obj == null) {
-                        return ResultUtil.error("无人机不在线！");
-                    }
-                    String uavSn = obj.toString();
-                    String key = uavSn + "_" + 19011 + "_" + tag;
-                    redisUtils.remove(key);
-                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
 
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 } else {
@@ -2503,6 +2491,23 @@ public class UavController {
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 }
             }
+
+            // 打包19011--确认上传数据包
+            byte tag = (byte) (new Random().nextInt() & 0xFF);
+            EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
+            eflink_msg_19011.setHandleId(handleUuid);
+            eflink_msg_19011.setTag(tag);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
+            // 推送到mqtt
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
+            }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 19011 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
+
             return ResultUtil.success("确认预览信息成功");
         } catch (Exception e) {
             // 异常处理
@@ -2532,7 +2537,7 @@ public class UavController {
             AtomicInteger taskCount = new AtomicInteger(0);
             // 将 MultipartFile 转换为字节数组输入流
             try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
-                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream,  Charset.forName("GBK"))) {
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream, Charset.forName("GBK"))) {
                 ZipEntry entry;
 
                 while ((entry = zipInputStream.getNextEntry()) != null) {
@@ -2621,8 +2626,8 @@ public class UavController {
                     Thread.sleep(100);
                 }
             } catch (Exception e) {
-                return ResultUtil.error("处理文件时出错:"+ e);
-            }finally {
+                return ResultUtil.error("处理文件时出错:" + e);
+            } finally {
 
             }
             // 从redis 获取
@@ -2636,8 +2641,8 @@ public class UavController {
             Runnable runnableTask = () -> {
                 try {
                     Boolean success = redisUtils.hmSet(handleUuid, useridStr, JSONObject.toJSONString(blockAllObject), 3, TimeUnit.HOURS);
-                    if(!success){
-                         LogUtil.logMessage("存储失败！");
+                    if (!success) {
+                        LogUtil.logMessage("存储失败！");
                     }
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
@@ -2680,7 +2685,7 @@ public class UavController {
             }
 
 
-            int handleId =9; // 通过数据库表查询
+            int handleId = 9; // 通过数据库表查询
 
             //
             BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
