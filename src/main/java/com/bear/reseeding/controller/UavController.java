@@ -2309,28 +2309,6 @@ public class UavController {
                         return ResultUtil.error("发送处理信息异常！");
                     }
 
-                    // 打包19010--开始处理数据包
-                    byte tag = (byte) (new Random().nextInt() & 0xFF);
-                    EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
-                    eflink_msg_19010.setHandleId(Integer.parseInt(handleUuid));
-                    eflink_msg_19010.setTag(tag);
-                    eflink_msg_19010.setOriginal_latitude(latitude);
-                    eflink_msg_19010.setOriginal_longitude(longitude);
-                    eflink_msg_19010.setOrginal_height(height);
-                    eflink_msg_19010.setReseed_uav_height(uavheight);
-                    byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
-
-                    // 推送到mqtt
-                    Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-                    if (obj == null) {
-                        return ResultUtil.error("无人机不在线！");
-                    }
-
-                    String uavSn = obj.toString();
-                    String key = uavSn + "_" + 19010 + "_" + tag;
-                    redisUtils.remove(key);
-                    MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
-
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 } else {
                     LogUtil.logMessage(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
@@ -2341,6 +2319,28 @@ public class UavController {
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 }
             }
+            // 打包19010--开始处理数据包
+//            byte tag = (byte) (new Random().nextInt() & 0xFF);
+//            EFLINK_MSG_19010 eflink_msg_19010 = new EFLINK_MSG_19010();
+//            eflink_msg_19010.setHandleId(Integer.parseInt(handleUuid));
+//            eflink_msg_19010.setTag(tag);
+//            eflink_msg_19010.setOriginal_latitude(latitude);
+//            eflink_msg_19010.setOriginal_longitude(longitude);
+//            eflink_msg_19010.setOrginal_height(height);
+//            eflink_msg_19010.setReseed_uav_height(uavheight);
+//            byte[] packet = EfLinkUtil.Packet(eflink_msg_19010.EFLINK_MSG_ID, eflink_msg_19010.packet());
+//
+//            // 推送到mqtt
+//            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+//            if (obj == null) {
+//                return ResultUtil.error("无人机不在线！");
+//            }
+//
+//            String uavSn = obj.toString();
+//            String key = uavSn + "_" + 19010 + "_" + tag;
+//            redisUtils.remove(key);
+//            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
+
             return ResultUtil.success(Thread.currentThread().getName() + "发送处理信息成功");
         } catch (Exception e) {
             // 异常处理
@@ -2364,21 +2364,7 @@ public class UavController {
                 return ResultUtil.error("接收二次分析预览结果失败！");
             }
             String HandleUuid = blockAll.getHandleUuid();
-//                // 根据handleId查询指定处理记录
-//                EfHandle efHandle = efHandleService.queryById(handleId);
-//                if (efHandle == null) {
-//                    return ResultUtil.error("查询处理记录失败！");
-//                }
-//                efHandle.setGapSquare(blockAll.getGapSquare());
-//                efHandle.setReseedSquare(blockAll.getReseedSquare());
-//                efHandle.setReseedAreaNum(blockAll.getReseedAreaNum());
-//                efHandle.setSeedNum(blockAll.getSeedNum());
-//                // 更新处理记录
-//                EfHandle update = efHandleService.update(efHandle);
-//                if (update == null) {
-//                    return ResultUtil.error("更新处理记录失败！");
-//                }
-//                return ResultUtil.success("接收二次分析预览结果成功。", efHandle);
+
             Object userId = null;
             EfHandle efHandleObj = null;
             ArrayList<String> ownerUsers = new ArrayList<>();
@@ -2470,25 +2456,10 @@ public class UavController {
             try {
                 isLocked = lock.tryLock(5, 10, TimeUnit.SECONDS);
                 if (isLocked) {
-                    Boolean success = redisUtils.isHashExists(handleUuid, userIdStr, JSONObject.toJSONString(efHandle), 3, TimeUnit.HOURS);
+                    Boolean success = redisUtils.isHashExists(handleUuid, userIdStr, JSONObject.toJSONString(efHandle), 6, TimeUnit.HOURS);
                     if (!success) {
                         return ResultUtil.error("发送处理信息异常！");
                     }
-                    // 打包19011--确认上传数据包
-                    byte tag = (byte) (new Random().nextInt() & 0xFF);
-                    EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
-                    eflink_msg_19011.setHandleId(Integer.parseInt(handleUuid));
-                    eflink_msg_19011.setTag(tag);
-                    byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
-                    // 推送到mqtt
-                    Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
-                    if (obj == null) {
-                        return ResultUtil.error("无人机不在线！");
-                    }
-                    String uavSn = obj.toString();
-                    String key = uavSn + "_" + 19011 + "_" + tag;
-                    redisUtils.remove(key);
-                    MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
 
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 } else {
@@ -2503,6 +2474,22 @@ public class UavController {
                     LogUtil.logMessage(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 }
             }
+
+            // 打包19011--确认上传数据包
+            byte tag = (byte) (new Random().nextInt() & 0xFF);
+            EFLINK_MSG_19011 eflink_msg_19011 = new EFLINK_MSG_19011();
+            eflink_msg_19011.setHandleId(Integer.parseInt(handleUuid));
+            eflink_msg_19011.setTag(tag);
+            byte[] packet = EfLinkUtil.Packet(eflink_msg_19011.EFLINK_MSG_ID, eflink_msg_19011.packet());
+            // 推送到mqtt
+            Object obj = redisUtils.hmGet("rel_uav_sn_id", uavId);
+            if (obj == null) {
+                return ResultUtil.error("无人机不在线！");
+            }
+            String uavSn = obj.toString();
+            String key = uavSn + "_" + 19011 + "_" + tag;
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavSn);
             return ResultUtil.success("确认预览信息成功");
         } catch (Exception e) {
             // 异常处理
@@ -2607,7 +2594,7 @@ public class UavController {
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
                                 synchronized (resultObject) {
-                                    resultObject.put(key, base64Image);
+                                    resultObject.put(key, "base64Image");
                                 }
                                 // 任务完成后，减少任务计数
                                 taskCount.decrementAndGet();
@@ -2636,7 +2623,9 @@ public class UavController {
             Runnable runnableTask = () -> {
                 try {
                     Boolean success = redisUtils.hmSet(handleUuid, useridStr, JSONObject.toJSONString(blockAllObject), 3, TimeUnit.HOURS);
-
+                    if(!success){
+                         LogUtil.logMessage("存储失败！");
+                    }
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
@@ -2676,32 +2665,29 @@ public class UavController {
                     lock.unlock();
                 }
             }
-//            Object obj = redisUtils.get("handle_Id");
-//            if (obj == null) {
-//                return ResultUtil.error("当前未 获取handle_Id");
-//            }
-//            // 重新
-//            Integer handleId = (Integer) obj;
 
 
-//            List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
-//            blockList.stream().forEach(block -> {
-//                block.setHandleId(handleId);
-//                int id = block.getId();
-//                String imgStr = (String) resultObject.get(id + ".jpg");// "l";
-//                block.setImg(imgStr);
-//            });
-//            Integer s = efHandleBlockListService.insertBatchByList(blockList);
-//
-//
-//            BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
-//
-//
-//            List<EfHandleWaypoint> reseedPointlist = (List<EfHandleWaypoint>) resultObject.get("reseedPointList");
-//            reseedPointlist.stream().forEach(waypoint -> {
-//                waypoint.setHandleId(handleId);
-//            });
-//            Integer a = efHandleWaypointService.insertBatchByList(reseedPointlist);
+            int handleId =9; // 通过数据库表查询
+
+            //
+            BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
+
+            // 作业地块信息存储
+            List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
+            blockList.stream().forEach(block -> {
+                block.setHandleId(handleId);
+                int id = block.getId();
+                String imgStr = (String) resultObject.get(id + ".jpg");// "l";
+                block.setImg(imgStr);
+            });
+//            Integer inserBlockListNum = efHandleBlockListService.insertBatchByList(blockList);
+
+            // 补播路径点存储
+            List<EfHandleWaypoint> reseedPointlist = (List<EfHandleWaypoint>) resultObject.get("reseedPointList");
+            reseedPointlist.stream().forEach(waypoint -> {
+                waypoint.setHandleId(handleId);
+            });
+            Integer inserPointNum = efHandleWaypointService.insertBatchByList(reseedPointlist);
 
 
             // 存储
