@@ -15,11 +15,11 @@
 
 
     <!-- 使用foreach 批量新增    -->
-    <insert id="insertBatchByList">
+    <insert id="insertBatchByList"  keyProperty="id" useGeneratedKeys="true">
         INSERT INTO ef_handle_block_list
-        (id,gap_square,centre_latitude,centre_longitude,seed_num,reseed_area_num,reseed_square,handle_id,img) VALUES
+        (gap_square,centre_latitude,centre_longitude,seed_num,reseed_area_num,reseed_square,handle_id,img) VALUES
         <foreach collection="blockList" item="entity" separator=",">
-            (#{entity.id},#{entity.gapSquare},#{entity.centreLatitude},#{entity.centreLongitude},#{entity.seedNum},#{entity.reseedAreaNum},#{entity.reseedSquare},#{entity.handleId},#{entity.img})
+            (#{entity.gapSquare},#{entity.centreLatitude},#{entity.centreLongitude},#{entity.seedNum},#{entity.reseedAreaNum},#{entity.reseedSquare},#{entity.handleId},#{entity.img})
         </foreach>
     </insert>
 

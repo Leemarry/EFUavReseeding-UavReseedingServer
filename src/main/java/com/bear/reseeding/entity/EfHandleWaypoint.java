@@ -1,7 +1,7 @@
 package com.bear.reseeding.entity;
 
 public class EfHandleWaypoint {
-
+    private static final long serialVersionUID = 347945384347757625L;
     /**
      * 纬度
      */
@@ -54,6 +54,8 @@ public class EfHandleWaypoint {
         this.alt = prop3;
         this.seedNum = prop4;
     }
+
+
 
     public Integer getId() {
         return id;

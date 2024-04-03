@@ -19,7 +19,7 @@
         </foreach>
     </insert>
     <!-- 使用foreach 批量新增    -->
-    <insert id="insertBatchByList">
+    <insert id="insertBatchByList" keyProperty="id" useGeneratedKeys="true">
         INSERT INTO ef_handle_waypoint (id,lat,lng,alt,seed_num,handle_id,fly_times) VALUES
         <foreach collection="entities" item="entity" separator=",">
             (#{entity.id},#{entity.lat},#{entity.lng},#{entity.alt},#{entity.seedNum},#{entity.handleId},#{entity.flyTimes})

@@ -1,10 +1,12 @@
 package com.bear.reseeding.eflink;
 
 import com.bear.reseeding.utils.BytesUtil;
+import com.bear.reseeding.utils.LogUtil;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 
 /**
  * 大疆单个航点内容
@@ -14,6 +16,9 @@ public class WaypointEf implements Serializable {
      * 内容段数据长度，最小为5，变长
      */
     private final int EFLINK_MSG_LENGTH = 32;
+
+    //当前包总长度
+    public int WaypointEfLength = EFLINK_MSG_LENGTH;
 
     private int WpNo;
     private int Command;
@@ -40,6 +45,25 @@ public class WaypointEf implements Serializable {
         return buffer.array();
     }
 
+    public void unpacket(byte[] packet, int index) {
+        try {
+            WpNo = BytesUtil.bytes2UShort(packet, index);
+            index += 2;
+            Command = BytesUtil.bytes2Short(packet, index);
+            index += 2;
+            Lat = BytesUtil.bytes2Int(packet, index);
+            index += 4;
+            Lng = BytesUtil.bytes2Int(packet, index);
+            index += 4;
+            AltRel = BytesUtil.bytes2Int(packet, index);
+            index += 4;
+            Parm1 = BytesUtil.bytes2Float(packet,index);
+            index +=4;
+
+        } catch (Exception e) {
+            LogUtil.logError("解析单个航点数据失败：" + e.getMessage());
+        }
+    }
 
     public int getWpNo() {
         return WpNo;

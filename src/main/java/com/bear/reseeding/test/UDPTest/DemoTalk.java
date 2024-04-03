@@ -5,7 +5,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
-
+//https://blog.csdn.net/FanShenDeXianYu/article/details/115537836
+//https://blog.csdn.net/qq_48508278/article/details/119388809?spm=1001.2101.3001.6650.2&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-2-119388809-blog-115537836.235%5Ev43%5Epc_blog_bottom_relevance_base9&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-2-119388809-blog-115537836.235%5Ev43%5Epc_blog_bottom_relevance_base9&utm_relevant_index=5
 public class DemoTalk {
 
     public static class TalkReceiver implements Runnable {

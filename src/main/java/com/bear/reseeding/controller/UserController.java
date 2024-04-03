@@ -7,6 +7,7 @@ import com.bear.reseeding.model.Result;
 import com.bear.reseeding.service.*;
 import com.bear.reseeding.utils.*;
 import com.tencentyun.TLSSigAPIv2;
+import org.apache.fop.fo.properties.EnumNumber;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +35,19 @@ public class UserController {
     private int port;
     @Autowired
     private RedisUtils redisUtils;
+
+    @Value("${spring.mqtt.host}")
+    private String MqttServer;
+
+    @Value("${spring.mqtt.port}")
+    private String MqttPort;
+
+    @Value("${spring.mqtt.user}")
+    private String MqttUserName;
+
+    @Value("${spring.mqtt.pwd}")
+    private String MqttUserPwd;
+
 
     @Resource
     private EfUserService efUserService;
@@ -105,7 +119,7 @@ public class UserController {
     /**
      * 安卓端登陆
      *
-     * @param map    RsaPublicKey
+     * @param map     RsaPublicKey
      *                UserId
      *                UserPwd
      *                ClientId
@@ -200,6 +214,26 @@ public class UserController {
                     hashMap.put("userSign", userSig);
                     hashMap.put("userName", user.getUName());
                     hashMap.put("roomUserId", roomUserId);
+
+                    hashMap.put("sysMqttPort", MqttPort);
+                    hashMap.put("sysMqttServer", MqttServer);
+                    hashMap.put("sysMqttUserPwd", MqttUserPwd);
+                    hashMap.put("sysMqttUserName", MqttUserName);
+
+                    hashMap.put("sysNameZh", user.getUName());
+                    hashMap.put("sysApiEncryption", null);
+                    hashMap.put("sysCreateDate", null);
+                    hashMap.put("sysIco", null);
+                    hashMap.put("sysInfo", null);
+                    hashMap.put("sysLanguage", null);
+                    hashMap.put("sysName", null);
+                    hashMap.put("sysServerHost", null);
+                    hashMap.put("sysServerPort",null);
+                    hashMap.put("sysUavPhotoStorage",null);
+                    hashMap.put("sysVideoPath",null);
+                    hashMap.put("sysVideoUserName",null);
+                    hashMap.put("sysVideoUserPwd",null);
+
                 }
                 user.setULoginPassword("");
                 hashMap.put("user", user);
@@ -208,6 +242,120 @@ public class UserController {
                 LogUtil.logWarn("登录完成, 生成Token失败！");
                 return ResultUtil.error("生成唯一标识失败！");
             }
+        } catch (Exception e) {
+            LogUtil.logError("登录出错：" + e.toString());
+            return ResultUtil.error("登录异常，请联系管理员！");
+        }
+    }
+
+
+    /**
+     * 安卓端登陆
+     *
+     * @param loginName
+     * @param password
+     * @param machineCode
+     * @param request
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/appLogins")
+    public Result appLogins(@RequestParam(value = "loginName") String loginName, @RequestParam(value = "password") String password, @RequestParam(value = "machineCode") String machineCode, HttpServletRequest request) {
+        try {
+            try {
+                Jedis jedis = new Jedis(host, port);
+                String ping = jedis.ping();
+                if (!ping.equalsIgnoreCase("PONG")) {
+                    return ResultUtil.error("数据服务未启动!");
+                }
+            } catch (Exception e) {
+                return ResultUtil.error("数据服务未启动!");
+            }
+
+//            String loginName = map.getOrDefault("UserId", "").toString();
+//            String password = map.getOrDefault("UserPwd", "").toString();
+//            String clientId = map.getOrDefault("ClientId", "").toString();
+            if (loginName.equals("") || password.equals("")) {
+                return ResultUtil.error("请输入正确的账户信息!");
+            }
+            password = MD5Util.md5Encode(password + encryptMd5Soft);
+            EfUser user = efUserService.login(loginName, password);
+            if (user == null) {
+                return ResultUtil.error("账户信息错误!");
+            } else if (user.getUStatus() != null) {
+                if (user.getUStatus() == -1) {
+                    return ResultUtil.error("账号已删除!");
+                } else if (user.getUStatus() == -2) {
+                    return ResultUtil.error("账号已冻结！");
+                } else if (user.getUStatus() == -3) {
+                    return ResultUtil.error("账号已失效!");
+                }
+            }
+            String roleId = String.valueOf(user.getURId());
+            Date date = user.getULimitDate();
+            if (date == null || date.getTime() < System.currentTimeMillis()) {
+                return ResultUtil.error("账号已过期!");
+            }
+            if (user.getEfCompany() == null || user.getEfCompany().getCLimitDate() == null || user.getEfCompany().getCLimitDate().getTime() < System.currentTimeMillis()) {
+                return ResultUtil.error("公司账户已过期!");
+            }
+            //region 保存登录记录
+            String addr = request.getRemoteAddr();
+            String ip = NetworkUtil.getIpAddr(request);
+            String userAgent = request.getHeader("User-Agent");
+            EfUserLogin logined = new EfUserLogin();
+            logined.setUIpLocal(addr);
+            logined.setUIpWww(ip);
+            logined.setUUserId(user.getId());
+            logined.setUAgent(userAgent);
+            logined.setULoginTime(new Date());
+            logined.setULoginName(user.getULoginName());
+            logined.setUName(user.getUName());
+            logined.setUMachineCode(machineCode);  //
+            logined.setULoginOutTime(new Date());
+            logined.setUOnlineTime(1);
+            logined.setUDescription("大疆APP登录");
+            logined.setUStatus(0);
+            logined = efUserLoginService.insert(logined);
+            if (logined == null) {
+                LogUtil.logWarn("用户[" + loginName + "]登录成功，保存登录记录失败!");
+            }
+            //endregion
+            //region 返回token
+            String token = JwtUtil.sign(user.getId().toString(), user.getULoginName(), user.getUName(), machineCode, String.valueOf(user.getUCId()), String.valueOf(user.getURId()));
+            Map<String, Object> hashMap = new HashMap<String, Object>();
+            if (token != null) {
+                if (redisUtils != null) {
+                    redisUtils.set(token, "登录时间：" + System.currentTimeMillis(), 5L, TimeUnit.HOURS);
+                    redisUtils.set(token + "_LoginIpWww", ip, 5L, TimeUnit.HOURS);
+                    redisUtils.set(token + "_LoginIpLocal", addr, 5L, TimeUnit.HOURS);
+                    redisUtils.set(token + "_UserInfo", user, 5L, TimeUnit.HOURS); //token对应的用户信息
+                    redisUtils.set(token + "_LoginTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //登录时间
+                    redisUtils.set(token + "_LastOpterTime", System.currentTimeMillis(), 5L, TimeUnit.HOURS); //上次操作时间
+                    if (logined != null) {
+                        redisUtils.set(token + "_LoginedId", logined); //储存的登录记录ID
+                    }
+                    int roomId = (int) user.getUCId();
+                    //获取userSig
+                    String roomUserId = user.getUName() + "-" + DateUtil.timeStamp2Date(System.currentTimeMillis(), "HHmmssSSS");
+                    TLSSigAPIv2 api = new TLSSigAPIv2(EfStaticController.TxyTrtcSdkAppId, EfStaticController.TxyTrtcSecretKey);
+                    String userSig = api.genUserSig(roomUserId, EfStaticController.TxyTrtcExpireTime);
+
+                    hashMap.put("token", token);
+                    hashMap.put("roomId", roomId);
+                    hashMap.put("sdkAppId", EfStaticController.TxyTrtcSdkAppId);
+                    hashMap.put("userSign", userSig);
+                    hashMap.put("userName", user.getUName());
+                    hashMap.put("roomUserId", roomUserId);
+                }
+                user.setULoginPassword("");
+                hashMap.put("user", user);
+                return ResultUtil.success(token, hashMap);
+            } else {
+                LogUtil.logWarn("登录完成, 生成Token失败！");
+                return ResultUtil.error("生成唯一标识失败！");
+            }
+
         } catch (Exception e) {
             LogUtil.logError("登录出错：" + e.toString());
             return ResultUtil.error("登录异常，请联系管理员！");

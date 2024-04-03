@@ -13,6 +13,16 @@ public class GisUtil {
      */
     private static double EarthRadius = 6378.137;
 
+    // 地球平均半径（单位：千米）
+    private static final double EARTH_RADIUS = 6371.0;
+
+    // 每一度纬度的距离（单位：千米）
+    private static final double DEGREE_LAT_DISTANCE = 111.0;
+
+    // 每一度经度的距离（单位：千米）
+    private static final double DEGREE_LON_DISTANCE = 111.0;
+
+
     /**
      * 经纬度转化成弧度
      *
@@ -192,6 +202,31 @@ public class GisUtil {
         ret += (20.0 * Math.sin(x * PI) + 40.0 * Math.sin(x / 3.0 * PI)) * 2.0 / 3.0;
         ret += (150.0 * Math.sin(x / 12.0 * PI) + 300.0 * Math.sin(x / 30.0 * PI)) * 2.0 / 3.0;
         return ret;
+    }
+
+
+    // 计算经度与纬度
+    public static double[][] calculateCoordinates(double lat0, double lon0, double distance) {
+        // 计算正方形的四个角的经纬度
+        double[][] coordinates = new double[4][2];
+
+        // 计算东北角
+        coordinates[0][0] = lat0 + (distance / DEGREE_LAT_DISTANCE);
+        coordinates[0][1] = lon0 + (distance / (DEGREE_LON_DISTANCE * Math.cos(Math.toRadians(lat0))));
+
+        // 计算西北角
+        coordinates[1][0] = lat0 + (distance / DEGREE_LAT_DISTANCE);
+        coordinates[1][1] = lon0 - (distance / (DEGREE_LON_DISTANCE * Math.cos(Math.toRadians(lat0))));
+
+        // 计算西南角
+        coordinates[2][0] = lat0 - (distance / DEGREE_LAT_DISTANCE);
+        coordinates[2][1] = lon0 - (distance / (DEGREE_LON_DISTANCE * Math.cos(Math.toRadians(lat0))));
+
+        // 计算东南角
+        coordinates[3][0] = lat0 - (distance / DEGREE_LAT_DISTANCE);
+        coordinates[3][1] = lon0 + (distance / (DEGREE_LON_DISTANCE * Math.cos(Math.toRadians(lat0))));
+
+        return coordinates;
     }
 
     public static void main(String[] args) {

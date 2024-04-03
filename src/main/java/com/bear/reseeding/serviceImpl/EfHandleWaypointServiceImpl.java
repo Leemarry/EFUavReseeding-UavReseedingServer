@@ -24,8 +24,9 @@ public class EfHandleWaypointServiceImpl implements EfHandleWaypointService {
     private SqlSessionFactory sqlSessionFactory;
 
     @Override
-    public Integer insertBatchByList(List<EfHandleWaypoint> efHandleWaypoints) {
-        return efHandleWaypointDao.insertBatchByList(efHandleWaypoints);
+    public List<EfHandleWaypoint> insertBatchByList(List<EfHandleWaypoint> efHandleWaypoints) {
+       efHandleWaypointDao.insertBatchByList(efHandleWaypoints);
+        return efHandleWaypoints;
     }
 
     @Override

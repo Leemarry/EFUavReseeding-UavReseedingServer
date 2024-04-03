@@ -12,7 +12,7 @@ public interface EfHandleBlockListService {
      * @param blockList
      * @return
      */
-    Integer insertBatchByList(List<EfHandleBlockList> blockList);
+    List<EfHandleBlockList> insertBatchByList(List<EfHandleBlockList> blockList);
 
     /**
      * 根据HandleId查询作业地块处理信息

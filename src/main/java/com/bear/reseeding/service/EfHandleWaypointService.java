@@ -12,7 +12,7 @@ public interface EfHandleWaypointService {
      * @param efHandleWaypoints 数组
      * @return
      */
-    Integer insertBatchByList(List<EfHandleWaypoint> efHandleWaypoints);
+    List<EfHandleWaypoint> insertBatchByList(List<EfHandleWaypoint> efHandleWaypoints);
 
 
     Integer insertByList(List<EfHandleWaypoint> efHandleWaypoints);

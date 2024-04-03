@@ -75,10 +75,22 @@ public class EfHandle implements Serializable {
      * 回传分析后：补播草种数量
      */
     private Integer seedNum;
+
+    public Integer getHandleUserid() {
+        return handleUserid;
+    }
+
+    public void setHandleUserid(Integer handleUserid) {
+        this.handleUserid = handleUserid;
+    }
+
     /**
      * 回传分析后：一张草地退化等级评定图
      */
     private String imgLevel;
+
+    private Integer handleUserid;
+
 
     public String getHandleUuid() {
         return handleUuid;

@@ -18,7 +18,8 @@
         <result property="reseedAreaNum" column="reseed_area_num" jdbcType="VARCHAR"/>
         <result property="reseedSquare" column="reseed_square" jdbcType="VARCHAR"/>
         <result property="seedNum" column="seed_num" jdbcType="INTEGER"/>
-        <result property="imgLevel" column="img_level" jdbcType="VARCHAR"/>
+        <result property="imgLevel" column="img_level" jdbcType="LONGVARCHAR" />
+        <result property="handleUserid" column="handle_userid" jdbcType="INTEGER" />
     </resultMap>
 
     <!--查询单个-->
@@ -100,8 +101,8 @@
 
     <!--新增所有列-->
     <insert id="insert" keyProperty="id" useGeneratedKeys="true">
-        insert into ef_handle(date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level)
-        values (#{date}, #{lat}, #{lng}, #{alt}, #{flyAlt}, #{loadP1}, #{loadP2}, #{loadP3}, #{loadP4}, #{loadP5}, #{gapSquare}, #{reseedAreaNum}, #{reseedSquare}, #{seedNum}, #{imgLevel})
+        insert into ef_handle(date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level,handle_userid)
+        values (#{date}, #{lat}, #{lng}, #{alt}, #{flyAlt}, #{loadP1}, #{loadP2}, #{loadP3}, #{loadP4}, #{loadP5}, #{gapSquare}, #{reseedAreaNum}, #{reseedSquare}, #{seedNum}, #{imgLevel},#{handleUserid})
     </insert>
 
     <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">

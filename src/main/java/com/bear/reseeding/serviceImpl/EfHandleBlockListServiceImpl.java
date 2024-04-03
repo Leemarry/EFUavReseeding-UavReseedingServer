@@ -16,8 +16,9 @@ public class EfHandleBlockListServiceImpl implements EfHandleBlockListService {
     private EfHandleBlockListDao efHandleBlockListDao;
 
     @Override
-    public Integer insertBatchByList(List<EfHandleBlockList> blockList) {
-        return efHandleBlockListDao.insertBatchByList(blockList);
+    public List<EfHandleBlockList> insertBatchByList(List<EfHandleBlockList> blockList) {
+        efHandleBlockListDao.insertBatchByList(blockList);
+        return blockList;
     }
 
     /**

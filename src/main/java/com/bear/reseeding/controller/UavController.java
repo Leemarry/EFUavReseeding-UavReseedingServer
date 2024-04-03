@@ -21,6 +21,7 @@ import com.bear.reseeding.service.*;
 import com.bear.reseeding.task.TaskAnsisPhoto;
 import com.bear.reseeding.task.MinioService;
 import com.bear.reseeding.utils.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
@@ -1292,6 +1293,7 @@ public class UavController {
             efTaskKmz.setKmzCreateTime(nowdate);
             efTaskKmz.setKmzName(name);
             efTaskKmz.setKmzPath(url);
+            efTaskKmz.setKmzVersion("1.0.0");
             efTaskKmz.setKmzType("kmz");
             efTaskKmz.setKmzSize(fileSize);
             efTaskKmz.setKmzDes("");
@@ -1451,8 +1453,8 @@ public class UavController {
     /**
      * 上传分析后的照片, 上传后，主动推送给前台界面显示
      *
-     * @param file 照片
-     * @param map  相关参数
+     * @param photo    照片
+     * @param jsonFile 相关参数
      * @return 成功，失败
      */
     @ResponseBody
@@ -1683,68 +1685,63 @@ public class UavController {
      * 上传航点任务给补种无人机
      *
      * @param uavId                        无人机ID
-     * @param missionType                  任务类型，默认0为翼飞任务，1为大疆任务
-     * @param speed                        执行任务的飞行速度，0表示原始值
-     * @param maxSpeed                     允许的最大飞行速度，0表示原始值
-     * @param missionOnRCSignalLostEnabled 确定当飞机与遥控器之间的连接丢失时，任务是否应该停止,0继续任务，1终止。
-     * @param missionFinishedAction        航点任务完成后，飞机将采取的行动
-     * @param missionFlightPathMode        飞机在航点之间遵循的路径。飞机可以直接在航路点之间沿直线飞行，也可以在弯道中的航路点附近转弯，航路点位置定义了弯路的一部分。
-     * @param missionGotoWaypointMode      定义飞机如何从当前位置前往第一个航点。默认值为SAFELY。
-     * @param missionHeadingMode           机在航点之间移动时的航向。默认值为AUTO。
-     * @param missionRepeatTimes           任务执行可以重复多次。值范围是[1，255]。如果选择255，则任务将继续执行直到stopMission被调用或发生任何错误。其他值表示任务的确切执行时间。
+     * @param missionType                  0任务类型，默认0为翼飞任务，1为大疆任务
+     * @param speed                        0执行任务的飞行速度，0表示原始值
+     * @param maxSpeed                     0允许的最大飞行速度，0表示原始值
+     * @param missionOnRCSignalLostEnabled 0确定当飞机与遥控器之间的连接丢失时，任务是否应该停止,0继续任务，1终止。
+     * @param missionFinishedAction        0航点任务完成后，飞机将采取的行动
+     * @param missionFlightPathMode        0飞机在航点之间遵循的路径。飞机可以直接在航路点之间沿直线飞行，也可以在弯道中的航路点附近转弯，航路点位置定义了弯路的一部分。
+     * @param missionGotoWaypointMode      0定义飞机如何从当前位置前往第一个航点。默认值为SAFELY。
+     * @param missionHeadingMode           0机在航点之间移动时的航向。默认值为AUTO。
+     * @param missionRepeatTimes           0任务执行可以重复多次。值范围是[1，255]。如果选择255，则任务将继续执行直到stopMission被调用或发生任何错误。其他值表示任务的确切执行时间。
      * @param missionWpCount               航线航点数
-     * @param wpsDetailMap                 航点详情表
+     * @param wpsDetailMap                 航点详情表 choosePointList
      * @return
      */
     @ResponseBody
     @PostMapping(value = "/uploadRouteTask")
-    public Result uploadWps(@RequestParam("uavId") String uavId,
-                            @RequestParam("speed") Float speed,
-                            @RequestParam("maxSpeed") Float maxSpeed,
-                            @RequestParam("missionOnRCSignalLostEnabled") int missionOnRCSignalLostEnabled,
-                            @RequestParam("missionFinishedAction") int missionFinishedAction,
-                            @RequestParam("missionFlightPathMode") int missionFlightPathMode,
-                            @RequestParam("missionGotoWaypointMode") int missionGotoWaypointMode,
-                            @RequestParam("missionHeadingMode") int missionHeadingMode,
-                            @RequestParam("missionRepeatTimes") int missionRepeatTimes,
-                            @RequestParam("missionWpCount") int missionWpCount,
-                            @RequestBody Map<String, Object> wpsDetailMap) {
+    public Result uploadWps(@RequestParam("uavId") String uavId, @RequestBody List<Map<String, Object>> wpsDetailList) {
         try {
+
+            int missionWpCount = wpsDetailList.size(); // 点数
+
             if (uavId.equals("")) {
                 return ResultUtil.error("请选择无人机！");
             }
+
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机SN获取无人机ID  2,1,
             if (obj != null) {
                 uavId = obj.toString();
             }
-            Object wpsDetail = wpsDetailMap.getOrDefault("wpsDetail", "");
-            if (wpsDetail == null) {
-                return ResultUtil.error("航线信息错误！");
-            }
-            String wps = JSONObject.toJSONString(wpsDetail);
-            JSONArray array = JSONObject.parseArray(wps);
 
-            int tag = ((byte) new Random().nextInt()) & 0xFF;
+            //region xin 3102 打包
+            int a =5;
+            Random random = new Random();
+            int randomNumber = random.nextInt(99); // 生成0到99之间的随机整数
+            System.out.println("随机数：" + randomNumber);
+            int tag = ((byte)a )& 0xFF;
+            System.out.println(tag);
             EFLINK_MSG_3102 eflinkMsg3102 = new EFLINK_MSG_3102();
             eflinkMsg3102.setTag(tag);
             eflinkMsg3102.setMissionType(0);
             eflinkMsg3102.setWpsCount(missionWpCount);
-            eflinkMsg3102.setSpeed((int) (speed * 100));
-            eflinkMsg3102.setMaxSpeed((int) (maxSpeed * 100));
-            eflinkMsg3102.setMissionOnRCSignalLostEnabled(missionOnRCSignalLostEnabled);
-            eflinkMsg3102.setMissionFinishedAction(missionFinishedAction);
-            eflinkMsg3102.setMissionFlightPathMode(missionFlightPathMode);
-            eflinkMsg3102.setMissionGotoWaypointMode(missionGotoWaypointMode);
-            eflinkMsg3102.setMissionHeadingMode(missionHeadingMode);
-            eflinkMsg3102.setMissionRepeatTimes(missionRepeatTimes);
+            eflinkMsg3102.setSpeed((int) 0);
+            eflinkMsg3102.setMaxSpeed((int) 0);
+            eflinkMsg3102.setMissionOnRCSignalLostEnabled(0);
+            eflinkMsg3102.setMissionFinishedAction(0);
+            eflinkMsg3102.setMissionFlightPathMode(0);
+            eflinkMsg3102.setMissionGotoWaypointMode(0);
+            eflinkMsg3102.setMissionHeadingMode(0);
+            eflinkMsg3102.setMissionRepeatTimes(0);
             //打包
             byte[] packet = EfLinkUtil.Packet(eflinkMsg3102.EFLINK_MSG_ID, eflinkMsg3102.packet());
+            //endregion
+
             // region 请求上传任务，等待无人机回复
             long timeout = System.currentTimeMillis();
             String key = uavId + "_" + tag;
             boolean goon = false;
             String error = "未知错误！";
-            redisUtils.remove(key);
             MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
             while (true) {
                 Object ack = redisUtils.get(key);
@@ -1767,6 +1764,36 @@ public class UavController {
                 return ResultUtil.error(error);
             }
             //endregion
+
+            //region 整理数据
+            List<WaypointEf> waypointEfList = new ArrayList<>(); //  将数据取出
+            int i = 0;
+            for (Map<String, Object> wpsDetailDto : wpsDetailList) {
+                WaypointEf waypointEf = new WaypointEf();
+                i++;
+                Object altValue = wpsDetailDto.getOrDefault("alt", null);
+                double alt;
+
+                if (altValue instanceof Integer) {
+                    alt = (Integer) altValue;
+                } else if (altValue instanceof Double) {
+                    alt = (Double) altValue;
+                } else {
+                    // 如果 altValue 既不是 Integer 也不是 Double，则设置一个默认值或者抛出异常，根据实际需求处理
+                    alt = 0.0; // 设置默认值为 0.0，你可以根据实际需求做调整
+                }
+
+                double lng = (double) wpsDetailDto.getOrDefault("lng", null);
+                double lat = (double) wpsDetailDto.getOrDefault("lat", null);
+                waypointEf.setWpNo(i);
+                waypointEf.setLat((int) (lat * 1e7d));
+                waypointEf.setLng((int) (lng * 1e7d));
+                waypointEf.setAltRel((int) (alt * 100));
+                waypointEfList.add(waypointEf);
+            }
+            //endregion
+
+            //region xin 3103
             EFLINK_MSG_3103 eflinkMsg3103 = new EFLINK_MSG_3103();
             eflinkMsg3103.setTag(tag);
             eflinkMsg3103.setMissionType(0);
@@ -1774,38 +1801,104 @@ public class UavController {
             eflinkMsg3103.setWpsCount(missionWpCount);
             eflinkMsg3103.setPacketCount(1);
             eflinkMsg3103.setPacketIndex(0);
-            List<WaypointEf> waypointEfList = new ArrayList<>();
-            //region 循环航点赋值
-            for (int i = 0; i < array.size(); i++) {
-                JSONObject map1 = array.getJSONObject(i);
-                int WpNo = Integer.parseInt(map1.get("WpNo").toString());
-                int Command = Integer.parseInt(map1.get("Command").toString());
-                Double Lat = Double.valueOf(map1.getOrDefault("Lat", "0").toString());
-                Double Lng = Double.valueOf(map1.getOrDefault("Lng", "0").toString());
-                Double AltRel = Double.valueOf(map1.getOrDefault("AltRel", "0").toString());
-                Double Parm1 = Double.valueOf(map1.getOrDefault("Parm1", "0").toString());
-                Double Parm2 = Double.valueOf(map1.getOrDefault("Parm2", "0").toString());
-                Double Parm3 = Double.valueOf(map1.getOrDefault("Parm3", "0").toString());
-                Double Parm4 = Double.valueOf(map1.getOrDefault("Parm4", "0").toString());
-                WaypointEf waypointEf = new WaypointEf();
-                waypointEf.setWpNo(WpNo);
-                waypointEf.setCommand(Command);
-                waypointEf.setLat((int) (Lat * 1e7d));
-                waypointEf.setLng((int) (Lng * 1e7d));
-                waypointEf.setAltRel((int) (AltRel * 100));
-                waypointEf.setParm1(Float.parseFloat(String.valueOf(Parm1)));
-                waypointEf.setParm2(Float.parseFloat(String.valueOf(Parm2)));
-                waypointEf.setParm3(Float.parseFloat(String.valueOf(Parm3)));
-                waypointEf.setParm4(Float.parseFloat(String.valueOf(Parm4)));
-                waypointEfList.add(waypointEf);
-                eflinkMsg3103.setWaypointEfList(waypointEfList);
-            }
             eflinkMsg3103.setWaypointEfList(waypointEfList);
-
+            System.out.println("3103:"+tag+"missionWpCount:"+missionWpCount);
+            //endregion
+           byte[] s=  eflinkMsg3103.packet();
             packet = EfLinkUtil.Packet(eflinkMsg3103.EFLINK_MSG_ID, eflinkMsg3103.packet());
-
             //推送mqtt
             MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+
+            // region  3102
+//            Object wpsDetail = wpsDetailMap.getOrDefault("wpsDetail", "");
+//            if (wpsDetail == null) {
+//                return ResultUtil.error("航线信息错误！");
+//            }
+//            String wps = JSONObject.toJSONString(wpsDetail);
+//            JSONArray array = JSONObject.parseArray(wps);
+//
+
+//            eflinkMsg3102.setMissionType(0);
+//            eflinkMsg3102.setWpsCount(missionWpCount);
+//            eflinkMsg3102.setSpeed((int) (speed * 100));
+//            eflinkMsg3102.setMaxSpeed((int) (maxSpeed * 100));
+//            eflinkMsg3102.setMissionOnRCSignalLostEnabled(missionOnRCSignalLostEnabled);
+//            eflinkMsg3102.setMissionFinishedAction(missionFinishedAction);
+//            eflinkMsg3102.setMissionFlightPathMode(missionFlightPathMode);
+//            eflinkMsg3102.setMissionGotoWaypointMode(missionGotoWaypointMode);
+//            eflinkMsg3102.setMissionHeadingMode(missionHeadingMode);
+//            eflinkMsg3102.setMissionRepeatTimes(missionRepeatTimes);
+//            //打包
+//            byte[] packet = EfLinkUtil.Packet(eflinkMsg3102.EFLINK_MSG_ID, eflinkMsg3102.packet());
+//            // region 请求上传任务，等待无人机回复
+//            long timeout = System.currentTimeMillis();
+//            String key = uavId + "_" + tag;
+//            boolean goon = false;
+//            String error = "未知错误！";
+//            redisUtils.remove(key);
+//            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+//            while (true) {
+//                Object ack = redisUtils.get(key);
+//                if (ack != null) {
+//                    if (Boolean.parseBoolean(ack.toString())) {
+//                        goon = true;
+//                    } else {
+//                        error = "无人机未准备好，待会再传！";
+//                    }
+//                    redisUtils.remove(key);
+//                    break;
+//                }
+//                if (timeout + 5000 < System.currentTimeMillis()) {
+//                    error = "无人机未响应！";
+//                    break;
+//                }
+//                Thread.sleep(200);
+//            }
+//            if (!goon) {
+//                return ResultUtil.error(error);
+//            }
+            //endregion
+
+//            //endregion
+//            EFLINK_MSG_3103 eflinkMsg3103 = new EFLINK_MSG_3103();
+//            eflinkMsg3103.setTag(tag);
+//            eflinkMsg3103.setMissionType(0);
+//            eflinkMsg3103.setWpCount(missionWpCount);
+//            eflinkMsg3103.setWpsCount(missionWpCount);
+//            eflinkMsg3103.setPacketCount(1);
+//            eflinkMsg3103.setPacketIndex(0);
+//            List<WaypointEf> waypointEfList = new ArrayList<>();
+//            //region 循环航点赋值
+//            for (int i = 0; i < array.size(); i++) {
+//                JSONObject map1 = array.getJSONObject(i);
+//                int WpNo = Integer.parseInt(map1.get("WpNo").toString());
+//                int Command = Integer.parseInt(map1.get("Command").toString());
+//                Double Lat = Double.valueOf(map1.getOrDefault("Lat", "0").toString());
+//                Double Lng = Double.valueOf(map1.getOrDefault("Lng", "0").toString());
+//                Double AltRel = Double.valueOf(map1.getOrDefault("AltRel", "0").toString());
+//                Double Parm1 = Double.valueOf(map1.getOrDefault("Parm1", "0").toString());
+//                Double Parm2 = Double.valueOf(map1.getOrDefault("Parm2", "0").toString());
+//                Double Parm3 = Double.valueOf(map1.getOrDefault("Parm3", "0").toString());
+//                Double Parm4 = Double.valueOf(map1.getOrDefault("Parm4", "0").toString());
+//                WaypointEf waypointEf = new WaypointEf();
+//                waypointEf.setWpNo(WpNo);
+//                waypointEf.setCommand(Command);
+//                waypointEf.setLat((int) (Lat * 1e7d));
+//                waypointEf.setLng((int) (Lng * 1e7d));
+//                waypointEf.setAltRel((int) (AltRel * 100));
+//                waypointEf.setParm1(Float.parseFloat(String.valueOf(Parm1)));
+//                waypointEf.setParm2(Float.parseFloat(String.valueOf(Parm2)));
+//                waypointEf.setParm3(Float.parseFloat(String.valueOf(Parm3)));
+//                waypointEf.setParm4(Float.parseFloat(String.valueOf(Parm4)));
+//                waypointEfList.add(waypointEf);
+//                eflinkMsg3103.setWaypointEfList(waypointEfList);
+//            }
+//            eflinkMsg3103.setWaypointEfList(waypointEfList);
+//
+//            packet = EfLinkUtil.Packet(eflinkMsg3103.EFLINK_MSG_ID, eflinkMsg3103.packet());
+//
+//            //推送mqtt
+//            MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
 
             return ResultUtil.success("任务已同步到客户端！");
         } catch (Exception e) {
@@ -1833,7 +1926,7 @@ public class UavController {
                 uavId = obj.toString();
             }
             // EFLINK_MSG_3107请求下载航线
-            int tag = ((byte) new Random().nextInt()) & 0xFF;
+            int tag = ((byte) new Random().nextInt(100)) & 0xFF;
             EFLINK_MSG_3107 eflink_msg_3107 = new EFLINK_MSG_3107();
             eflink_msg_3107.setTag(tag);
             byte[] packet = EfLinkUtil.Packet(eflink_msg_3107.EFLINK_MSG_ID, eflink_msg_3107.packet());
@@ -1848,20 +1941,22 @@ public class UavController {
             redisUtils.remove(key3108);
             MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
             EFLINK_MSG_3108 msg3108 = null;
+            List<WaypointEf> efList = null;
             while (true) {
                 Object ack = redisUtils.get(key);
                 Object ack3108 = redisUtils.get(key3108);
-                if (ack != null) {
-                    if (Boolean.parseBoolean(ack.toString())) {
-                        goon = true;
-                    } else {
-                        error = "无人机未准备好，待会再下载！";
-                    }
-                    redisUtils.remove(key);
-                    break;
-                }
+                Object ack3109 = redisUtils.get(key3109);
+//                if (ack != null) {
+//                    if (Boolean.parseBoolean(ack.toString())) {
+//                        goon = true;
+//                    } else {
+//                        error = "无人机未准备好，待会再下载！";
+//                    }
+//                    redisUtils.remove(key);
+//                    break;
+//                }
                 if (ack3108 != null) {
-                    msg3108 = (EFLINK_MSG_3108) ack3108;
+                    efList = (List<WaypointEf>) ack3109;
                     goon = true;
                     redisUtils.remove(key3108);
                     break;
@@ -1889,7 +1984,8 @@ public class UavController {
             while (true) {
                 Object object3109 = redisUtils.get(key3109);
                 if (object3109 != null) {
-                    msg3109 = (EFLINK_MSG_3109) object3109;
+                    // msg3109 = (EFLINK_MSG_3109) object3109;
+                    efList = (List<WaypointEf>) object3109;
                     goon = true;
                     redisUtils.remove(key3109);
                     break;
@@ -1907,7 +2003,7 @@ public class UavController {
             JSONObject object = new JSONObject();
             object.put("msg3108", msg3108);
             object.put("msg3109", msg3109);
-            return ResultUtil.successData(object);
+            return ResultUtil.successData(efList);
         } catch (Exception e) {
             return ResultUtil.error("航线下载异常，请联系管理员！");
         }
@@ -2288,6 +2384,8 @@ public class UavController {
                 return ResultUtil.error("参数错误");
             }
 
+            Integer userId = efUser.getId();
+
             // 处理记录保存
             EfHandle efHandle = new EfHandle();
             efHandle.setDate(new Date(handleDate));
@@ -2296,8 +2394,7 @@ public class UavController {
             efHandle.setAlt(height);
             efHandle.setFlyAlt(uavheight);
             efHandle.setHandleUuid(handleUuid);
-
-            Integer userId = efUser.getId();
+            efHandle.setHandleUserid(userId);
 
             RLock lock = redissonClient.getLock(handleLock);
             boolean isLocked = false;
@@ -2371,7 +2468,6 @@ public class UavController {
             JSONArray blockAllArray = jsonObject.getJSONArray("block_all");
             JSONObject blockAllObj = blockAllArray.getJSONObject(0);
 
-
             String HandleUuid = blockAllObj.getString("handleUuid");
 
             BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
@@ -2379,8 +2475,6 @@ public class UavController {
             if (blockAll == null) {
                 return ResultUtil.error("接收二次分析预览结果失败！");
             }
-
-
 
             Object userId = null;
             EfHandle efHandleObj = null;
@@ -2458,7 +2552,9 @@ public class UavController {
      */
     @ResponseBody
     @RequestMapping(value = "/finalHandle", method = RequestMethod.POST)
-    public Result finalHandle(@CurrentUser EfUser efUser, @RequestParam("handleUuid") String handleUuid, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody EfHandle efHandle) {
+    public Result finalHandle(@CurrentUser EfUser efUser, @RequestParam("handleUuid") String handleUuid,
+                              @RequestParam(value = "uavId", required = false) String uavId,
+                              @RequestBody EfHandle efHandle) {
         try {
             // 参数校验
             if (efUser == null || StringUtils.isBlank(handleUuid)) {
@@ -2466,7 +2562,6 @@ public class UavController {
             }
 
             String userIdStr = String.valueOf(efUser.getId());
-
             // 确认无误后，才能存储
             RLock lock = redissonClient.getLock(handleLock);
             boolean isLocked = false;
@@ -2525,7 +2620,7 @@ public class UavController {
      * @return
      */
     @PostMapping(value = "/secondaryAnalysiss")
-    public Result secondaryAnalysiss(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = false) MultipartFile file) {
+    public Result secondaryAnalysiss(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = true) MultipartFile file) {
         int numThread = 3;
         ExecutorService executorService = Executors.newFixedThreadPool(numThread);
         try {
@@ -2612,7 +2707,7 @@ public class UavController {
                                 String base64Image = Base64.getEncoder().encodeToString(bytes);
                                 // 执行您的操作，例如将Base64字符串存入resultObject
                                 synchronized (resultObject) {
-                                    resultObject.put(key, "base64Image");
+                                    resultObject.put(key, base64Image);
                                 }
                                 // 任务完成后，减少任务计数
                                 taskCount.decrementAndGet();
@@ -2630,6 +2725,7 @@ public class UavController {
             } finally {
 
             }
+            ArrayList<String> ownerUsers = new ArrayList<>();
             // 从redis 获取
             String useridStr = String.valueOf(efUser.getId());
             // 获取BlockAll对象
@@ -2637,27 +2733,8 @@ public class UavController {
             // 获取handleUuid属性值
             String handleUuid = blockAllObject.getString("handleUuid");
 
-            // 上 故意 代码有问题 存储一个 handle_Id
-            Runnable runnableTask = () -> {
-                try {
-                    Boolean success = redisUtils.hmSet(handleUuid, useridStr, JSONObject.toJSONString(blockAllObject), 3, TimeUnit.HOURS);
-                    if (!success) {
-                        LogUtil.logMessage("存储失败！");
-                    }
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } finally {
-                    taskCount.decrementAndGet();
-                }
-            };
-            executorService.submit(runnableTask);
-            taskCount.incrementAndGet();
-            while (taskCount.get() > 0) {
-                Thread.sleep(100);
-            }
-            // 下 故意 代码有问题 存储一个 handle_Id
 
+            EfHandle efHandleObj = null;
             RLock lock = redissonClient.getLock(handleLock);
             boolean isLocked = true;
             try {
@@ -2668,7 +2745,7 @@ public class UavController {
                         LogUtil.logMessage("redis缓存处理信息已过期");
                         return ResultUtil.error("处理信息过期！");
                     }
-//                    efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
+                    efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
                     System.out.println(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
                 } else {
                     // 未获得锁，处理锁定失败的情况
@@ -2684,11 +2761,14 @@ public class UavController {
                 }
             }
 
-
-            int handleId = 9; // 通过数据库表查询
-
             //
             BlockAll blockAll = (BlockAll) resultObject.get("BlockAll");
+
+            String imgLevelStr = resultObject.getString("草地退化等级评定图.jpg");
+            efHandleObj.setImgLevel(imgLevelStr);
+            EfHandle efHandle = efHandleService.insert(efHandleObj);
+            int handleId = efHandle.getId(); // 通过数据库表查询
+
 
             // 作业地块信息存储
             List<EfHandleBlockList> blockList = (List<EfHandleBlockList>) resultObject.get("BlockList");
@@ -2698,16 +2778,23 @@ public class UavController {
                 String imgStr = (String) resultObject.get(id + ".jpg");// "l";
                 block.setImg(imgStr);
             });
-//            Integer inserBlockListNum = efHandleBlockListService.insertBatchByList(blockList);
+            List<EfHandleBlockList> efHandleBlockLists = efHandleBlockListService.insertBatchByList(blockList);
 
             // 补播路径点存储
             List<EfHandleWaypoint> reseedPointlist = (List<EfHandleWaypoint>) resultObject.get("reseedPointList");
             reseedPointlist.stream().forEach(waypoint -> {
                 waypoint.setHandleId(handleId);
             });
-            Integer inserPointNum = efHandleWaypointService.insertBatchByList(reseedPointlist);
+            reseedPointlist.forEach(waypoint -> {
+                waypoint.setHandleId(handleId);
+            });
+            List<EfHandleWaypoint> efHandleWaypointList = efHandleWaypointService.insertBatchByList(reseedPointlist);
 
 
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("efHandle", efHandle);
+            jsonObject.put("efHandleBlockLists", efHandleBlockLists);
+            jsonObject.put("efHandleWaypointList", efHandleWaypointList);
             // 存储
 //            Callable<EfPvBoardGroup> task1 = new Callable<EfPvBoardGroup>() {
 //                @Override
@@ -2719,8 +2806,9 @@ public class UavController {
 //            };
 //            Future<EfPvBoardGroup> future1 = executorService.submit(task1);
 
+            ownerUsers.add(useridStr);
             /**5000--作为推送接口id**/
-//            WebSocketLink.push(ResultUtil.success(5001, "blockList", "blockList", efHandleObj), ownerUsers); // 推送blockList到对应的用户列
+            WebSocketLink.push(ResultUtil.success(5001, "blockList", "blockList", jsonObject), ownerUsers); // 推送blockList到对应的用户列
             return ResultUtil.success("处理数据", resultObject);
         } catch (Exception e) {
             return ResultUtil.error("发送处理信息失败");

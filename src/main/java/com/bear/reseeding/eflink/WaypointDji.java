@@ -55,6 +55,7 @@ public class WaypointDji implements Serializable {
                 '}';
     }
 
+
     public void unpacket(byte[] packet, int index) {
         try {
             WpNo = BytesUtil.bytes2UShort(packet, index);

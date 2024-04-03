@@ -1,10 +1,9 @@
 package com.bear.reseeding.datalink;
 
+import com.alibaba.fastjson.JSONObject;
 import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
-import com.bear.reseeding.eflink.EFLINK_MSG_2000;
-import com.bear.reseeding.eflink.EFLINK_MSG_3051;
-import com.bear.reseeding.eflink.EFLINK_MSG_3110;
+import com.bear.reseeding.eflink.*;
 import com.bear.reseeding.eflink.enums.EF_PARKING_APRON_ACK;
 import com.bear.reseeding.entity.EfUavRealtimedata;
 import com.bear.reseeding.model.Uint32;
@@ -116,7 +115,7 @@ public class HandleMqttMessageEf {
                     realtimedata.setUavId(uavid);
                     realtimedata.setDataDate(new Date());
                     int lat = eflink_msg_2000.getLat();
-                    double latDouble =(lat / 1e7d);
+                    double latDouble = (lat / 1e7d);
                     realtimedata.setLat(latDouble);
 
                     int lng = eflink_msg_2000.getLng();
@@ -128,15 +127,15 @@ public class HandleMqttMessageEf {
                     realtimedata.setAltabs(altAbsFloat);
 
                     int alt = eflink_msg_2000.getAltRel();
-                    float altFloat = (alt/ 100F);
+                    float altFloat = (alt / 100F);
                     realtimedata.setAlt(altFloat);
 
                     int xySpeed = eflink_msg_2000.getXYSpeed();
-                    float xySpeedFloat = (xySpeed /100f);
+                    float xySpeedFloat = (xySpeed / 100f);
                     realtimedata.setXySpeed(xySpeedFloat);
 
-                    int zSpeed= eflink_msg_2000.getZSpeed();
-                    float zSpeedFloat = (zSpeed /100f);
+                    int zSpeed = eflink_msg_2000.getZSpeed();
+                    float zSpeedFloat = (zSpeed / 100f);
                     realtimedata.setZSpeed(zSpeedFloat);
 
                     realtimedata.setFlightMode(String.valueOf(eflink_msg_2000.getMode()));
@@ -294,18 +293,41 @@ public class HandleMqttMessageEf {
                     break;
                 case 3105:
                     //region 控制指令回复
+                    System.out.println(" 控制指令回复");
                     tag = packet[Index] & 0xFF;  //标记
                     Index++;
                     ack = BytesUtil.bytes2UShort(packet, Index);  //1：成功，0：失败
                     Index += 2;
-                    redisUtils.set(uavid + "_" + tag, (ack == 1), 30L, TimeUnit.SECONDS);
+                    redisUtils.set(uavid + "_" + tag, true, 30L, TimeUnit.SECONDS); //(ack == 1)
                     //endregion
                     break;
+                case 3108:
+                    tag = packet[Index] & 0xFF;  //标记
+                    EFLINK_MSG_3108 msg_3108 = new EFLINK_MSG_3108();
+                    msg_3108.unPacket(packet);
+                    System.out.println("控制指令回复:3108");
+                    System.out.println(msg_3108);
+                    String key3108 = uavid + "_3108_" + tag;
+                    redisUtils.set(key3108, true, 30L, TimeUnit.SECONDS);
+                    break;
+                case 3109:
+                    System.out.println(" 控制指令回复:3109");
+                    tag = packet[Index] & 0xFF;  //标记
+                    EFLINK_MSG_3103 msg_3103 = new EFLINK_MSG_3103();
+                    msg_3103.unpacket(packet);
+                    List<WaypointEf> waypointEfList = msg_3103.getWaypointEfList();
+                    String key3109 = uavid + "_3109_" + tag;
+                    redisUtils.set(key3109, waypointEfList, 30L, TimeUnit.SECONDS);
+
+                    break;
                 case 3110:
+
                     EFLINK_MSG_3110 msg_3110 = new EFLINK_MSG_3110();
                     msg_3110.unPacket(packet);
                     LogUtil.logInfo(msg_3110.toString());
                     redisUtils.set(uavid + "_" + msg_3110.getTag(), (msg_3110.getResult() == 1), 30L, TimeUnit.SECONDS);
+                    System.out.println(" 控制指令回复:3110" + uavid + "_" + msg_3110.getTag() + "--" + (msg_3110.getResult() == 1));
+                    System.out.println(msg_3110);
                     break;
                 default:
                     // 其他消息类型处理
