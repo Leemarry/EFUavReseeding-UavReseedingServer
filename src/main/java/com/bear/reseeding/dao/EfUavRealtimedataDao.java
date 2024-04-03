@@ -58,7 +58,7 @@ public interface EfUavRealtimedataDao {
     /**
      * 批量新增或按主键更新数据（MyBatis原生foreach方法）
      *
-     * @param entities List<EfUavRealtimedata> 实例对象列表
+     * @param entities List<EfUavRealtimedata>实例对象列表
      * @return 影响行数
      */
     int insertOrUpdateBatch(@Param("entities") List<EfUavRealtimedata> entities);

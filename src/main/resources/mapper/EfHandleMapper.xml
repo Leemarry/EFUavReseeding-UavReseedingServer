@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.EfHandleDao">
+
+    <resultMap type="com.bear.reseeding.entity.EfHandle" id="EfHandleMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="date" column="date" jdbcType="TIMESTAMP"/>
+        <result property="lat" column="lat" jdbcType="VARCHAR"/>
+        <result property="lng" column="lng" jdbcType="VARCHAR"/>
+        <result property="alt" column="alt" jdbcType="VARCHAR"/>
+        <result property="flyAlt" column="fly_alt" jdbcType="VARCHAR"/>
+        <result property="loadP1" column="load_p1" jdbcType="VARCHAR"/>
+        <result property="loadP2" column="load_p2" jdbcType="VARCHAR"/>
+        <result property="loadP3" column="load_p3" jdbcType="VARCHAR"/>
+        <result property="loadP4" column="load_p4" jdbcType="VARCHAR"/>
+        <result property="loadP5" column="load_p5" jdbcType="VARCHAR"/>
+        <result property="gapSquare" column="gap_square" jdbcType="VARCHAR"/>
+        <result property="reseedAreaNum" column="reseed_area_num" jdbcType="VARCHAR"/>
+        <result property="reseedSquare" column="reseed_square" jdbcType="VARCHAR"/>
+        <result property="seedNum" column="seed_num" jdbcType="INTEGER"/>
+        <result property="imgLevel" column="img_level" jdbcType="LONGVARCHAR" />
+        <result property="handleUserid" column="handle_userid" jdbcType="INTEGER" />
+    </resultMap>
+
+    <!--查询单个-->
+    <select id="queryById" resultMap="EfHandleMap">
+        select
+          id, date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level
+        from ef_handle
+        where id = #{id}
+    </select>
+
+    <!--查询指定行数据-->
+    <select id="queryAllByLimit" resultMap="EfHandleMap">
+        select
+          id, date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level        from ef_handle
+        limit #{offset}, #{limit}
+    </select>
+
+    <!--统计总行数-->
+    <select id="count" resultType="java.lang.Long">
+        select count(1)
+        from ef_handle
+        <where>
+            <if test="id != null">
+                and id = #{id}
+            </if>
+            <if test="date != null">
+                and date = #{date}
+            </if>
+            <if test="lat != null">
+                and lat = #{lat}
+            </if>
+            <if test="lng != null">
+                and lng = #{lng}
+            </if>
+            <if test="alt != null">
+                and alt = #{alt}
+            </if>
+            <if test="flyAlt != null">
+                and fly_alt = #{flyAlt}
+            </if>
+            <if test="loadP1 != null">
+                and load_p1 = #{loadP1}
+            </if>
+            <if test="loadP2 != null">
+                and load_p2 = #{loadP2}
+            </if>
+            <if test="loadP3 != null">
+                and load_p3 = #{loadP3}
+            </if>
+            <if test="loadP4 != null">
+                and load_p4 = #{loadP4}
+            </if>
+            <if test="loadP5 != null">
+                and load_p5 = #{loadP5}
+            </if>
+            <if test="gapSquare != null">
+                and gap_square = #{gapSquare}
+            </if>
+            <if test="reseedAreaNum != null">
+                and reseed_area_num = #{reseedAreaNum}
+            </if>
+            <if test="reseedSquare != null">
+                and reseed_square = #{reseedSquare}
+            </if>
+            <if test="seedNum != null">
+                and seed_num = #{seedNum}
+            </if>
+            <if test="imgLevel != null and imgLevel != ''">
+                and img_level = #{imgLevel}
+            </if>
+        </where>
+    </select>
+    <!--时间段查询数据-->
+    <select id="queryByTime" resultMap="EfHandleMap" parameterType="Map">
+        select * from ef_handle
+        where date between #{startDate} and #{endDate}
+        order by date desc
+    </select>
+
+    <!--新增所有列-->
+    <insert id="insert" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_handle(date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level,handle_userid)
+        values (#{date}, #{lat}, #{lng}, #{alt}, #{flyAlt}, #{loadP1}, #{loadP2}, #{loadP3}, #{loadP4}, #{loadP5}, #{gapSquare}, #{reseedAreaNum}, #{reseedSquare}, #{seedNum}, #{imgLevel},#{handleUserid})
+    </insert>
+
+    <insert id="insertBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_handle(date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+        (#{entity.date}, #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.flyAlt}, #{entity.loadP1}, #{entity.loadP2}, #{entity.loadP3}, #{entity.loadP4}, #{entity.loadP5}, #{entity.gapSquare}, #{entity.reseedAreaNum}, #{entity.reseedSquare}, #{entity.seedNum}, #{entity.imgLevel})
+        </foreach>
+    </insert>
+
+    <insert id="insertOrUpdateBatch" keyProperty="id" useGeneratedKeys="true">
+        insert into ef_handle(date, lat, lng, alt, fly_alt, load_p1, load_p2, load_p3, load_p4, load_p5, gap_square, reseed_area_num, reseed_square, seed_num, img_level)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.date}, #{entity.lat}, #{entity.lng}, #{entity.alt}, #{entity.flyAlt}, #{entity.loadP1}, #{entity.loadP2}, #{entity.loadP3}, #{entity.loadP4}, #{entity.loadP5}, #{entity.gapSquare}, #{entity.reseedAreaNum}, #{entity.reseedSquare}, #{entity.seedNum}, #{entity.imgLevel})
+        </foreach>
+        on duplicate key update
+        date = values(date),
+        lat = values(lat),
+        lng = values(lng),
+        alt = values(alt),
+        fly_alt = values(fly_alt),
+        load_p1 = values(load_p1),
+        load_p2 = values(load_p2),
+        load_p3 = values(load_p3),
+        load_p4 = values(load_p4),
+        load_p5 = values(load_p5),
+        gap_square = values(gap_square),
+        reseed_area_num = values(reseed_area_num),
+        reseed_square = values(reseed_square),
+        seed_num = values(seed_num),
+        img_level = values(img_level)
+    </insert>
+
+    <!--通过主键修改数据-->
+    <update id="update">
+        update ef_handle
+        <set>
+            <if test="date != null">
+                date = #{date},
+            </if>
+            <if test="lat != null">
+                lat = #{lat},
+            </if>
+            <if test="lng != null">
+                lng = #{lng},
+            </if>
+            <if test="alt != null">
+                alt = #{alt},
+            </if>
+            <if test="flyAlt != null">
+                fly_alt = #{flyAlt},
+            </if>
+            <if test="loadP1 != null">
+                load_p1 = #{loadP1},
+            </if>
+            <if test="loadP2 != null">
+                load_p2 = #{loadP2},
+            </if>
+            <if test="loadP3 != null">
+                load_p3 = #{loadP3},
+            </if>
+            <if test="loadP4 != null">
+                load_p4 = #{loadP4},
+            </if>
+            <if test="loadP5 != null">
+                load_p5 = #{loadP5},
+            </if>
+            <if test="gapSquare != null">
+                gap_square = #{gapSquare},
+            </if>
+            <if test="reseedAreaNum != null">
+                reseed_area_num = #{reseedAreaNum},
+            </if>
+            <if test="reseedSquare != null">
+                reseed_square = #{reseedSquare},
+            </if>
+            <if test="seedNum != null">
+                seed_num = #{seedNum},
+            </if>
+            <if test="imgLevel != null and imgLevel != ''">
+                img_level = #{imgLevel},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--通过主键删除-->
+    <delete id="deleteById">
+        delete from ef_handle where id = #{id}
+    </delete>
+
+</mapper>
+

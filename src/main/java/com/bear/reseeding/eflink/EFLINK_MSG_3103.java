@@ -116,6 +116,10 @@ public class EFLINK_MSG_3103 implements Serializable {
                     for (int i = 0; i < WpCount; i++) {
                         switch (this.MissionType) {
                             case 0: // 翼飞任务
+                                WaypointEf waypointEf = new WaypointEf();
+                                waypointEf.unpacket(packet, index);
+                                waypointEfList.add(waypointEf);
+                                index += waypointEf.WaypointEfLength;
                                 break;
                             case 1: // 大疆任务
                                 WaypointDji waypointDji = new WaypointDji();

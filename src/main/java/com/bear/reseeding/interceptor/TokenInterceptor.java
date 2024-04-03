@@ -6,6 +6,7 @@ import com.bear.reseeding.common.ResultUtil;
 import com.bear.reseeding.entity.EfUser;
 import com.bear.reseeding.utils.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -26,6 +27,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 public class TokenInterceptor implements HandlerInterceptor {
+
+    @Value("${releaseIP}")
+    private String[] releaseIPArray;
+
 
     @Autowired
     private RedisUtils redisUtils;
@@ -66,6 +71,13 @@ public class TokenInterceptor implements HandlerInterceptor {
         //String ClientId = request.getHeader("ClientId");
         //String jsonParam = getResultFromRequest(request);
         String error = "通讯异常!";
+        for (String ip : releaseIPArray) {
+            if (ip.equals(ipWww)) {
+                LogUtil.logMessage("放行Ip:["+ipWww+"]");
+                return true;
+            }
+        }
+
         if (token == null) {
             error = "验证信息失败，请重新登录！";
             LogUtil.logWarn("The token is null !!!");

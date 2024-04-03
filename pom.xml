@@ -86,6 +86,11 @@
             <artifactId>fastjson</artifactId>
             <version>1.2.12</version>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20180130</version>
+        </dependency>
         <!--        EasyExcel依懒-->
         <dependency>
             <groupId>com.alibaba</groupId>
@@ -168,6 +173,11 @@
             <artifactId>minio</artifactId>
             <version>8.2.2</version>
         </dependency>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.16.4</version>
+        </dependency>
         <!-- 压缩-->
         <dependency>
             <groupId>net.lingala.zip4j</groupId>
@@ -223,6 +233,14 @@
             <groupId>org.docx4j</groupId>
             <artifactId>docx4j-export-fo</artifactId>
             <version>6.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
 
     </dependencies>

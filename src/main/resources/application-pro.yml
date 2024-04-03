@@ -8,7 +8,7 @@ spring:
   datasource:
     username: reseeding
     password: zjMMPsFajDsrtTMk
-    url: jdbc:mysql://8.134.196.47:3306/ef_reseeding?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
+    url: jdbc:mysql://8.148.10.90:3306/ef_reseeding?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
 #    driver-class-name: com.mysql.jdbc.Driver
     #druid连接池配置
     type: com.alibaba.druid.pool.DruidDataSource
