@@ -6,6 +6,8 @@ import com.bear.reseeding.utils.LogUtil;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+
 /**
  * @Auther: bear
  * @Date: 2022-11-18 10:18:11
@@ -63,6 +65,10 @@ public class ADebugController {
             }
             // 获取文件名-大小
             String fileName = file.getOriginalFilename();
+            String desktopPath = System.getProperty("user.home") + "/Desktop/reseed";
+            File savePath = new File(desktopPath, fileName);
+            file.transferTo(savePath);
+            LogUtil.logInfo("已储存照片：" + savePath.getAbsolutePath());
             return ResultUtil.success(fileName);
         } catch (Exception e) {
             LogUtil.logError("测试异常：" + e.toString());
