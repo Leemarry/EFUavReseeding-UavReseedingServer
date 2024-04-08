@@ -178,6 +178,14 @@ public class MinioService {
 
         } catch (Exception e) {
             LogUtil.logError("上传文件 " + path + " 到Minio异常：" + e.toString());
+        }finally {
+            try {
+                if (stream != null) {
+                    stream.close();
+                }
+            } catch (IOException e) {
+                LogUtil.logError("关闭文件流失败：" + e.toString());
+            }
         }
         return result;
     }

@@ -11,17 +11,17 @@ import org.dom4j.io.OutputFormat;
 import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * kmz
- *
  */
 public class KmzUtil {
 
@@ -48,8 +48,10 @@ public class KmzUtil {
 
 
     //region 写入
+
     /**
-     *  传入数据处理
+     * 传入数据处理
+     *
      * @param coordinateArray
      * @param takeoffAlt
      * @param homeAltAbs
@@ -57,13 +59,13 @@ public class KmzUtil {
      * @param uavType
      * @return
      */
-    public static  File beforeDataProcessing(List<double[]> coordinateArray,String fileName,double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath){
+    public static File beforeDataProcessing(List<double[]> coordinateArray, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath) {
         boolean flag = false;
         File kmzFile = null; // 返回的文件实例
         try {
             // 距离 点集合
             int numPoints = coordinateArray.size();
-            double distaceCount=0.0;
+            double distaceCount = 0.0;
             double distance;
             for (int i = 0; i < numPoints; i++) {
                 for (int j = i + 1; j < numPoints; j++) {
@@ -74,7 +76,7 @@ public class KmzUtil {
                     double lng2 = nextPoint[0];  // 获取经度
                     double lat2 = nextPoint[1];  // 获取纬度
 
-                    distance = GisUtil.getDistance(lng1,lat1 , lng2, lat2);
+                    distance = GisUtil.getDistance(lng1, lat1, lng2, lat2);
                     distaceCount += distance;
 //                    System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
                     break;
@@ -98,9 +100,10 @@ public class KmzUtil {
 //            efTaskWps.setWpsUserTime(0);
             //kmlPath
 
-            String wpmlPathString = writewpml( coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType,topbasePath);
-            String kmlPathString = writeKml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType,topbasePath);
+            String wpmlPathString = writewpml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath);
+            String kmlPathString = writeKml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath);
 
+            List<String> pathStrList= new ArrayList<>();
 
             File file1 = null;
             File file2 = null;
@@ -108,14 +111,14 @@ public class KmzUtil {
             if (wpmlPathString != null) {
                 file1 = new File(wpmlPathString);
                 if (file1.exists()) {
-                    String p=file1.getParent();
+                    String p = file1.getParent();
                     path = file1.getParent();
                 }
             }
             if (kmlPathString != null) {
                 file2 = new File(kmlPathString);
                 if (file2.exists()) {
-                    String p=file2.getParent();
+                    String p = file2.getParent();
                     path = file2.getParent();
                 }
             }
@@ -128,20 +131,27 @@ public class KmzUtil {
                         LogUtil.logWarn("创建Kmz文件夹中 res 目录失败！");
                     }
                 }
-
+//                pathStrList.add(resFile.getPath());
+                // kmz 文件路径+文件名
                 String kmzPath = getpIngBasePath(topbasePath) + fileName + File.separator + fileName + ".kmz";
-                kmzFile = copyKmzStream(kmlPathString,wpmlPathString,kmzPath ,topbasePath);
+//                FileUtil.createOrUpdateFile(kmzPath);
+                //
+
+                pathStrList.add(wpmlPathString);
+                pathStrList.add(kmlPathString);
+                kmzFile = writeZip(pathStrList,kmzPath);
+//                kmzFile = copyKmzStream(kmlPathString, wpmlPathString, kmzPath, topbasePath);
             } else {
                 LogUtil.logWarn("Wpml目録不存在：" + path + fileName);
             }
 
-        }catch (Exception e){
+        } catch (Exception e) {
             LogUtil.logError("数据集处理有误：" + e.toString());
         }
         return kmzFile;
     }
 
-    public static String writeKml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath) {
+    public static String writeKml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath) {
         try {
             Element root = DocumentHelper.createElement("kml");
             Namespace namespace = Namespace.get("http://www.opengis.net/kml/2.2");
@@ -203,7 +213,7 @@ public class KmzUtil {
             globalWaypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
             folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature");
-            double direction =0;
+            double direction = 0;
             for (int i = 0; i < coordinateArray.size(); i++) {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
                 double lng = firstPoint[0];  // 获取经度
@@ -212,27 +222,27 @@ public class KmzUtil {
 //                double lng = entry.get("x");
 //                double lat = entry.get("y");
 //                double alt = entry.get("z");
-                for (int j= i+1;j<coordinateArray.size();j++){
+                for (int j = i + 1; j < coordinateArray.size(); j++) {
 
                     double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
-                    double longitude1= nextPoint[0];  // 获取经度
+                    double longitude1 = nextPoint[0];  // 获取经度
                     double latitude2 = nextPoint[1];  // 获取纬度
 //                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
 //                    double lng1 = nextentry.get("x");
 //                    double lat1 = nextentry.get("y");
 //                    double alt1 = nextentry.get("z");
 //                    direction =getDirection(lat,lng,lat1,lng1);
-                    direction =getDirection(lat,lng,latitude2,longitude1);
+                    direction = getDirection(lat, lng, latitude2, longitude1);
                     break;
                 }
 
                 Element placemark = folder.addElement("Placemark");
                 Element point = placemark.addElement("Point");
 //                point.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
-                point.addElement("coordinates").addText( lng + "," + lat );
+                point.addElement("coordinates").addText(lng + "," + lat);
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) ); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
-                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) );
+                placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs)); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
+                placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs));
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(0));  //朝向？ direction
@@ -329,7 +339,7 @@ public class KmzUtil {
         }
     }
 
-    private static String writewpml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType,String topbasePath) {
+    private static String writewpml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath) {
         try {
             Element root = DocumentHelper.createElement("kml");
             Namespace namespace = Namespace.get("http://www.opengis.net/kml/2.2");
@@ -369,7 +379,7 @@ public class KmzUtil {
             folder.addElement("wpml:autoFlightSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));
 
 //
-            double direction =0;
+            double direction = 0;
             for (int i = 0; i < coordinateArray.size(); i++) {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
                 double lng = firstPoint[0];  // 获取经度
@@ -378,16 +388,16 @@ public class KmzUtil {
 //                double lng = entry.get("x");
 //                double lat = entry.get("y");
 //                double alt = entry.get("z");
-                for (int j= i+1;j<coordinateArray.size();j++){
+                for (int j = i + 1; j < coordinateArray.size(); j++) {
                     double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
-                    double longitude1= nextPoint[0];  // 获取经度
+                    double longitude1 = nextPoint[0];  // 获取经度
                     double latitude2 = nextPoint[1];  // 获取纬度
 //                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
 //                    double lng1 = nextentry.get("x");
 //                    double lat1 = nextentry.get("y");
 //                    double alt1 = nextentry.get("z");
 //                    direction =getDirection(lat,lng,lat1,lng1);
-                    direction =getDirection(lat,lng,latitude2,longitude1);
+                    direction = getDirection(lat, lng, latitude2, longitude1);
                     break;
                 }
 
@@ -395,9 +405,9 @@ public class KmzUtil {
                 Element placemark = folder.addElement("Placemark");
                 Element pointElement = placemark.addElement("Point");
 //                pointElement.addElement("coordinates").addText("\r\n" + lng + "," + lat + "\r\n");
-                pointElement.addElement("coordinates").addText( lng + "," + lat );
+                pointElement.addElement("coordinates").addText(lng + "," + lat);
                 placemark.addElement("wpml:index").addText(String.valueOf(i));
-                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs) );//航点执行高度
+                placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs));//航点执行高度
                 placemark.addElement("wpml:waypointSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));//航点飞行速度
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");//偏航角参数模式
                 waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
@@ -520,7 +530,7 @@ public class KmzUtil {
     /**
      * 拷贝
      */
-    private static File copyKmzStream(String kmlPathString,String wpmlPathString, String kmzPath,String topbasePath) {
+    private static File copyKmzStream(String kmlPathString, String wpmlPathString, String kmzPath, String topbasePath) {
         boolean flag = false;
         File kmzFile = null;  // 返回的文件实例
         try {
@@ -533,6 +543,7 @@ public class KmzUtil {
             }
             Path sourcePath = Paths.get(file.getAbsolutePath());
             Path targetPath = Paths.get(kmzPath);
+//            byteCopy(sourcePath.toString(),targetPath.toString());
             Path copiedPath = Files.copy(sourcePath, targetPath, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
             // 如果代码执行到此处，表示复制成功
 //            System.out.println("文件复制成功：" + copiedPath.toString());
@@ -545,8 +556,8 @@ public class KmzUtil {
                 Path fileInsideZipPathWpml = fs.getPath("/wpmz/waylines.wpml");
                 Files.copy(kmlPath, fileInsideZipPathKml, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
                 Files.copy(wpmlPath, fileInsideZipPathWpml, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
-                flag =true;
-                kmzFile =zipFilePath.toFile();
+                flag = true;
+                kmzFile = zipFilePath.toFile();
 
             } catch (IOException e) {
                 LogUtil.logError("写入Kmz航线时IO异常：" + e.toString());
@@ -554,7 +565,84 @@ public class KmzUtil {
         } catch (Exception e) {
             LogUtil.logError("写入Kmz航线时异常：" + e.toString());
         }
-        return  kmzFile;
+
+        return kmzFile;
+    }
+
+
+    public static void byteCopy(String  sourcePath,String target) throws IOException {
+        //1.创建输入流
+        InputStream iStream = new FileInputStream(sourcePath);
+        //2.创建输出流
+        OutputStream oStream = new FileOutputStream(target);
+        //3.一部分一部分读出
+        byte[] bytes = new byte[10*1024];
+        int br;//实际的读取长度
+        while((br =iStream.read(bytes))!=-1) {//判断是否读到末尾
+            oStream.write(bytes, 0, br);
+        }
+        //4.清空缓存
+        oStream.flush();
+        //5.关闭流
+        if(iStream!=null) {
+            iStream.close();
+        }
+        if(oStream!=null) {
+            oStream.close();
+        }
+    }
+
+
+
+    /**
+     * 写入文件压缩为ZIP格式
+     * @param filePaths 被压缩文件路径
+     * @param zipPath 生成zip文件路径
+     */
+    public static File writeZip(List<String> filePaths, String zipPath){
+        File kmzFile = null;  // 返回的文件实例
+        try{
+            File zipFile = new File(zipPath);
+            // 判断文件是否存在，如文件不存在创建一个新文件
+            if (!zipFile.exists()){
+                zipFile.createNewFile();
+            }
+            // 创建一个zip文件输出流
+            ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(zipFile));
+            for (String filePath : filePaths){
+                File file = new File(filePath);
+                // 判断文件是否存在，如不存在直接跳过
+                if (!file.exists()){
+                    continue;
+                }
+                /**
+                 * 创建一个缓冲读取流，提高读取效率
+                 * 也可以直接创建一个 FileInputStream 对象，BufferedInputStream内部维护了一个8KB的缓冲区，BufferedInputStream本身不具备读取能力
+                 * BufferedInputStream 可以手动指定缓冲区大小 单位为字节例如：new BufferedInputStream(new FileInputStream(file), 10240)
+                 */
+                BufferedInputStream bufferedInput = new BufferedInputStream(new FileInputStream(file));
+                // 设置压缩条目名称
+                zipOutput.putNextEntry(new ZipEntry(file.getName()));
+                byte[] bytes = new byte[1024];
+                int len = -1;
+                // 读取file内的字节流，写入到zipOutput内
+                while ((len = bufferedInput.read(bytes)) != -1){
+                    zipOutput.write(bytes,0,len);
+                }
+                // 关闭输入流
+                // 无需关闭new FileInputStream(file)的输入流 因为BufferedInputStream.close()方法内部已经调用了FileInputStream.close()方法
+                bufferedInput.close();
+                // 写入完毕后关闭条目
+                zipOutput.closeEntry();
+            }
+            zipOutput.close();
+            kmzFile= new File(zipPath);
+        }catch (IOException e){
+            System.out.println("写入文件压缩为ZIP格式失败："+e.getMessage());
+        }finally {
+            return  kmzFile;
+        }
+
     }
 
 
@@ -583,7 +671,7 @@ public class KmzUtil {
         return direction;
     }
 
-        //endregion
+    //endregion
 
     private static String getActionActuatorFunc(String str) {
         switch (str) {
@@ -603,7 +691,6 @@ public class KmzUtil {
                 return "hover";
         }
     }
-
 
 
 }

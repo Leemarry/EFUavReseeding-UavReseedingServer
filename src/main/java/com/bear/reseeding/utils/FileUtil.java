@@ -301,6 +301,39 @@ public class FileUtil {
 
 
     /**
+     * 创建该文件
+     */
+
+    /**
+     * 判断是否是 文件类型 或创建
+     * @param filePath 文件路径
+     */
+    public static void createOrUpdateFile(String filePath) {
+        File file = new File(filePath);
+        if (file.exists() && !file.isFile()) {
+            if (file.isDirectory()) {
+                file.delete();
+            }
+            try {
+                file.createNewFile();
+                System.out.println("文件已重新生成");
+            } catch (IOException e) {
+                System.out.println("重新生成文件出错：" + e.getMessage());
+            }
+        } else if (!file.exists()) {
+            try {
+                file.createNewFile();
+                System.out.println("文件已创建");
+            } catch (IOException e) {
+                System.out.println("创建文件出错：" + e.getMessage());
+            }
+        } else {
+            System.out.println("文件存在且为文件类型");
+        }
+    }
+
+
+    /**
      * 文件合并
      *
      * @param targetFile

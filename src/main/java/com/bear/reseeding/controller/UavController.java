@@ -1251,72 +1251,74 @@ public class UavController {
             if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
+            String fileNames= kmzFile.getName();
             // 上传minion
-            String url = applicationName + File.separator + File.separator + ucId + File.separator + kmzFile.getName();
+            String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
             if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
                 if (kmzFile.exists()) {
                     FileUtil.deleteDir(kmzFile.getParent());
                 }
                 return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
             }
+            return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
 
-            url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
-            if ("".equals(url)) {
-                return ResultUtil.error("保存巡检航线失败(错误码 4)！");
-            }
-            long fileSize = kmzFile.length();
-//            double fileSizeKB = (double) kmzFile.length() / 1024; // 将字节数转换为 KB
-//            String formattedSize = String.format("%.2f KB", fileSizeKB); // 格式化结果（保留两位小数）
-//            System.out.println("文件大小：" + fileSize + "字节");
-            // 距离 点集合
-            int numPoints = mission.size();
-            double distaceCount = 0.0;
-            double distance;
-            for (int i = 0; i < numPoints; i++) {
-                for (int j = i + 1; j < numPoints; j++) {
-                    double[] firstPoint = mission.get(i);  // 获取第一组坐标点
-                    double lng1 = firstPoint[0];  // 获取经度
-                    double lat1 = firstPoint[1];  // 获取纬度
-                    double[] nextPoint = mission.get(j);  // 获取第一组坐标点
-                    double lng2 = nextPoint[0];  // 获取经度
-                    double lat2 = nextPoint[1];  // 获取纬度
-
-                    distance = GisUtil.getDistance(lng1, lat1, lng2, lat2);
-                    distaceCount += distance;
-//                    System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
-                    break;
-                }
-            }
-            // minio上传成功  保存 到数据库
-            EfTaskKmz efTaskKmz = new EfTaskKmz();
-            efTaskKmz.setKmzUpdateTime(nowdate);
-            efTaskKmz.setKmzCreateTime(nowdate);
-            efTaskKmz.setKmzName(name);
-            efTaskKmz.setKmzPath(url);
-            efTaskKmz.setKmzVersion("1.0.0");
-            efTaskKmz.setKmzType("kmz");
-            efTaskKmz.setKmzSize(fileSize);
-            efTaskKmz.setKmzDes("");
-            efTaskKmz.setKmzVersion("1.0.0");
-            efTaskKmz.setKmzDistance(distaceCount);
-            efTaskKmz.setKmzDuration((Double) (distaceCount / 5f));
-            efTaskKmz.setKmzCreateUser(userName);
-            efTaskKmz.setKmzUpdateUser(userName);
-            efTaskKmz.setKmzUpdateByUserId(userId);
-            efTaskKmz.setKmzCreateByUserId(userId);
-            efTaskKmz.setKmzCompanyId(ucId);
-
-            efTaskKmz = efTaskKmzService.insert(efTaskKmz);
-            if (efTaskKmz != null) {
-                return ResultUtil.success("保存航线成功！");
-            }
-            /**移除minio 错误航线*/
-            Boolean gold = minioService.removeObject(BucketNameKmz, url);
-            if (gold) {
-                return ResultUtil.error("保存航线失败！！！请重新上传");
-            } else {
-                return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
-            }
+//            url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+//            if ("".equals(url)) {
+//                return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+//            }
+//            long fileSize = kmzFile.length();
+////            double fileSizeKB = (double) kmzFile.length() / 1024; // 将字节数转换为 KB
+////            String formattedSize = String.format("%.2f KB", fileSizeKB); // 格式化结果（保留两位小数）
+////            System.out.println("文件大小：" + fileSize + "字节");
+//            // 距离 点集合
+//            int numPoints = mission.size();
+//            double distaceCount = 0.0;
+//            double distance;
+//            for (int i = 0; i < numPoints; i++) {
+//                for (int j = i + 1; j < numPoints; j++) {
+//                    double[] firstPoint = mission.get(i);  // 获取第一组坐标点
+//                    double lng1 = firstPoint[0];  // 获取经度
+//                    double lat1 = firstPoint[1];  // 获取纬度
+//                    double[] nextPoint = mission.get(j);  // 获取第一组坐标点
+//                    double lng2 = nextPoint[0];  // 获取经度
+//                    double lat2 = nextPoint[1];  // 获取纬度
+//
+//                    distance = GisUtil.getDistance(lng1, lat1, lng2, lat2);
+//                    distaceCount += distance;
+////                    System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
+//                    break;
+//                }
+//            }
+//            // minio上传成功  保存 到数据库
+//            EfTaskKmz efTaskKmz = new EfTaskKmz();
+//            efTaskKmz.setKmzUpdateTime(nowdate);
+//            efTaskKmz.setKmzCreateTime(nowdate);
+//            efTaskKmz.setKmzName(name);
+//            efTaskKmz.setKmzPath(url);
+//            efTaskKmz.setKmzVersion("1.0.0");
+//            efTaskKmz.setKmzType("kmz");
+//            efTaskKmz.setKmzSize(fileSize);
+//            efTaskKmz.setKmzDes("");
+//            efTaskKmz.setKmzVersion("1.0.0");
+//            efTaskKmz.setKmzDistance(distaceCount);
+//            efTaskKmz.setKmzDuration((Double) (distaceCount / 5f));
+//            efTaskKmz.setKmzCreateUser(userName);
+//            efTaskKmz.setKmzUpdateUser(userName);
+//            efTaskKmz.setKmzUpdateByUserId(userId);
+//            efTaskKmz.setKmzCreateByUserId(userId);
+//            efTaskKmz.setKmzCompanyId(ucId);
+//
+//            efTaskKmz = efTaskKmzService.insert(efTaskKmz);
+//            if (efTaskKmz != null) {
+//                return ResultUtil.success("保存航线成功！");
+//            }
+//            /**移除minio 错误航线*/
+//            Boolean gold = minioService.removeObject(BucketNameKmz, url);
+//            if (gold) {
+//                return ResultUtil.error("保存航线失败！！！请重新上传");
+//            } else {
+//                return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
+//            }
 
 
         } catch (Exception e) {
