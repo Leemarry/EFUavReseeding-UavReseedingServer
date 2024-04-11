@@ -64,7 +64,18 @@ public class EfUav implements Serializable {
      */
     private Integer uavCurrentCamera;
 
+    public String getUavModel() {
+        return uavModel;
+    }
 
+    public void setUavModel(String uavModel) {
+        this.uavModel = uavModel;
+    }
+
+    /**
+     *无人机默认型号
+     */
+    private  String uavModel;
 
     /**
      * 逻辑状态默认0正常，-1：已删除

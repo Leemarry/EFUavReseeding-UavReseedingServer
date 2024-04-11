@@ -8,15 +8,13 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.io.OutputFormat;
+import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.*;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -645,7 +643,107 @@ public class KmzUtil {
 
     }
 
+    public  static  void  dozip(List<String> pathList,String zipPath){
+        try{
+            File zipfile = new File(zipPath);
+            if(!zipfile.exists()){
+                zipfile.createNewFile();
+            }
+           for(String filePath : pathList){
+               File file = new File(filePath);
+               // 判断文件是否存在，如不存在直接跳过
+               if (!file.exists()){
+                   continue;
+               }
+               InputStream inputStream = new FileInputStream(filePath);
 
+
+           }
+
+        }catch (Exception e){
+
+        }
+
+    }
+
+
+    /**
+     *  获取kml的经纬度
+     * @param byteArrayOutputStream
+     * @return
+     */
+    public static Map readKml(ByteArrayOutputStream byteArrayOutputStream){
+        Map map =new HashMap();
+        map.put("msg",false);
+        String heightStr = "";
+        try{
+            // 转换为ByteArrayInputStream
+            ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+
+            SAXReader saxReader = new SAXReader();
+            Document document = saxReader.read(byteArrayInputStream);
+            //根节点 即XML文件的最顶层节点 <kml>
+            Element rootElement=document.getRootElement();
+            Element docElement = rootElement.element("Document");
+            // 尝试获取 missionConfig 节点
+            Element missionConfigElement = docElement.element("missionConfig");
+            if (missionConfigElement != null) {
+                // 检查是否成功获取到 missionConfig 节点
+                System.out.println("MissionConfig element: " + missionConfigElement.getName());
+
+                // 尝试获取 takeOffSecurityHeight 节点
+                Element takeOffSecurityHeightElement = missionConfigElement.element("takeOffSecurityHeight");
+                if (takeOffSecurityHeightElement != null) {
+                    // 输出 takeOffSecurityHeight 节点的值
+                    heightStr=  takeOffSecurityHeightElement.getText();
+                    System.out.println("TakeOffSecurityHeight: " + takeOffSecurityHeightElement.getText());
+                } else {
+                    System.out.println("TakeOffSecurityHeight element not found.");
+                }
+            } else {
+                System.out.println("MissionConfig element not found.");
+            }
+            // 创建根字节-->子字节 <Folder></Folder>
+            Element folderElement = rootElement.element("Document").element("Folder");
+//            Element folderElement = (Element) rootElement.selectSingleNode("Document/Folder");
+            if(folderElement == null){
+                map.put("msg","解析节点失败");
+                return map;
+            }
+            // 获取<Placemark>节点列表
+            List<Element> placemarkList = folderElement.elements("Placemark");
+            List<Map> PointList = new ArrayList<>();
+            List<String[]> coordinateslist = new ArrayList<>();
+            for (Element placemark : placemarkList) {
+                Map pointMap = new HashMap();
+                // 解析<coordinates>节点
+                Element coordinates = placemark.element("Point").element("coordinates");
+                String coordinatesValue = coordinates.getTextTrim();
+                String[] values = coordinatesValue.split(",");
+                String longitude = values[0]; // 经度
+                String latitude = values[1]; // 纬度
+                // 添加数据
+                coordinateslist.add(values);
+
+                pointMap.put("Longitude",longitude);
+                pointMap.put("Latitude",latitude);
+                // 其他字段类似，根据实际需要解析其他节点
+                PointList.add(pointMap); //
+            }
+            String mid = System.currentTimeMillis()+"-"+new Random().nextInt(9999);
+            map.put("msg",true);
+            map.put("mid",mid);
+            map.put("unifiedHeight",heightStr);
+            map.put("PointList",PointList);
+            map.put("coordinateslist",coordinateslist);
+            return  map;
+
+        }catch (Exception e){
+
+        }finally {
+            return map;
+        }
+    }
     //endregion
 
     //region 工具
