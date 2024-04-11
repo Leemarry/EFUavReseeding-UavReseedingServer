@@ -40,6 +40,7 @@ public class BaseConfiguration extends WebMvcConfigurationSupport {
      * 接口调用拦截：不需要拦截的地址
      */
     String[] filterExcludePath = {
+            "/debugger/**",
             "/websocket/**",
             "/user/test",
             "/user/login", "/user/appLogin","/efUser/login",
