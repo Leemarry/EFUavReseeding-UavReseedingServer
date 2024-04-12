@@ -18,10 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -103,15 +100,19 @@ public class MinioService {
                         minioClient.makeBucket(create);
                         LogUtil.logMessage("正在上传文件到Minio，创建储存桶 " + bucketName + "成功。");
                     }
-                    minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream, stream.available(), -1).contentType(contentType).build());
+                    boolean isExists=  checkStatObjectExists(bucketName,path); // minio 统一路径同一文件名会出现bug
+                    if(!isExists){
+                        minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream, stream.available(), -1).contentType(contentType).build());
 
-                    String fileUrl = minioClient.getPresignedObjectUrl(
-                            GetPresignedObjectUrlArgs.builder()
-                                    .method(Method.PUT)
-                                    .bucket(bucketName)
-                                    .object(path)
-                                    .build()
-                    );
+                        String fileUrl = minioClient.getPresignedObjectUrl(
+                                GetPresignedObjectUrlArgs.builder()
+                                        .method(Method.PUT)
+                                        .bucket(bucketName)
+                                        .object(path)
+                                        .build()
+                        );
+                    }
+                    String name = System.currentTimeMillis()+""+new Random().nextInt(9999);        //随机文件名
                     result = true;
                     LogUtil.logInfo("上传文件 " + path + " 到Minio成功。");
                 } catch (Exception e) {
@@ -124,6 +125,14 @@ public class MinioService {
             }
         } catch (Exception e) {
             LogUtil.logError("上传文件 " + path + " 到Minio异常：" + e.toString());
+        }finally {
+            try {
+                if (stream != null) {
+                    stream.close();
+                }
+            } catch (IOException e) {
+                LogUtil.logError("关闭文件流失败：" + e.toString());
+            }
         }
         return result;
     }
@@ -178,6 +187,14 @@ public class MinioService {
 
         } catch (Exception e) {
             LogUtil.logError("上传文件 " + path + " 到Minio异常：" + e.toString());
+        }finally {
+            try {
+                if (stream != null) {
+                    stream.close();
+                }
+            } catch (IOException e) {
+                LogUtil.logError("关闭文件流失败：" + e.toString());
+            }
         }
         return result;
     }

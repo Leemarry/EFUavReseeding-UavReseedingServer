@@ -65,6 +65,7 @@ public class TaskAnsisPhoto {
 
     private final Object lock = new Object();
 
+    private int a=0;
     /**
      * 保存实时拍摄照片
      *
@@ -264,6 +265,8 @@ public class TaskAnsisPhoto {
                 msg10010.setLng(lng);
                 msg10010.setUrl(urlBig);
                 WebSocketLink.push(ResultUtil.success(msg10010.EFLINK_MSG_ID, uavId, null, msg10010), owerUsers);
+                a++;
+                System.out.println("执行次数："+a);
                 //endregion
                 LogUtil.logDebug("实时航拍图片储存耗时：" + (System.currentTimeMillis() - timeStart) / 1000d + "秒");
             } catch (Exception e) {
@@ -286,7 +289,7 @@ public class TaskAnsisPhoto {
                     new ArrayBlockingQueue<Runnable>(30),
                     new ThreadPoolExecutor.CallerRunsPolicy());
         }
-        threadPoolExecutorPhoto.execute(() -> {
+//        threadPoolExecutorPhoto.execute(() -> {
             try {
                 long timenow = System.currentTimeMillis();
                 if (file.isEmpty()) {
@@ -451,6 +454,7 @@ public class TaskAnsisPhoto {
                     String[] owerUsers = new String[0];
                     Object obj = null;
                     obj = redisUtils.hmGet("rel_uavid_userid", uavSn); //无人机ID获取用户ID  2,1,
+//                    Object obj = "1,2";
                     if (obj != null) {
                         String delims = "[,]+";
                         owerUsers = obj.toString().split(delims);
@@ -497,6 +501,8 @@ public class TaskAnsisPhoto {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        });
+//        });
+
+
     }
 }

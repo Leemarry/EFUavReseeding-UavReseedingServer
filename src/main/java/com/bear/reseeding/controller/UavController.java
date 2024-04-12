@@ -1068,6 +1068,164 @@ public class UavController {
     //region 测绘无人机控制
 
     /**
+     *
+     */
+    @ResponseBody
+    @PostMapping(value = "readkmz")
+    public Result readKmz(@RequestParam(value = "Url") String Url,@RequestParam("mid") String mid){
+        try{
+            if(Url.equals("")||Url ==null){
+                return  ResultUtil.error("解析航线url有误");
+            }
+            Map kmlData =null;
+            // InputStream inputStream = new URL(Url).openStream()
+            URL zipUrl = new URL(Url);
+            try (InputStream inputStream = zipUrl.openStream();
+                 ZipInputStream zipInputStream = new ZipInputStream(new BufferedInputStream(inputStream))) {
+                ZipEntry entry;
+                while ((entry = zipInputStream.getNextEntry()) !=null){
+                    String fileName = entry.getName();
+
+                    if(!entry.isDirectory()&&fileName.toLowerCase().endsWith(".kml")){
+                        //读取内容
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(); //
+                        byte[] buffer = new byte[1024];
+                        int count ;
+
+                        while ((count = zipInputStream.read(buffer)) != -1){
+                            byteArrayOutputStream.write(buffer,0,count);
+                        }
+
+                        byteArrayOutputStream.close();
+
+                        kmlData = KmzUtil.readKml(byteArrayOutputStream);
+                        break;
+                    }
+                }
+
+                // 处理代码块
+            }
+            //获取数据流 赋值到本地 、判断是否可以解压 解压 获取里面的数据信息
+            boolean msg = (boolean) kmlData.get("msg");
+            kmlData.put("mid",mid);
+            if(msg){
+                return ResultUtil.success("解析成功",kmlData );
+            }
+
+            return ResultUtil.success("航线解析有误",kmlData );
+
+
+        }catch(IOException e){
+            e.printStackTrace();
+            return ResultUtil.error("解析航线url出现异常：" + e.getMessage());
+        }
+    }
+
+
+    /**
+     * 历史航线任务上传给无人机
+     *
+     * @param uavId      无人机ID
+     * @param url    miniokmz
+     * @param altType    高度类型：0 使用相对高度，1使用海拔高度
+     * @param homeAlt    起飞点海拔（如果传1，并且使用海拔高度飞行，则自动获取无人机起飞点海拔高度 多边形绘制无法使用）
+     * @return 成功/失败
+     */
+    @ResponseBody
+    @PostMapping(value = "/uploadTaskToUav")
+    public Result uploadTaskToUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "url") String url, @RequestParam("altType") int altType,
+                               @RequestParam(value = "homeAlt", required = false) double homeAlt, HttpServletRequest request) {
+        try {
+            if (url == null || url.equals("")) {
+                return ResultUtil.error("航线为空!");
+            }
+            if ("".equals(uavId)) {
+                return ResultUtil.error("请选择无人机!");
+            }
+
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            String fileName = "temp_" + uavId + System.currentTimeMillis();
+            if (altType == 0) {
+                // 使用相对高度，获取飞机当前海拔
+                if (homeAlt == -1) {
+                    Object objalt = redisUtils.get(uavId + "_heart");
+                    if (objalt != null) {
+                        EfUavRealtimedata realtimedata = (EfUavRealtimedata) objalt;
+                        if (realtimedata.getAremd() == 1) {
+                            return ResultUtil.error("无人机已经起飞，请先降落无人机！");
+                        }
+                        if (realtimedata.getGpsStatus() == 10 || realtimedata.getGpsStatus() == 5) {
+                            homeAlt = realtimedata.getAltabs();
+                        } else {
+                            return ResultUtil.error("无人机未差分定位！");
+                        }
+                    } else {
+                        return ResultUtil.error("无人机已离线！");
+                    }
+                }
+            }
+            int uavType = 0;
+            //获取飞机类型
+            Object objtype = redisUtils.get(uavId + "_heart");
+            if (objtype != null) {
+                EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
+                uavType = realtimedata.getUavType();
+            }
+
+            int size = 0;
+            // EFLINK_MSG_3121 上传
+            int tag = ((byte) new Random().nextInt() & 0xFF);
+            EFLINK_MSG_3121 msg3121 = new EFLINK_MSG_3121();
+            msg3121.setTag(tag);
+            msg3121.setSize(size);
+            msg3121.setUrl(url);
+
+            // region 请求上传任务，等待无人机回复
+            EFLINK_MSG_3123 msg3123 = new EFLINK_MSG_3123();
+            byte[] packet = EfLinkUtil.Packet(msg3121.EFLINK_MSG_ID, msg3121.packet());
+            long timeout = System.currentTimeMillis();
+            String key = uavId + "_" + msg3123.EFLINK_MSG_ID + "_" + tag;
+            boolean goon = false;
+            String error = "未知错误！";
+            redisUtils.remove(key);
+            MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavId);
+            while (true) {
+                Object ack = redisUtils.get(key);
+                if (ack != null) {
+                    msg3123 = (EFLINK_MSG_3123) ack;
+                    if (msg3123.getResult() == 1) {
+                        goon = true;
+                    } else if (msg3123.getResult() == 2) {
+                        error = "下载航线任务文件失败，请重试！";
+                    } else {
+                        error = "无人机未准备好，请待会再传！";
+                    }
+                    redisUtils.remove(key);
+                    break;
+                }
+                if (timeout + 20000 < System.currentTimeMillis()) {
+                    error = "无人机未响应！";
+                    break;
+                }
+                Thread.sleep(200);
+            }
+            if (!goon) {
+                return ResultUtil.error(error);
+            }
+
+            return ResultUtil.success("上传巡检航线成功。");
+        } catch (Exception e) {
+            LogUtil.logError("上传航点任务至无人机异常：" + e.toString());
+            return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
+        }
+    }
+
+
+
+    /**
      * 上传航点任务给无人机
      *
      * @param uavId      无人机ID
@@ -1252,7 +1410,7 @@ public class UavController {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
             // 上传minion
-            String url = applicationName + File.separator + File.separator + ucId + File.separator + kmzFile.getName();
+            String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
             if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
                 if (kmzFile.exists()) {
                     FileUtil.deleteDir(kmzFile.getParent());
@@ -1318,10 +1476,11 @@ public class UavController {
                 return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
             }
 
-
         } catch (Exception e) {
             LogUtil.logError("上传航点任务至无人机异常：" + e.toString());
             return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
+        }finally {
+
         }
     }
 
@@ -2612,9 +2771,11 @@ public class UavController {
     }
 
 
+
+
     /**
      * 算法服务器第二次调用接口： 返回二次分析的结果文件压缩包
-     *
+     *readkmz
      * @param efUser
      * @param file
      * @return

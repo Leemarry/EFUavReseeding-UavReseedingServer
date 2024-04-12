@@ -17,6 +17,7 @@
         <result property="uavTypeId" column="uav_type_id" jdbcType="INTEGER"/>
         <result property="uavCurrentCamera" column="uav_current_camera" jdbcType="INTEGER"/>
         <result property="uavStatus" column="uav_status" jdbcType="INTEGER"/>
+        <result property="uavModel" column="uav_model" jdbcType="VARCHAR"/>
     </resultMap>
 
     <resultMap type="com.bear.reseeding.entity.EfUav" id="EfUavMapAndType">
@@ -34,6 +35,7 @@
         <result property="uavTypeId" column="uav_type_id" jdbcType="INTEGER"/>
         <result property="uavCurrentCamera" column="uav_current_camera" jdbcType="INTEGER"/>
         <result property="uavStatus" column="uav_status" jdbcType="INTEGER"/>
+        <result property="uavModel" column="uav_model" jdbcType="VARCHAR"/>
         <!-- 一对一关联映射： efUavType -->
         <association property="efUavType" column="uav_type_id" select="com.bear.reseeding.dao.EfUavTypeDao.queryById"
                      javaType="com.bear.reseeding.entity.EfUavType"/>
@@ -50,7 +52,7 @@
     <!--查询单个-->
     <select id="queryById" resultMap="EfUavMapAndType">
         select
-          uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status
+          uav_id, uav_name, uav_product_date, uav_product_by_user, uav_sell_date, uav_sell_by_user, uav_wheelbase, uav_maxpayload, uav_endurance_time, uav_maxspeed, uav_contract_no, uav_type_id, uav_current_camera, uav_status, uav_model
         from ef_reseeding.ef_uav
         where uav_id = #{uavId}
     </select>
