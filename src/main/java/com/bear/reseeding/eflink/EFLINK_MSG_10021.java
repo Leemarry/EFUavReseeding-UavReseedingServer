@@ -23,6 +23,11 @@ public class EFLINK_MSG_10021 implements Serializable {
     double alt;
     double altAbs;
     double yaw;
+    double square;
+    Integer level;
+    double seedNumber;
+    int id;
+
 
     public EFLINK_MSG_10021() {
     }
@@ -38,7 +43,43 @@ public class EFLINK_MSG_10021 implements Serializable {
                 ", alt=" + alt +
                 ", altAbs=" + altAbs +
                 ", yaw=" + yaw +
+                ", square=" + square +
+                ", level=" + level +
+                ", seedNumber=" + seedNumber +
+                ", id=" + id +
                 '}';
+    }
+
+    public double getSquare() {
+        return square;
+    }
+
+    public void setSquare(double square) {
+        this.square = square;
+    }
+
+    public Integer getLevel() {
+        return level;
+    }
+
+    public void setLevel(Integer level) {
+        this.level = level;
+    }
+
+    public double getSeedNumber() {
+        return seedNumber;
+    }
+
+    public void setSeedNumber(double seedNumber) {
+        this.seedNumber = seedNumber;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getUavId() {

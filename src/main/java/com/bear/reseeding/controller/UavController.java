@@ -198,7 +198,31 @@ public class UavController {
                     });
                 }
             }
-            return ResultUtil.success("查询无人机成功", efUavList);
+            String streamType = "webrtc";
+
+            // 添加PalyUrl;
+            JSONArray jsonArrayUavs = new JSONArray();
+            JSONObject object = null;
+            List<JSONObject> jsonObjectList = new ArrayList<>();
+            for (int i = 0; i < efUavList.size(); i++) {
+                EfUav userUav = efUavList.get(i);
+                String uavId = userUav.getUavId();
+                String StreamName = uavId + "-stream1";
+                Object sn = redisUtils.hmGet("rel_uav_id_sn", uavId);
+                if (sn != null) {
+                    StreamName = sn.toString() + "-stream1";
+                }
+                String playUrl = PlayUrlUtil.getPlayUrl(StreamName);
+                object = (JSONObject) JSONObject.toJSON(userUav);
+                object.put("playUrl1", playUrl);
+                object.put("streamType", streamType);
+
+                jsonObjectList.add(object);
+                jsonArrayUavs.add(object);
+            }
+
+
+            return ResultUtil.success("查询无人机成功", jsonObjectList);
         } catch (Exception e) {
             LogUtil.logError("获取所有权限的无人机异常：" + e.toString());
             return ResultUtil.error("获取所有权限的无人机异常,请联系管理员!");
@@ -1507,7 +1531,8 @@ public class UavController {
             String MediaName = CommonUtil.getStrValueFromMap(map, "MediaName");
             String UavID = CommonUtil.getStrValueFromMap(map, "UavID");
             String uavIdTemp = UavID;
-            UavID = redisUtils.getUavIdByUavSn(UavID);  //根据无人机SN获取无人机ID  2,1,
+            UavID = redisUtils.getUavIdByUavSn(UavID);
+            //根据无人机SN获取无人机ID  2,1,
             if (null == UavID || "".equals(UavID)) {
                 LogUtil.logWarn("无人机[" + uavIdTemp + "]未录入!");
                 return ResultUtil.error("无人机[" + uavIdTemp + "]未录入!");
@@ -2598,7 +2623,8 @@ public class UavController {
             redisUtils.remove(key);
             MqttUtil.publish(MqttUtil.Tag_Djiapp, packet, uavSn);
 
-            return ResultUtil.success(Thread.currentThread().getName() + "发送处理信息成功");
+            // Thread.currentThread().getName() +
+            return ResultUtil.success("发送处理信息成功");
         } catch (Exception e) {
             // 异常处理
             LogUtil.logError("发送处理信息异常" + e);
