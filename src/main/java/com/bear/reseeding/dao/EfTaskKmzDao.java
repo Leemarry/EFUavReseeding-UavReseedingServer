@@ -2,6 +2,8 @@ package com.bear.reseeding.dao;
 
 import com.bear.reseeding.entity.EfTaskKmz;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -12,13 +14,13 @@ import java.util.List;
  */
 public interface EfTaskKmzDao {
 
-//    /**
-//     * 通过ID查询单条数据
-//     *
-//     * @param id 主键
-//     * @return 实例对象
-//     */
-//    EfTaskKmz queryById(Integer id);
+    /**
+     * 通过ID查询单条数据
+     *
+     * @param id 主键
+     * @return 实例对象
+     */
+    EfTaskKmz queryById(Integer id);
 //
 //    /**
 //     * 查询指定行数据
@@ -63,16 +65,25 @@ public interface EfTaskKmzDao {
      * @return
      */
     List<EfTaskKmz> queryByUcidAndTime(@Param(value = "UcId") Integer UcId, @Param("startTime") String startTime, @Param("endTime") String endTime);
-//
-//    /**
-//     * 检测航线任务是否已经存在
-//     *
-//     * @param fileName 航线任务名称
-//     * @param cid      公司ID
-//     * @return 查询行数
-//     */
-//    int checkKmzExist(@Param("fileName") String fileName, @Param("cid") int cid);
-//
+
+    /**
+     * 检测航线任务是否已经存在
+     *
+     * @param fileName 航线任务名称
+     * @param cid      公司ID
+     * @return 查询行数
+     */
+    int checkKmzExist(@Param("fileName") String fileName, @Param("cid") int cid);
+
+
+    List<String> includeSamename(@Param("name") String name,@Param("cid") Integer cid);
+
+    List<Integer> includeSamenames(@Param("name") String name,@Param("cid") Integer cid,@Param("id") Integer id, @Param(value = "startTime") String startTime,@Param("endTime")String  endTime);
+
+
+    List<Integer> includeSame(@Param("name") String name,@Param("cid") Integer cid, @Param(value = "startTime") String startTime,@Param("endTime")String  endTime);
+
+
 //    /**
 //     * 批量新增数据（MyBatis原生foreach方法）
 //     *
@@ -102,19 +113,24 @@ public interface EfTaskKmzDao {
 //     * 重命名
 //     */
 //    int updateName(@Param("id") int id, @Param("name") String name, @Param("userId") int userId, @Param("updateTime") Date updateTime);
+        /**
+     * 重命名
+     */
+    int updateName(@Param("id") int id, @Param("name") String name, @Param("userId") int userId, @Param("updateTime") Date updateTime);
+
 //
 //    /**
 //     * 重命名
 //     */
 //    int updateNamePath(@Param("id") int id, @Param("name") String name, @Param("userId") int userId, @Param("path") String path, @Param("updateTime") Date updateTime);
 //
-//    /**
-//     * 通过主键删除数据
-//     *
-//     * @param id 主键
-//     * @return 影响行数
-//     */
-//    int deleteById(Integer id);
+    /**
+     * 通过主键删除数据
+     *
+     * @param id 主键
+     * @return 影响行数
+     */
+    int deleteById(Integer id);
 
 }
 

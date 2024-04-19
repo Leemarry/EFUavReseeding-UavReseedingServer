@@ -310,25 +310,30 @@ public class FileUtil {
      */
     public static void createOrUpdateFile(String filePath) {
         File file = new File(filePath);
+        // 确保路径中的所有目录都存在
+        File parentDir = file.getParentFile();
+        if (!parentDir.exists()) {
+            parentDir.mkdirs();
+        }
         if (file.exists() && !file.isFile()) {
             if (file.isDirectory()) {
                 file.delete();
             }
             try {
                 file.createNewFile();
-                System.out.println("文件已重新生成");
+//                System.out.println("文件已重新生成");
             } catch (IOException e) {
-                System.out.println("重新生成文件出错：" + e.getMessage());
+//                System.out.println("重新生成文件出错：" + e.getMessage());
             }
         } else if (!file.exists()) {
             try {
                 file.createNewFile();
-                System.out.println("文件已创建");
+//                System.out.println("文件已创建");
             } catch (IOException e) {
-                System.out.println("创建文件出错：" + e.getMessage());
+//                System.out.println("创建文件出错：" + e.getMessage());
             }
         } else {
-            System.out.println("文件存在且为文件类型");
+//            System.out.println("文件存在且为文件类型");
         }
     }
 

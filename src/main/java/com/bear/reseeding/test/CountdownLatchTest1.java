@@ -12,7 +12,7 @@ public class CountdownLatchTest1 {
     public static void main(String[] args) {
         ExecutorService service = Executors.newFixedThreadPool(3);
         final CountDownLatch latch = new CountDownLatch(3);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -38,3 +38,5 @@ public class CountdownLatchTest1 {
         }
     }
 }
+
+// i ==5 大于3 有问题

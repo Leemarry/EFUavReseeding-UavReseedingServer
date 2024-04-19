@@ -3,6 +3,7 @@ package com.bear.reseeding.utils;
 import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.entity.EfTaskKmz;
 import com.bear.reseeding.entity.EfTaskWps;
+import javafx.util.Pair;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -81,7 +82,9 @@ public class KmzUtil {
                 }
             }
 
-            // 构建光伏巡检默认参数
+
+
+            // region 构建光伏巡检默认参数
             EfTaskWps efTaskWps = new EfTaskWps();
             efTaskWps.setWpsCreateTime(new Date());
             efTaskWps.setWpsUpdateTime(new Date());
@@ -97,12 +100,11 @@ public class KmzUtil {
             efTaskWps.setWpsUserTime(WpsUserTime); //任务预计用时
 //            efTaskWps.setWpsUserTime(0);
             //kmlPath
+            // endregion
 
             String wpmlPathString = writewpml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath);
             String kmlPathString = writeKml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath);
-
-            List<String> pathStrList= new ArrayList<>();
-
+            List<String> pathStrList = new ArrayList<>();
             File file1 = null;
             File file2 = null;
             String path = "";  //父目録，wpml
@@ -120,7 +122,6 @@ public class KmzUtil {
                     path = file2.getParent();
                 }
             }
-
             if (path != null && FileUtil.isFileExit(path)) {
                 File resFile = new File(path, "res");
                 if (!resFile.exists()) {
@@ -137,7 +138,7 @@ public class KmzUtil {
 
                 pathStrList.add(wpmlPathString);
                 pathStrList.add(kmlPathString);
-                kmzFile = writeZip(pathStrList,kmzPath);
+                kmzFile = writeZip(pathStrList, kmzPath);
 //                kmzFile = copyKmzStream(kmlPathString, wpmlPathString, kmzPath, topbasePath);
             } else {
                 LogUtil.logWarn("Wpml目録不存在：" + path + fileName);
@@ -148,6 +149,79 @@ public class KmzUtil {
         }
         return kmzFile;
     }
+
+    // region    Route distance grouping
+    public static List<List<double[]>> groupPoints(List<double[]> coordinateArray) {
+        List<List<double[]>> groupedPoints = new ArrayList<>(); // 用于存放分组后的点集合
+
+        // 初始化第一个分组
+        List<double[]> group = new ArrayList<>();
+        group.add(coordinateArray.get(0));
+        groupedPoints.add(group);
+
+        double totalDistance = 0.0; // 用于记录当前分组的累计距离
+
+        // 遍历坐标点集合，进行分组
+        for (int i = 0; i < coordinateArray.size() - 1; i++) {
+            double[] currentPoint = coordinateArray.get(i);
+            double[] nextPoint = coordinateArray.get(i + 1);
+
+            // 计算当前点与下一个点之间的距离
+            double distance = GisUtil.getDistance(currentPoint[0], currentPoint[1], nextPoint[0], nextPoint[1]);
+
+            // 如果累计距离超过5000m，则创建新的分组
+            if (totalDistance + distance > 15000.0) {
+                group = new ArrayList<>();
+                groupedPoints.add(group);
+                totalDistance = 0.0; // 重置累计距离
+            }
+
+            // 将点添加到当前分组中
+            group.add(nextPoint);
+            totalDistance += distance;
+        }
+
+        return groupedPoints;
+    }
+
+
+    public static List<Pair<List<double[]>, Double>> groupPointsWithDistance(List<double[]> coordinateArray) {
+        List<Pair<List<double[]>, Double>> groupedPointsWithDistance = new ArrayList<>(); // 用于存放分组后的点集合以及每个分组的距离
+        List<Map<String,Object>>  mapList = new ArrayList<>();
+        // 初始化第一个分组
+        List<double[]> group = new ArrayList<>();
+        group.add(coordinateArray.get(0));
+        double totalDistance = 0.0; // 用于记录当前分组的累计距离
+
+        // 遍历坐标点集合，进行分组
+        for (int i = 0; i < coordinateArray.size() - 1; i++) {
+            double[] currentPoint = coordinateArray.get(i);
+            double[] nextPoint = coordinateArray.get(i + 1);
+
+            // 计算当前点与下一个点之间的距离
+            double distance = GisUtil.getDistance(currentPoint[0], currentPoint[1], nextPoint[0], nextPoint[1]);
+
+            // 如果累计距离超过15000m，则创建新的分组
+            if (totalDistance + distance > 8000.0) {
+                // 将当前分组及其距离添加到结果列表中
+                groupedPointsWithDistance.add(new Pair<>(group, totalDistance));
+                group = new ArrayList<>();
+                totalDistance = 0.0; // 重置累计距离
+            }
+
+            // 将点添加到当前分组中
+            group.add(nextPoint);
+            totalDistance += distance;
+        }
+
+        // 添加最后一个分组及其距离
+        if (!group.isEmpty()) {
+            groupedPointsWithDistance.add(new Pair<>(group, totalDistance));
+        }
+
+        return groupedPointsWithDistance;
+    }
+// endregion
 
     public static String writeKml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath) {
         try {
@@ -568,49 +642,55 @@ public class KmzUtil {
     }
 
 
-    public static void byteCopy(String  sourcePath,String target) throws IOException {
+    public static void byteCopy(String sourcePath, String target) throws IOException {
         //1.创建输入流
         InputStream iStream = new FileInputStream(sourcePath);
         //2.创建输出流
         OutputStream oStream = new FileOutputStream(target);
         //3.一部分一部分读出
-        byte[] bytes = new byte[10*1024];
+        byte[] bytes = new byte[10 * 1024];
         int br;//实际的读取长度
-        while((br =iStream.read(bytes))!=-1) {//判断是否读到末尾
+        while ((br = iStream.read(bytes)) != -1) {//判断是否读到末尾
             oStream.write(bytes, 0, br);
         }
         //4.清空缓存
         oStream.flush();
         //5.关闭流
-        if(iStream!=null) {
+        if (iStream != null) {
             iStream.close();
         }
-        if(oStream!=null) {
+        if (oStream != null) {
             oStream.close();
         }
     }
 
 
-
     /**
      * 写入文件压缩为ZIP格式
+     *
      * @param filePaths 被压缩文件路径
-     * @param zipPath 生成zip文件路径
+     * @param zipPath   生成zip文件路径
      */
-    public static File writeZip(List<String> filePaths, String zipPath){
+    public static File writeZip(List<String> filePaths, String zipPath) {
         File kmzFile = null;  // 返回的文件实例
-        try{
+        try {
+            FileUtil.createOrUpdateFile(zipPath);
             File zipFile = new File(zipPath);
-            // 判断文件是否存在，如文件不存在创建一个新文件
-            if (!zipFile.exists()){
-                zipFile.createNewFile();
-            }
+//            // 确保路径中的所有目录都存在
+//            File parentDir = zipFile.getParentFile();
+//            if (!parentDir.exists()) {
+//                parentDir.mkdirs();
+//            }
+//            // 判断文件是否存在，如文件不存在创建一个新文件
+//            if (!zipFile.exists()) {
+//                zipFile.createNewFile();
+//            }
             // 创建一个zip文件输出流
             ZipOutputStream zipOutput = new ZipOutputStream(new FileOutputStream(zipFile));
-            for (String filePath : filePaths){
+            for (String filePath : filePaths) {
                 File file = new File(filePath);
                 // 判断文件是否存在，如不存在直接跳过
-                if (!file.exists()){
+                if (!file.exists()) {
                     continue;
                 }
                 /**
@@ -624,8 +704,8 @@ public class KmzUtil {
                 byte[] bytes = new byte[1024];
                 int len = -1;
                 // 读取file内的字节流，写入到zipOutput内
-                while ((len = bufferedInput.read(bytes)) != -1){
-                    zipOutput.write(bytes,0,len);
+                while ((len = bufferedInput.read(bytes)) != -1) {
+                    zipOutput.write(bytes, 0, len);
                 }
                 // 关闭输入流
                 // 无需关闭new FileInputStream(file)的输入流 因为BufferedInputStream.close()方法内部已经调用了FileInputStream.close()方法
@@ -634,33 +714,33 @@ public class KmzUtil {
                 zipOutput.closeEntry();
             }
             zipOutput.close();
-            kmzFile= new File(zipPath);
-        }catch (IOException e){
-            System.out.println("写入文件压缩为ZIP格式失败："+e.getMessage());
-        }finally {
-            return  kmzFile;
+            kmzFile = new File(zipPath);
+        } catch (IOException e) {
+            System.out.println("写入文件压缩为ZIP格式失败：" + e.getMessage());
+        } finally {
+            return kmzFile;
         }
 
     }
 
-    public  static  void  dozip(List<String> pathList,String zipPath){
-        try{
+    public static void dozip(List<String> pathList, String zipPath) {
+        try {
             File zipfile = new File(zipPath);
-            if(!zipfile.exists()){
+            if (!zipfile.exists()) {
                 zipfile.createNewFile();
             }
-           for(String filePath : pathList){
-               File file = new File(filePath);
-               // 判断文件是否存在，如不存在直接跳过
-               if (!file.exists()){
-                   continue;
-               }
-               InputStream inputStream = new FileInputStream(filePath);
+            for (String filePath : pathList) {
+                File file = new File(filePath);
+                // 判断文件是否存在，如不存在直接跳过
+                if (!file.exists()) {
+                    continue;
+                }
+                InputStream inputStream = new FileInputStream(filePath);
 
 
-           }
+            }
 
-        }catch (Exception e){
+        } catch (Exception e) {
 
         }
 
@@ -668,22 +748,23 @@ public class KmzUtil {
 
 
     /**
-     *  获取kml的经纬度
+     * 获取kml的经纬度
+     *
      * @param byteArrayOutputStream
      * @return
      */
-    public static Map readKml(ByteArrayOutputStream byteArrayOutputStream){
-        Map map =new HashMap();
-        map.put("msg",false);
+    public static Map readKml(ByteArrayOutputStream byteArrayOutputStream) {
+        Map map = new HashMap();
+        map.put("msg", false);
         String heightStr = "";
-        try{
+        try {
             // 转换为ByteArrayInputStream
             ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
 
             SAXReader saxReader = new SAXReader();
             Document document = saxReader.read(byteArrayInputStream);
             //根节点 即XML文件的最顶层节点 <kml>
-            Element rootElement=document.getRootElement();
+            Element rootElement = document.getRootElement();
             Element docElement = rootElement.element("Document");
             // 尝试获取 missionConfig 节点
             Element missionConfigElement = docElement.element("missionConfig");
@@ -695,7 +776,7 @@ public class KmzUtil {
                 Element takeOffSecurityHeightElement = missionConfigElement.element("takeOffSecurityHeight");
                 if (takeOffSecurityHeightElement != null) {
                     // 输出 takeOffSecurityHeight 节点的值
-                    heightStr=  takeOffSecurityHeightElement.getText();
+                    heightStr = takeOffSecurityHeightElement.getText();
                     System.out.println("TakeOffSecurityHeight: " + takeOffSecurityHeightElement.getText());
                 } else {
                     System.out.println("TakeOffSecurityHeight element not found.");
@@ -706,8 +787,8 @@ public class KmzUtil {
             // 创建根字节-->子字节 <Folder></Folder>
             Element folderElement = rootElement.element("Document").element("Folder");
 //            Element folderElement = (Element) rootElement.selectSingleNode("Document/Folder");
-            if(folderElement == null){
-                map.put("msg","解析节点失败");
+            if (folderElement == null) {
+                map.put("msg", "解析节点失败");
                 return map;
             }
             // 获取<Placemark>节点列表
@@ -725,22 +806,22 @@ public class KmzUtil {
                 // 添加数据
                 coordinateslist.add(values);
 
-                pointMap.put("Longitude",longitude);
-                pointMap.put("Latitude",latitude);
+                pointMap.put("Longitude", longitude);
+                pointMap.put("Latitude", latitude);
                 // 其他字段类似，根据实际需要解析其他节点
                 PointList.add(pointMap); //
             }
-            String mid = System.currentTimeMillis()+"-"+new Random().nextInt(9999);
-            map.put("msg",true);
-            map.put("mid",mid);
-            map.put("unifiedHeight",heightStr);
-            map.put("PointList",PointList);
-            map.put("coordinateslist",coordinateslist);
-            return  map;
+            String mid = System.currentTimeMillis() + "-" + new Random().nextInt(9999);
+            map.put("msg", true);
+            map.put("mid", mid);
+            map.put("unifiedHeight", heightStr);
+            map.put("PointList", PointList);
+            map.put("coordinateslist", coordinateslist);
+            return map;
 
-        }catch (Exception e){
+        } catch (Exception e) {
 
-        }finally {
+        } finally {
             return map;
         }
     }

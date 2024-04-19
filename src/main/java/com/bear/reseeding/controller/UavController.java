@@ -39,6 +39,7 @@ import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
 import io.minio.errors.MinioException;
 import io.minio.http.Method;
+import javafx.util.Pair;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -68,6 +69,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.io.File;
 import java.util.Calendar;
@@ -1370,6 +1373,52 @@ public class UavController {
 
 
     /**
+     *
+     */
+    @ResponseBody
+    @PostMapping("/editRouteTask")
+    public Result editRouteTask(@CurrentUser EfUser efUser, @RequestParam("id") Integer id,@RequestParam(value = "name",required = false) String name  ){
+        try{
+            int cid = efUser.getUCId();
+            int userId= efUser.getId();
+            if(name ==null||name.equals("")   ){
+                efTaskKmzService.deleteById(id);
+
+                return ResultUtil.success("删除历史航线成功！");
+
+            }else {
+                // 判断航线名是否重复没有必要---id
+//                boolean isExit = efTaskKmzService.checkKmzExist(name,cid);
+
+                // 获取当前时间
+                LocalDateTime currentDateTime = LocalDateTime.now();
+                // 计算一周前的时间
+                LocalDateTime oneWeekAgo = currentDateTime.minus(1, ChronoUnit.WEEKS);
+                // 定义日期时间格式
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                // 格式化当前时间为字符串
+                String formattedCurrentDateTime = currentDateTime.format(formatter);
+
+                // 格式化一周前的时间为字符串
+                String formattedOneWeekAgo = oneWeekAgo.format(formatter);
+
+//                List<String> list= efTaskKmzService.includeSamename(name,cid);
+                List<Integer> list= efTaskKmzService.includeSamenames(name,cid,id,formattedOneWeekAgo,formattedCurrentDateTime);
+                if(list.size()>0){
+                    return ResultUtil.success("存在命名重复，请修改！");
+                }
+
+                EfTaskKmz efTaskKmz = efTaskKmzService.updateName(id,name,userId);
+                return ResultUtil.success("修改命名成功！",efTaskKmz);
+            }
+
+        }catch (Exception e){
+            LogUtil.logError("上传航点任务至无人机异常：" + e.toString());
+            return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
+        }
+    }
+
+    /**
      * 保存巡检航线至minio
      *
      * @param uavId
@@ -1381,8 +1430,8 @@ public class UavController {
      * @return
      */
     @ResponseBody
-    @PostMapping(value = "/saveRouteToMinio")
-    public Result saveRouteToMinio(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
+    @PostMapping(value = "/saveRouteToMinios")
+    public Result saveRouteToMinios(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
                                    @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
                                    HttpServletRequest request) {
         try {
@@ -1428,6 +1477,85 @@ public class UavController {
                 EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
                 uavType = realtimedata.getUavType();
             }
+            // 航距离 分任务
+            List<List<double[]>> groupedPoints = KmzUtil.groupPoints(mission);
+            Integer taskNum = groupedPoints.size();
+
+            // 创建一个固定大小的线程池，根据实际情况调整线程数量
+            ExecutorService executor = Executors.newFixedThreadPool(4);
+            AtomicInteger taskCount = new AtomicInteger(0);
+            for (int i = 0; i < taskNum; i ++) {
+                List<double[]> coordinateArray = groupedPoints.get(i);
+                // 提交子任务到线程池
+                final double finalHomeAlt = homeAlt;
+                final int finalUavType = uavType;
+
+                Callable<Object> task = new Callable<Object>() {
+                    public Object call() {
+                        try {
+                            File kmzFile = KmzUtil.beforeDataProcessing(coordinateArray, fileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath);
+                            if (kmzFile == null) {
+                                return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+                            }
+                            // 上传minion
+                            String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
+                            if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+                                if (kmzFile.exists()) {
+                                    FileUtil.deleteDir(kmzFile.getParent());
+                                }
+                                return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+                            }
+                            url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+                            if ("".equals(url)) {
+                                return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+                            }
+                            long fileSize = kmzFile.length(); // 文件大小
+                            double distaceCount = 0.0;
+                            // minio上传成功  保存 到数据库
+                            EfTaskKmz efTaskKmz = new EfTaskKmz();
+                            efTaskKmz.setKmzUpdateTime(nowdate);
+                            efTaskKmz.setKmzCreateTime(nowdate);
+                            efTaskKmz.setKmzName(name);
+                            efTaskKmz.setKmzPath(url);
+                            efTaskKmz.setKmzVersion("1.0.0");
+                            efTaskKmz.setKmzType("kmz");
+                            efTaskKmz.setKmzSize(fileSize);
+                            efTaskKmz.setKmzDes("");
+                            efTaskKmz.setKmzVersion("1.0.0");
+                            efTaskKmz.setKmzDistance(distaceCount);
+                            efTaskKmz.setKmzDuration((Double) (distaceCount / 5f));
+                            efTaskKmz.setKmzCreateUser(userName);
+                            efTaskKmz.setKmzUpdateUser(userName);
+                            efTaskKmz.setKmzUpdateByUserId(userId);
+                            efTaskKmz.setKmzCreateByUserId(userId);
+                            efTaskKmz.setKmzCompanyId(ucId);
+                            efTaskKmz = efTaskKmzService.insert(efTaskKmz);
+                            if (efTaskKmz != null) {
+                                return ResultUtil.success("保存航线成功！");
+                            }
+                            /**移除minio 错误航线*/
+                            Boolean gold = minioService.removeObject(BucketNameKmz, url);
+                            if (gold) {
+                                return ResultUtil.error("保存航线失败！！！请重新上传");
+                            } else {
+                                return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            taskCount.decrementAndGet();
+                        }
+                        return null; // 或者返回其他你需要的值
+                    }
+                };
+                executor.submit(task);
+
+                taskCount.incrementAndGet();
+
+            }
+            // 关闭线程池
+            executor.shutdown();
             // 生成kmz
             File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath);
             if (kmzFile == null) {
@@ -1503,6 +1631,258 @@ public class UavController {
         } catch (Exception e) {
             LogUtil.logError("上传航点任务至无人机异常：" + e.toString());
             return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
+        }finally {
+
+        }
+    }
+
+
+    /**
+     * 保存巡检航线至minio
+     *
+     * @param uavId
+     * @param mission
+     * @param altType
+     * @param takeoffAlt
+     * @param homeAlt
+     * @param request
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/saveRouteToMinio")
+    public Result saveRouteToMinio(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
+                                   @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
+                                   HttpServletRequest request) {
+        try {
+            if (mission == null || mission.size() <= 0) {
+                return ResultUtil.error("航线为空!");
+            }
+            Integer ucId = efUser.getUCId();
+            Integer userId = efUser.getId(); //
+            String userName = efUser.getUName();
+            Date nowdate = new Date();
+
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            /**航线名称*/
+//            String fileName ="temp_" + uavId + System.currentTimeMillis();
+            String fileName = name;
+
+            if (altType == 0) {
+                // 使用相对高度，获取飞机当前海拔
+                if (homeAlt == -1) {
+                    Object objalt = redisUtils.get(uavId + "_heart");
+                    if (objalt != null) {
+                        EfUavRealtimedata realtimedata = (EfUavRealtimedata) objalt;
+                        if (realtimedata.getAremd() == 1) {
+                            return ResultUtil.error("无人机已经起飞，请先降落无人机！");
+                        }
+                        if (realtimedata.getGpsStatus() == 10 || realtimedata.getGpsStatus() == 5) {
+                            homeAlt = realtimedata.getAltabs();
+                        } else {
+                            return ResultUtil.error("无人机未差分定位！");
+                        }
+                    } else {
+                        return ResultUtil.error("无人机已离线！");
+                    }
+                }
+            }
+            int uavType = 0;
+            //获取飞机类型
+            Object objtype = redisUtils.get(uavId + "_heart");
+            if (objtype != null) {
+                EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
+                uavType = realtimedata.getUavType();
+            }
+            int cid = efUser.getUCId();
+            // 获取当前时间
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            // 计算一周前的时间
+            LocalDateTime oneWeekAgo = currentDateTime.minus(1, ChronoUnit.MONTHS);
+            // 定义日期时间格式
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            // 格式化当前时间为字符串
+            String formattedCurrentDateTime = currentDateTime.format(formatter);
+
+            // 格式化一周前的时间为字符串
+            String formattedOneWeekAgo = oneWeekAgo.format(formatter);
+            List<Integer> list= efTaskKmzService.includeSame(name,cid,formattedOneWeekAgo,formattedCurrentDateTime);
+            if(list.size()>0){
+                return ResultUtil.error("存在命名重复，请修改！");
+            }
+
+            // 航距离 分任务
+            List<Pair<List<double[]>, Double>> groupedPointsWithDistance = KmzUtil.groupPointsWithDistance(mission);
+
+
+            // 创建一个固定大小的线程池，根据实际情况调整线程数量
+            ExecutorService executor = Executors.newFixedThreadPool(8);
+            List<Future<Result>> futures = new ArrayList<>();
+            AtomicInteger taskCount = new AtomicInteger(0);
+            int index = 1; // 初始化索引值
+            int fileNum = groupedPointsWithDistance.size();
+
+            //region  其他
+            for (Pair<List<double[]>, Double> pair : groupedPointsWithDistance) {
+                List<double[]> group = pair.getKey();
+                Double totalDistance = pair.getValue();
+                                // 提交子任务到线程池
+                final double finalHomeAlt = homeAlt;
+                final int finalUavType = uavType;
+                final String groupfileName = fileName + "（" + index + "-" + fileNum + "）"; // 使用索引值作为文件名的一部分
+                index++; // 更新索引值
+
+                Callable<Result> task = new Callable<Result>() {
+                    public Result call() {
+                        try {
+                            File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath);
+                            if (kmzFile == null) {
+                                return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+                            }
+                            // 上传minion
+                            String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
+                            if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+                                if (kmzFile.exists()) {
+                                    FileUtil.deleteDir(kmzFile.getParent());
+                                }
+                                return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+                            }
+                            url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+                            if ("".equals(url)) {
+                                return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+                            }
+                            long fileSize = kmzFile.length(); // 文件大小
+                            // minio上传成功  保存 到数据库
+                            EfTaskKmz efTaskKmz = new EfTaskKmz();
+                            efTaskKmz.setKmzUpdateTime(nowdate);
+                            efTaskKmz.setKmzCreateTime(nowdate);
+                            efTaskKmz.setKmzName(groupfileName);
+                            efTaskKmz.setKmzPath(url);
+                            efTaskKmz.setKmzVersion("1.0.0");
+                            efTaskKmz.setKmzType("kmz");
+                            efTaskKmz.setKmzSize(fileSize);
+                            efTaskKmz.setKmzDes("");
+                            efTaskKmz.setKmzVersion("1.0.0");
+                            efTaskKmz.setKmzDistance(totalDistance);
+                            efTaskKmz.setKmzDuration((Double) (totalDistance / 5f));
+                            efTaskKmz.setKmzCreateUser(userName);
+                            efTaskKmz.setKmzUpdateUser(userName);
+                            efTaskKmz.setKmzUpdateByUserId(userId);
+                            efTaskKmz.setKmzCreateByUserId(userId);
+                            efTaskKmz.setKmzCompanyId(ucId);
+                            efTaskKmz = efTaskKmzService.insert(efTaskKmz);
+                            if (efTaskKmz != null) {
+                                return ResultUtil.success("保存航线成功！");
+                            }
+                            /**移除minio 错误航线*/
+                            Boolean gold = minioService.removeObject(BucketNameKmz, url);
+                            if (gold) {
+                                return ResultUtil.error("保存航线失败！！！请重新上传");
+                            } else {
+                                return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
+                            }
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            taskCount.decrementAndGet();
+                        }
+                        return ResultUtil.error("保存航线失败！"); // 或者返回其他你需要的值
+                    }
+                };
+
+                Future<Result> future =  executor.submit(task);
+                futures.add(future);
+                taskCount.incrementAndGet();
+
+            }
+            // 等待任务
+            while (taskCount.get() > 0) {
+                Thread.sleep(100);
+            }
+
+            for (Future<Result> future : futures) {
+                try {
+                   Result  result = future.get();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            // 关闭线程池
+            executor.shutdown();
+
+            //endregion
+
+//region 测试
+
+//            for (Pair<List<double[]>, Double> pair : groupedPointsWithDistance) {
+//                List<double[]> group = pair.getKey();
+//                Double totalDistance = pair.getValue();
+//                // 提交子任务到线程池
+//                final double finalHomeAlt = homeAlt;
+//                final int finalUavType = uavType;
+//                final String groupfileName = fileName + "（" + index + "-" + fileNum + "）"; // 使用索引值作为文件名的一部分
+//                index++; // 更新索引值
+//                File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath);
+//                if (kmzFile == null) {
+//                    return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+//                }
+//                // 上传minion
+//                String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
+//                if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+//                    if (kmzFile.exists()) {
+//                        FileUtil.deleteDir(kmzFile.getParent());
+//                    }
+//                    return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+//                }
+//                url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+//                if ("".equals(url)) {
+//                    return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+//                }
+//                long fileSize = kmzFile.length(); // 文件大小
+//                // minio上传成功  保存 到数据库
+//                EfTaskKmz efTaskKmz = new EfTaskKmz();
+//                efTaskKmz.setKmzUpdateTime(nowdate);
+//                efTaskKmz.setKmzCreateTime(nowdate);
+//                efTaskKmz.setKmzName(groupfileName);
+//                efTaskKmz.setKmzPath(url);
+//                efTaskKmz.setKmzVersion("1.0.0");
+//                efTaskKmz.setKmzType("kmz");
+//                efTaskKmz.setKmzSize(fileSize);
+//                efTaskKmz.setKmzDes("");
+//                efTaskKmz.setKmzVersion("1.0.0");
+//                efTaskKmz.setKmzDistance(totalDistance);
+//                efTaskKmz.setKmzDuration((Double) (totalDistance / 5f));
+//                efTaskKmz.setKmzCreateUser(userName);
+//                efTaskKmz.setKmzUpdateUser(userName);
+//                efTaskKmz.setKmzUpdateByUserId(userId);
+//                efTaskKmz.setKmzCreateByUserId(userId);
+//                efTaskKmz.setKmzCompanyId(ucId);
+//                efTaskKmz = efTaskKmzService.insert(efTaskKmz);
+//                if (efTaskKmz != null) {
+//                    return ResultUtil.success("保存航线成功！");
+//                }
+//                /**移除minio 错误航线*/
+//                Boolean gold = minioService.removeObject(BucketNameKmz, url);
+//                if (gold) {
+//                    return ResultUtil.error("保存航线失败！！！请重新上传");
+//                } else {
+//                    return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
+//                }
+//
+//            }
+
+// endregiom
+
+
+            return ResultUtil.success("保存航线成功！");
+
+        } catch (Exception e) {
+            LogUtil.logError("保存航线信息异常：" + e.toString());
+            return ResultUtil.error("保存航线信息异常,请联系管理员!");
         }finally {
 
         }

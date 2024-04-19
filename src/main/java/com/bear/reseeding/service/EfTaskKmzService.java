@@ -13,13 +13,13 @@ import java.util.List;
  */
 public interface EfTaskKmzService {
 
-//    /**
-//     * 通过ID查询单条数据
-//     *
-//     * @param id 主键
-//     * @return 实例对象
-//     */
-//    EfTaskKmz queryById(Integer id);
+    /**
+     * 通过ID查询单条数据
+     *
+     * @param id 主键
+     * @return 实例对象
+     */
+    EfTaskKmz queryById(Integer id);
 //
 //    /**
 //     * 查询多条数据
@@ -58,14 +58,22 @@ public interface EfTaskKmzService {
     List<EfTaskKmz> queryByUcidAndTime(Integer UcId, @Param("startTime") String startTime, @Param("endTime") String endTime);
 //
 //
-//    /**
-//     * 检测航线任务是否已经存在
-//     *
-//     * @param fileName 航线任务名称
-//     * @param cid      公司ID
-//     * @return boolean
-//     */
-//    boolean checkKmzExist(String fileName, int cid);
+    /**
+     * 检测航线任务是否已经存在
+     *
+     * @param fileName 航线任务名称
+     * @param cid      公司ID
+     * @return boolean
+     */
+    boolean checkKmzExist(String fileName, int cid);
+
+
+    List<String> includeSamename(String name,Integer cid);
+
+    List<Integer> includeSamenames(String name,Integer cid,Integer id,String startTime,String endTime);
+
+    List<Integer> includeSame(String name,Integer cid,String startTime,String endTime);
+
 //
 //    /**
 //     * 修改数据
@@ -75,10 +83,10 @@ public interface EfTaskKmzService {
 //     */
 //    EfTaskKmz update(EfTaskKmz efTaskKmz);
 //
-//    /**
-//     * 重命名
-//     */
-//    EfTaskKmz updateName(int id, String name, int userId);
+    /**
+     * 重命名
+     */
+    EfTaskKmz updateName(int id, String name, int userId);
 //
 //    /**
 //     * 重命名
@@ -91,6 +99,6 @@ public interface EfTaskKmzService {
 //     * @param id 主键
 //     * @return 是否成功
 //     */
-//    boolean deleteById(Integer id);
+    boolean deleteById(Integer id);
 
 }

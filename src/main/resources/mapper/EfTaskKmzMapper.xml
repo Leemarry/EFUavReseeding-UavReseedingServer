@@ -54,6 +54,28 @@
          where kmz_company_id = #{cid} and kmz_name= #{fileName}
     </select>
 
+
+    <select id="includeSamename" resultType="java.lang.String">
+        SELECT kmz_name
+        FROM ef_task_kmz
+        WHERE kmz_company_id = #{cid} and kmz_name LIKE  concat('%',#{name},'%');
+    </select>
+
+    <select id="includeSamenames" resultType="java.lang.Integer">
+        SELECT id
+        FROM ef_task_kmz
+        WHERE kmz_company_id = #{cid} and  kmz_name LIKE  concat('%',#{name},'%') and kmz_update_time  BETWEEN #{startTime} AND #{endTime} and id &lt;&gt; #{id};
+    </select>
+
+    <select id="includeSame" resultType="java.lang.Integer">
+        SELECT id
+        FROM ef_task_kmz
+        WHERE kmz_company_id = #{cid} and  kmz_name LIKE  concat('%',#{name},'%') and kmz_update_time  BETWEEN #{startTime} AND #{endTime};
+    </select>
+
+
+
+
     <!-- 通过公司id与时间段查询航线列表   queryByUcidAndTime-->
     <select id="queryByUcidAndTime"  resultMap="EfTaskKmzMap">
         select

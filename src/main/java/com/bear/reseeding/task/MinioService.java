@@ -224,7 +224,7 @@ public class MinioService {
             if (port != -1) {
                 hostString += ":" + port + paths;
             }
-            System.out.println(fileUrl);
+//            System.out.println(fileUrl);
             String fileName = paths.substring(paths.lastIndexOf('/') + 1);
             urlString = hostString;
         } catch (Exception e) {

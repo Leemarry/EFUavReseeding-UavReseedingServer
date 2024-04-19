@@ -19,17 +19,17 @@ import java.util.List;
 public class EfTaskKmzServiceImpl implements EfTaskKmzService {
     @Resource
     private EfTaskKmzDao efTaskKmzDao;
-//
-//    /**
-//     * 通过ID查询单条数据
-//     *
-//     * @param id 主键
-//     * @return 实例对象
-//     */
-//    @Override
-//    public EfTaskKmz queryById(Integer id) {
-//        return this.efTaskKmzDao.queryById(id);
-//    }
+
+    /**
+     * 通过ID查询单条数据
+     *
+     * @param id 主键
+     * @return 实例对象
+     */
+    @Override
+    public EfTaskKmz queryById(Integer id) {
+        return this.efTaskKmzDao.queryById(id);
+    }
 //
 //    /**
 //     * 查询多条数据
@@ -85,17 +85,36 @@ public class EfTaskKmzServiceImpl implements EfTaskKmzService {
     }
 //
 //
-//    /**
-//     * 检测航线任务是否已经存在
-//     *
-//     * @param fileName 航线任务名称
-//     * @param cid      公司ID
-//     * @return boolean
-//     */
-//    @Override
-//    public boolean checkKmzExist(String fileName, int cid) {
-//        return (this.efTaskKmzDao.checkKmzExist(fileName, cid) > 0);
-//    }
+    /**
+     * 检测航线任务是否已经存在
+     *
+     * @param fileName 航线任务名称
+     * @param cid      公司ID
+     * @return boolean
+     */
+    @Override
+    public boolean checkKmzExist(String fileName, int cid) {
+        return (this.efTaskKmzDao.checkKmzExist(fileName, cid) > 0);
+    }
+
+
+    @Override
+    public List<String> includeSamename(String name,Integer cid){
+        return this.efTaskKmzDao.includeSamename(name,cid);
+    }
+
+    @Override
+    public List<Integer> includeSamenames(String name,Integer cid,Integer id,String startTime,String endTime){
+        return this.efTaskKmzDao.includeSamenames(name,cid,id,startTime,endTime);
+    }
+
+    @Override
+    public List<Integer> includeSame(String name,Integer cid,String startTime,String endTime){
+        return this.efTaskKmzDao.includeSame(name,cid,startTime,endTime);
+    }
+
+
+
 //
 //
 //    /**
@@ -115,18 +134,18 @@ public class EfTaskKmzServiceImpl implements EfTaskKmzService {
 //    }
 //
 //
-//    /**
-//     * 重命名
-//     */
-//    @Override
-//    public EfTaskKmz updateName(int id, String name, int userId) {
-//        int count = this.efTaskKmzDao.updateName(id, name, userId, new Date());
-//        if (count > 0) {
-//            return this.queryById(id);
-//        } else {
-//            return null;
-//        }
-//    }
+    /**
+     * 重命名
+     */
+    @Override
+    public EfTaskKmz updateName(int id, String name, int userId) {
+        int count = this.efTaskKmzDao.updateName(id, name, userId, new Date());
+        if (count > 0) {
+            return this.queryById(id);
+        } else {
+            return null;
+        }
+    }
 //
 //    /**
 //     * 重命名
@@ -142,14 +161,14 @@ public class EfTaskKmzServiceImpl implements EfTaskKmzService {
 //    }
 //
 //
-//    /**
-//     * 通过主键删除数据
-//     *
-//     * @param id 主键
-//     * @return 是否成功
-//     */
-//    @Override
-//    public boolean deleteById(Integer id) {
-//        return this.efTaskKmzDao.deleteById(id) > 0;
-//    }
+    /**
+     * 通过主键删除数据
+     *
+     * @param id 主键
+     * @return 是否成功
+     */
+    @Override
+    public boolean deleteById(Integer id) {
+        return this.efTaskKmzDao.deleteById(id) > 0;
+    }
 }
