@@ -1294,8 +1294,9 @@ public class UavController {
                 EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
                 uavType = realtimedata.getUavType();
             }
+            Float speed =5f;
             // 生成kmz
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath);
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed);
             if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
@@ -1422,7 +1423,7 @@ public class UavController {
     @PostMapping(value = "/saveRouteToMinios")
     public Result saveRouteToMinios(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
                                    @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
-                                   HttpServletRequest request) {
+                                    @RequestParam("speed") Float speed, HttpServletRequest request) {
         try {
             if (mission == null || mission.size() <= 0) {
                 return ResultUtil.error("航线为空!");
@@ -1482,7 +1483,7 @@ public class UavController {
                 Callable<Object> task = new Callable<Object>() {
                     public Object call() {
                         try {
-                            File kmzFile = KmzUtil.beforeDataProcessing(coordinateArray, fileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath);
+                            File kmzFile = KmzUtil.beforeDataProcessing(coordinateArray, fileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath,speed);
                             if (kmzFile == null) {
                                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
                             }
@@ -1546,7 +1547,7 @@ public class UavController {
             // 关闭线程池
             executor.shutdown();
             // 生成kmz
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath);
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed);
             if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
@@ -1641,7 +1642,7 @@ public class UavController {
     @PostMapping(value = "/saveRouteToMinio")
     public Result saveRouteToMinio(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
                                    @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
-                                   HttpServletRequest request) {
+                                   @RequestParam("speed") Float speed,    HttpServletRequest request) {
         try {
             if (mission == null || mission.size() <= 0) {
                 return ResultUtil.error("航线为空!");
@@ -1726,7 +1727,7 @@ public class UavController {
                 Callable<Result> task = new Callable<Result>() {
                     public Result call() {
                         try {
-                            File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath);
+                            File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath,speed);
                             if (kmzFile == null) {
                                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
                             }

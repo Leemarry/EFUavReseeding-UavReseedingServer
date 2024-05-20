@@ -1,8 +1,6 @@
 package com.bear.reseeding.utils;
 
 import cn.hutool.core.lang.Pair;
-import com.bear.reseeding.MyApplication;
-import com.bear.reseeding.entity.EfTaskKmz;
 import com.bear.reseeding.entity.EfTaskWps;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
@@ -14,6 +12,7 @@ import org.dom4j.io.XMLWriter;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.*;
+import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -22,7 +21,7 @@ import java.util.zip.ZipOutputStream;
 /**
  * kmz
  */
-public class KmzUtil {
+public class KmzUtilcopy {
 
 //  @Value("/wpmz/template.kml")
 // public String BucketNameKmz;
@@ -96,7 +95,7 @@ public class KmzUtil {
             efTaskWps.setWpsAlt(200);   //海拔
             efTaskWps.setWpsSpeed(speed); // 速度 5f
             efTaskWps.setWpsDistance(distaceCount);
-            Integer WpsUserTime = (int) (distaceCount / speed);
+            Integer WpsUserTime = (int) (distaceCount / 5f);
             efTaskWps.setWpsUserTime(WpsUserTime); //任务预计用时
 //            efTaskWps.setWpsUserTime(0);
             //kmlPath
@@ -247,12 +246,12 @@ public class KmzUtil {
 
             //声明无人机型号
             Element droneInfo = missionConfig.addElement("wpml:droneInfo");
-            droneInfo.addElement("wpml:droneEnumValue").addText("77");  // 77
-            droneInfo.addElement("wpml:droneSubEnumValue").addText("2");  // 1
+            droneInfo.addElement("wpml:droneEnumValue").addText("67");  // 77
+            droneInfo.addElement("wpml:droneSubEnumValue").addText("0");  // 1
 
             //声明有效载荷模型
             Element payloadInfo = missionConfig.addElement("wpml:payloadInfo");
-            payloadInfo.addElement("wpml:payloadEnumValue").addText("68");
+            payloadInfo.addElement("wpml:payloadEnumValue").addText("67");
             payloadInfo.addElement("wpml:payloadSubEnumValue").addText("0");
             payloadInfo.addElement("wpml:payloadPositionIndex").addText("0");
 
@@ -284,7 +283,7 @@ public class KmzUtil {
             globalWaypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
             globalWaypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
-            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndPassWithContinuityCurvature");
+            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature");
             double direction = 0;
             for (int i = 0; i < coordinateArray.size(); i++) {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
@@ -433,11 +432,11 @@ public class KmzUtil {
             Element droneInfo = missionConfig.addElement("wpml:droneInfo");
             //声明无人机型号
             droneInfo.addElement("wpml:droneEnumValue").addText("77");
-            droneInfo.addElement("wpml:droneSubEnumValue").addText("2");  // 2  -- m3m  68   --- 1   67
+            droneInfo.addElement("wpml:droneSubEnumValue").addText("1");
 
             Element payloadInfo = missionConfig.addElement("wpml:payloadInfo");
             //声明有效载荷模型
-            payloadInfo.addElement("wpml:payloadEnumValue").addText("68"); // 68
+            payloadInfo.addElement("wpml:payloadEnumValue").addText("67");
             payloadInfo.addElement("wpml:payloadSubEnumValue").addText("0");
             payloadInfo.addElement("wpml:payloadPositionIndex").addText("0");
 
@@ -489,7 +488,7 @@ public class KmzUtil {
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
                 Element waypointTurnParam = placemark.addElement("wpml:waypointTurnParam");//航点转弯模式
-                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndPassWithContinuityCurvature"); // 点不停
+                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature");
                 waypointTurnParam.addElement("wpml:waypointTurnDampingDist").addText("0");
                 placemark.addElement("wpml:useStraightLine").addText("1");
 
