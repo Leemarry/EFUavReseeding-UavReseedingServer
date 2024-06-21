@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 public class CountdownLatchTest1 {
     public static void main(String[] args) {
         ExecutorService service = Executors.newFixedThreadPool(3);
+        System.out.println("主线程"+Thread.currentThread().getName());
         final CountDownLatch latch = new CountDownLatch(3);
         for (int i = 0; i < 5; i++) {
             Runnable runnable = new Runnable() {

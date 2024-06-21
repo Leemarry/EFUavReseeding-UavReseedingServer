@@ -52,5 +52,30 @@ public class EfHandleWaypointServiceImpl implements EfHandleWaypointService {
         return efHandleWaypointDao.queryByHandleId(handleId);
     }
 
+    @Override
+    public List<EfHandleWaypoint> queryByHandleIdAndtime(int handleId,List<Integer> flyTimes) {
+        return efHandleWaypointDao.queryByHandleIdAndtime(handleId,flyTimes);
+    }
+
+    @Override
+    public List<EfHandleWaypoint> queryByHandleIdandFlyed(int handleId,Integer flyTimes) {
+        return efHandleWaypointDao.queryByHandleIdandFlyed(handleId,flyTimes);
+    }
+
+
+    @Override
+    public List<EfHandleWaypoint> queryByHandleIdNofly(int handleId,Integer flyTimes) {
+        return efHandleWaypointDao.queryByHandleIdNofly(handleId,flyTimes);
+    }
+
+
+
+
+
+    @Override
+    public int updateHandleNmu(int id){
+        return  efHandleWaypointDao.updateHandleNmu(id);
+    }
+
 
 }

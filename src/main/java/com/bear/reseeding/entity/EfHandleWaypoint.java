@@ -21,7 +21,7 @@ public class EfHandleWaypoint {
     /**
      *是否飞过这个航点，飞一次+1
      */
-    private  Integer flyTimes;
+    private  Integer flyTimes =0;
     /**
      *
      */

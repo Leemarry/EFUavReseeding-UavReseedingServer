@@ -16,6 +16,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -474,6 +475,67 @@ public class MinioService {
         }
         return gold;
     }
+
+
+    public boolean downloadFile(String urlStr ,String downloadPathStr){
+        try{
+            URL url = new URL(urlStr);
+            try(BufferedInputStream in= new BufferedInputStream(url.openStream())){
+                FileOutputStream fileOutputStream = new FileOutputStream(downloadPathStr);
+                byte[] dataBuffer = new byte[1024];
+                int bytesRead ;
+                while ((bytesRead= in.read(dataBuffer,0,1024)) !=-1){
+                    fileOutputStream.write(dataBuffer,0,bytesRead);
+                }
+            }
+            System.out.println("文件下载完成！");
+            return true; // 下载成功
+        }catch (IOException e) {
+            System.out.println("文件下载失败：" + e.getMessage());
+            return false; // 下载失败
+        }
+    }
+
+
+    /**
+     * 解压
+     *
+     * @param zipFilePath
+     * @param extractPath
+     * @return
+     * @throws IOException
+     */
+    public HashMap<String,String> extractFile(String zipFilePath, String extractPath) throws IOException {
+        HashMap<String, String> extractedPathsMap = new HashMap<>();
+        try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFilePath))) {
+            byte[] buffer = new byte[1024];
+
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+            while (zipEntry != null) {
+                String entryName = zipEntry.getName();
+                File newFile = new File(extractPath + entryName);
+
+                if (zipEntry.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    new File(newFile.getParent()).mkdirs();
+                    FileOutputStream fileOutputStream = new FileOutputStream(newFile);
+                    int length;
+                    while ((length = zipInputStream.read(buffer)) > 0) {
+                        fileOutputStream.write(buffer, 0, length);
+                    }
+                    fileOutputStream.close();
+                    extractedPathsMap.put(entryName,newFile.getAbsolutePath());
+                }
+
+                zipEntry = zipInputStream.getNextEntry();
+            }
+        }
+
+        // 判断解压后的文件是否存在
+        return extractedPathsMap;
+    }
+
 
     /**
      * 删除文件夹内 对象文件

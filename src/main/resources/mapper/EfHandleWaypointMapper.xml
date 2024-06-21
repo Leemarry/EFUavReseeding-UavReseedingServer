@@ -32,4 +32,32 @@
         WHERE handle_id = #{handleId}
     </select>
 
+    <select id="queryByHandleIdAndtime" resultMap="EfCompanyMap" parameterType="int">
+        SELECT * FROM ef_handle_waypoint
+        WHERE handle_id = #{handleId} And
+        COALESCE(fly_times, 0) IN
+        <foreach collection="flyTimes" item="id" index="index" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="queryByHandleIdandFlyed" resultMap="EfCompanyMap" parameterType="int">
+        SELECT * FROM ef_handle_waypoint
+        WHERE handle_id = #{handleId} And
+        COALESCE(fly_times, 0)  >= #{flyTimes}
+    </select>
+
+    <select id="queryByHandleIdNofly" resultMap="EfCompanyMap" parameterType="int">
+        SELECT * FROM ef_handle_waypoint
+        WHERE handle_id = #{handleId} And
+        COALESCE(fly_times, 0)  = #{flyTimes}
+    </select>
+
+
+    <update id="updateHandleNmu">
+        update ef_handle_waypoint
+        set fly_times = coalesce(fly_times, 0) + 1
+        where id = #{id}
+    </update>
+
 </mapper>

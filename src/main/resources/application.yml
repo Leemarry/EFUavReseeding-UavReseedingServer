@@ -71,7 +71,7 @@ tencent:
   # 腾讯云储存桶签
   TxyBucketName: efuav-1302980652
   TxyPrefix: https://efuav-1302980652.cos.ap-shanghai.myqcloud.com/
-  #腾讯云视频流
+  #腾讯云视频流 TxySecretStreamKey 播放
   TxySecretStreamKey: c4AYe5E2biQdKbe3mCWK
   TxyDomainName: 146099.livepush.myqcloud.com
   TxyTemplateid: 28453

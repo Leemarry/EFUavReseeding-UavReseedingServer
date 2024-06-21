@@ -24,4 +24,13 @@ public interface EfHandleWaypointService {
      * @return 实例对象list
      */
     List<EfHandleWaypoint> queryByHandleId(int handleId);
+
+    List<EfHandleWaypoint> queryByHandleIdAndtime(int handleId ,List<Integer> flyTimes);
+
+    List<EfHandleWaypoint> queryByHandleIdandFlyed(int handleId ,Integer flyTimes);
+
+    List<EfHandleWaypoint> queryByHandleIdNofly(int handleId ,Integer flyTimes);
+
+
+    int updateHandleNmu(int id);
 }

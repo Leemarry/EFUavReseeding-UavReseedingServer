@@ -16,4 +16,15 @@ public interface EfHandleWaypointDao {
      * @return 实例对象list
      */
     List<EfHandleWaypoint> queryByHandleId(@Param("handleId") int handleId);
+
+
+    List<EfHandleWaypoint> queryByHandleIdAndtime(@Param("handleId") int handleId,@Param("flyTimes") List<Integer> flyTimes);
+
+    List<EfHandleWaypoint> queryByHandleIdandFlyed(@Param("handleId") int handleId,@Param("flyTimes") Integer flyTimes);
+
+    List<EfHandleWaypoint> queryByHandleIdNofly(@Param("handleId") int handleId,@Param("flyTimes") Integer flyTimes);
+
+
+
+    int updateHandleNmu(@Param("id") int id);
 }

@@ -96,7 +96,60 @@ public class EfTaskKmz implements Serializable {
      * 任务描述与说明
      */
     private String kmzDes;
+    /**
+     * 当前索引点
+     */
+    private  Integer kmzCurrentWpNo ;
+    /**
+     * 所有点数
+     */
+    private  Integer kmzWpCount;
 
+    private  double kmzLastRtlLat;
+
+    private double kmzLastRtlLng;
+
+    private double kmzLastLtlAlt;
+
+    public Integer getKmzCurrentWpNo() {
+        return kmzCurrentWpNo;
+    }
+
+    public void setKmzCurrentWpNo(Integer kmzCurrentWpNo) {
+        this.kmzCurrentWpNo = kmzCurrentWpNo;
+    }
+
+    public Integer getKmzWpCount() {
+        return kmzWpCount;
+    }
+
+    public void setKmzWpCount(Integer kmzWpCount) {
+        this.kmzWpCount = kmzWpCount;
+    }
+
+    public double getKmzLastRtlLat() {
+        return kmzLastRtlLat;
+    }
+
+    public void setKmzLastRtlLat(double kmzLastRtlLat) {
+        this.kmzLastRtlLat = kmzLastRtlLat;
+    }
+
+    public double getKmzLastRtlLng() {
+        return kmzLastRtlLng;
+    }
+
+    public void setKmzLastRtlLng(double kmzLastRtlLng) {
+        this.kmzLastRtlLng = kmzLastRtlLng;
+    }
+
+    public double getKmzLastLtlAlt() {
+        return kmzLastLtlAlt;
+    }
+
+    public void setKmzLastLtlAlt(double kmzLastLtlAlt) {
+        this.kmzLastLtlAlt = kmzLastLtlAlt;
+    }
 
     public Integer getId() {
         return id;

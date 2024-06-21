@@ -146,6 +146,15 @@ public class EfTaskKmzServiceImpl implements EfTaskKmzService {
             return null;
         }
     }
+
+    /**
+     * 重命名
+     */
+    @Override
+    public int updateCurrentWpNo(int id, int CurrentWpNo, int userId) {
+        return  this.efTaskKmzDao.updateCurrentWpNo(id, CurrentWpNo, userId, new Date());
+    }
+
 //
 //    /**
 //     * 重命名

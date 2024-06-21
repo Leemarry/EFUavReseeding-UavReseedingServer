@@ -12,6 +12,7 @@ import com.bear.reseeding.utils.BytesUtil;
 import com.bear.reseeding.utils.LogUtil;
 import com.bear.reseeding.utils.RedisUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -30,6 +31,9 @@ import java.util.concurrent.TimeUnit;
 public class HandleMqttMessageEf {
     @Resource
     private TaskUavHeartbeat taskUavHeartbeat;
+
+    @Autowired
+    private SseClient sseClient;
 
     public void unPacket(RedisUtils redisUtils, String topic, String deviceId, byte[] packet) {
         DoPacketEfuav(redisUtils, packet, "", deviceId);
@@ -159,6 +163,19 @@ public class HandleMqttMessageEf {
                     // 储存架次和实时数据
                     taskUavHeartbeat.addQueue(realtimedata);
                     //endregion
+                    break;
+                case 19015:
+                    //#region 草地播种心跳包
+//                    tag = packet[Index] & 0xFF;  //标记
+                    EFLINK_MSG_19015 eflink_msg_19015 = new EFLINK_MSG_19015();
+                    eflink_msg_19015.InitPacket(packet,Index);
+                    System.out.println("控制指令回复:19015");
+                    int WpIndex =eflink_msg_19015.getWpIndex(); // 假设索引4
+                    sseClient.updateFCavity(WpIndex);
+
+//                    String key3108 = uavid + "_3108_" + tag;
+//                    redisUtils.set(key3108, true, 30L, TimeUnit.SECONDS);
+                    //#endregion
                     break;
                 case 3051:
                     //region 控制指令回复
@@ -293,7 +310,7 @@ public class HandleMqttMessageEf {
                     break;
                 case 3105:
                     //region 控制指令回复
-                    System.out.println(" 控制指令回复");
+                    System.out.println(" 控制指令回复：3105");
                     tag = packet[Index] & 0xFF;  //标记
                     Index++;
                     ack = BytesUtil.bytes2UShort(packet, Index);  //1：成功，0：失败
@@ -331,6 +348,7 @@ public class HandleMqttMessageEf {
                     break;
                 default:
                     // 其他消息类型处理
+                    System.out.println("其他19015");
                     break;
             }
         } catch (Exception e) {

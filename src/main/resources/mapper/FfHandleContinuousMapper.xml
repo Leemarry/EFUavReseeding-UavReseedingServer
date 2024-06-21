@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bear.reseeding.dao.FfHandleContinuousDao">
+    <resultMap type="com.bear.reseeding.entity.continuousWaypoints" id="EfcontinuousPointMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="onlat" column="on_lat" jdbcType="DOUBLE"/>
+        <result property="onlng" column="on_lng" jdbcType="DOUBLE"/>
+        <result property="onalt" column="on_alt" jdbcType="DOUBLE"/>
+        <result property="offlat" column="off_lat" jdbcType="DOUBLE"/>
+        <result property="offlng" column="off_lng" jdbcType="DOUBLE"/>
+        <result property="offalt" column="off_alt" jdbcType="DOUBLE"/>
+        <result property="reseedingid" column="reseeding_id" jdbcType="INTEGER"/>
+        <result property="flytimes" column="fly_times" jdbcType="INTEGER"/>
+        <result property="handleid" column="handle_id" jdbcType="INTEGER"/>
+    </resultMap>
+    <!-- 使用foreach 批量新增    -->
+    <insert id="insertBatchByList" keyProperty="id" useGeneratedKeys="true">
+        INSERT INTO ef_handle_continuous_waypoint (id,reseeding_id,on_lat,on_lng,on_alt,off_lat,off_lng,off_alt,handle_id,fly_times) VALUES
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.id},#{entity.handleid},#{entity.onlat},#{entity.onlng},#{entity.onalt},#{entity.offlat},#{entity.offlng},#{entity.offalt},#{entity.handleid},#{entity.flytimes})
+        </foreach>
+
+    </insert>
+
+    <select id="queryByHandleId" resultMap="EfcontinuousPointMap" parameterType="int">
+        SELECT * FROM ef_handle_continuous_waypoint
+        WHERE handle_id = #{handleId}
+    </select>
+
+
+    <select id="queryByHandleIdandFlyed" resultMap="EfcontinuousPointMap" parameterType="int">
+        SELECT * FROM ef_handle_continuous_waypoint
+        WHERE handle_id = #{handleId} And
+            COALESCE(fly_times, 0)  >= #{flyTimes}
+    </select>
+
+
+    <select id="queryByHandleIdNofly" resultMap="EfcontinuousPointMap" parameterType="int">
+        SELECT * FROM ef_handle_continuous_waypoint
+        WHERE handle_id = #{handleId} And
+            COALESCE(fly_times, 0)  = #{flyTimes}
+    </select>
+    <!--根据handleId查询-->
+
+
+
+
+
+
+</mapper>

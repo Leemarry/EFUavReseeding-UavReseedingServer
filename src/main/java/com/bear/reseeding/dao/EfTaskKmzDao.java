@@ -118,6 +118,16 @@ public interface EfTaskKmzDao {
      */
     int updateName(@Param("id") int id, @Param("name") String name, @Param("userId") int userId, @Param("updateTime") Date updateTime);
 
+    /**
+     *  重置航线0
+     * @param id
+     * @param CurrentWpNo
+     * @param userId
+     * @param updateTime
+     * @return
+     */
+    int  updateCurrentWpNo(@Param("id") int id, @Param("CurrentWpNo") int CurrentWpNo, @Param("userId") int userId, @Param("updateTime") Date updateTime);
+
 //
 //    /**
 //     * 重命名

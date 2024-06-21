@@ -1,5 +1,7 @@
 package com.bear.reseeding.entity;
 
+import lombok.Builder;
+
 import java.util.Date;
 import java.io.Serializable;
 
@@ -9,6 +11,7 @@ import java.io.Serializable;
  * @author N.
  * @since 2024-03-13 16:10:41
  */
+
 public class EfHandle implements Serializable {
     private static final long serialVersionUID = 347945384347757625L;
     /**

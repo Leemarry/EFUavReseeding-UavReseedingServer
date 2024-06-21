@@ -87,6 +87,12 @@ public interface EfTaskKmzService {
      * 重命名
      */
     EfTaskKmz updateName(int id, String name, int userId);
+
+
+    /**
+     * 重置航线点0
+     */
+    int updateCurrentWpNo(int id, int CurrentWpNo, int userId);
 //
 //    /**
 //     * 重命名

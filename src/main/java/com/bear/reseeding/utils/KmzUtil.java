@@ -192,15 +192,12 @@ public class KmzUtil {
         List<double[]> group = new ArrayList<>();
         group.add(coordinateArray.get(0));
         double totalDistance = 0.0; // 用于记录当前分组的累计距离
-
         // 遍历坐标点集合，进行分组
         for (int i = 0; i < coordinateArray.size() - 1; i++) {
             double[] currentPoint = coordinateArray.get(i);
             double[] nextPoint = coordinateArray.get(i + 1);
-
             // 计算当前点与下一个点之间的距离
             double distance = GisUtil.getDistance(currentPoint[0], currentPoint[1], nextPoint[0], nextPoint[1]);
-
             // 如果累计距离超过15000m，则创建新的分组
             if (totalDistance + distance > 8000.0) {
                 // 将当前分组及其距离添加到结果列表中
@@ -208,17 +205,14 @@ public class KmzUtil {
                 group = new ArrayList<>();
                 totalDistance = 0.0; // 重置累计距离
             }
-
             // 将点添加到当前分组中
             group.add(nextPoint);
             totalDistance += distance;
         }
-
         // 添加最后一个分组及其距离
         if (!group.isEmpty()) {
             groupedPointsWithDistance.add(new Pair<>(group, totalDistance));
         }
-
         return groupedPointsWithDistance;
     }
 // endregion

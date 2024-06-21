@@ -1,14 +1,12 @@
 package com.bear.reseeding.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import com.bear.reseeding.MyApplication;
 import com.bear.reseeding.common.ResultUtil;
-import com.bear.reseeding.datalink.EfLinkUtil;
-import com.bear.reseeding.datalink.MqttUtil;
-import com.bear.reseeding.datalink.WebSocketLink;
-import com.bear.reseeding.datalink.WebSocketLinks;
+import com.bear.reseeding.datalink.*;
 import com.bear.reseeding.eflink.*;
 import com.bear.reseeding.eflink.enums.EF_PARKING_APRON_ACK;
 import com.bear.reseeding.entity.*;
@@ -50,6 +48,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.print.attribute.standard.JobName;
 import javax.servlet.http.HttpServletRequest;
 import javax.swing.plaf.synth.Region;
 import java.io.*;
@@ -113,6 +112,8 @@ public class UavController {
 
     @Resource
     private EfHandleWaypointService efHandleWaypointService;
+    @Resource
+    private FfHandleContinuousService efHandleContinuousService;
 
     @Resource
     private EfHandleBlockListService efHandleBlockListService;
@@ -1149,8 +1150,8 @@ public class UavController {
      */
     @ResponseBody
     @PostMapping(value = "/uploadTaskToUav")
-    public Result uploadTaskToUav(@RequestParam(value = "uavId") String uavId, @RequestParam(value = "url") String url, @RequestParam("altType") int altType,
-                               @RequestParam(value = "homeAlt", required = false) double homeAlt, HttpServletRequest request) {
+    public Result uploadTaskToUav(@CurrentUser EfUser efUser,@RequestParam(value = "uavId") String uavId, @RequestParam(value = "url") String url, @RequestParam("altType") int altType,
+                               @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam("kmzId")Integer kmzId, @RequestParam(value = "currentIndex" ,required = false) Integer currentIndex, HttpServletRequest request) {
         try {
             if (url == null || url.equals("")) {
                 return ResultUtil.error("航线为空!");
@@ -1158,7 +1159,8 @@ public class UavController {
             if ("".equals(uavId)) {
                 return ResultUtil.error("请选择无人机!");
             }
-
+            int userId= efUser.getId();
+            Integer ucId = efUser.getUCId();
             Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
             if (obj != null) {
                 uavId = obj.toString();
@@ -1190,7 +1192,71 @@ public class UavController {
                 EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
                 uavType = realtimedata.getUavType();
             }
+            if(currentIndex !=0){
+                // create url
+                // 下载文件到的路径 ---判断是否是 文件类型 或创建
+                String downloadPath = basePath + "temp" + File.separator + "file" + File.separator + "download.kmz";
+                FileUtil.createOrUpdateFile(downloadPath);
+                // 解压文件路径 --
+                String extractPath = basePath + "temp" + File.separator + "file" + File.separator + "extractPath" + File.separator;
+                File fileDir = new File(extractPath);
+                if (!fileDir.exists()) {
+                    fileDir.mkdirs();
+                }
+                // 合并文件压缩
+                String zipPath = basePath + "temp"+File.separator + "file" + File.separator + "zipPath" + File.separator;
+                File zipfileDir = new File(zipPath);
+                if (!zipfileDir.exists()) {
+                    zipfileDir.mkdirs();
+                }
+                //下载
+                Boolean isdownload = minioService.downloadFile(url, downloadPath);
+                if (!isdownload) {
+                    return ResultUtil.error("minio下载存在问题");
+                }
 
+                String ofileName =( new File(downloadPath)).getName();
+                // 解压文件 文件才出现
+                HashMap<String,String> extractPathMap = minioService.extractFile(downloadPath, extractPath);
+                // 遍历HashMap中的每一个key和对应的value
+                List<String> filePaths = new ArrayList<>();
+                for (Map.Entry<String, String> entry : extractPathMap.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    String readPath = value;
+                    String copyPath = extractPath +key;
+                    String filePath =  XmlUtil.copyKml(readPath,copyPath,currentIndex);
+                    filePaths.add(filePath);
+                }
+                String  kmzPath= zipPath + ofileName;;
+                File kmzFile = KmzUtil.writeZip(filePaths, kmzPath);
+
+                String name= kmzFile.getName();
+
+                if (kmzFile == null) {
+                    return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+                }
+                //#region 上传minion
+                 url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
+                if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+                    if (kmzFile.exists()) {
+                        FileUtil.deleteDir(kmzFile.getParent());
+                    }
+                    return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+                }
+                url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+                if ("".equals(url)) {
+                    return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+                }
+                //#endregion
+
+            }else {
+//                LogUtil.logMessage("为0");
+                int num =  efTaskKmzService.updateCurrentWpNo(kmzId,0,userId);
+                if(num>0){
+                    LogUtil.logMessage("更新成功");
+                }
+            }
             int size = 0;
             // EFLINK_MSG_3121 上传
             int tag = ((byte) new Random().nextInt() & 0xFF);
@@ -1295,8 +1361,10 @@ public class UavController {
                 uavType = realtimedata.getUavType();
             }
             Float speed =5f;
+
+
             // 生成kmz
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed);
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed );
             if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
@@ -1499,6 +1567,7 @@ public class UavController {
                             if ("".equals(url)) {
                                 return ResultUtil.error("保存巡检航线失败(错误码 4)！");
                             }
+                            int numPoints = coordinateArray.size();
                             long fileSize = kmzFile.length(); // 文件大小
                             double distaceCount = 0.0;
                             // minio上传成功  保存 到数据库
@@ -1519,6 +1588,9 @@ public class UavController {
                             efTaskKmz.setKmzUpdateByUserId(userId);
                             efTaskKmz.setKmzCreateByUserId(userId);
                             efTaskKmz.setKmzCompanyId(ucId);
+                            //补加
+                            efTaskKmz.setKmzCurrentWpNo(0);
+                            efTaskKmz.setKmzWpCount(numPoints);
                             efTaskKmz = efTaskKmzService.insert(efTaskKmz);
                             if (efTaskKmz != null) {
                                 return ResultUtil.success("保存航线成功！");
@@ -1605,6 +1677,9 @@ public class UavController {
             efTaskKmz.setKmzUpdateByUserId(userId);
             efTaskKmz.setKmzCreateByUserId(userId);
             efTaskKmz.setKmzCompanyId(ucId);
+            //补加
+            efTaskKmz.setKmzCurrentWpNo(0);
+            efTaskKmz.setKmzWpCount(numPoints);
 
             efTaskKmz = efTaskKmzService.insert(efTaskKmz);
             if (efTaskKmz != null) {
@@ -1623,6 +1698,171 @@ public class UavController {
             return ResultUtil.error("上传航点任务至无人机异常,请联系管理员!");
         }finally {
 
+        }
+    }
+
+
+    /**
+     * 保存巡检航线至minio
+     *
+     * @param uavId
+     * @param mission
+     * @param altType
+     * @param takeoffAlt
+     * @param homeAlt
+     * @param request
+     * @return
+     */
+    @ResponseBody
+    @PostMapping(value = "/saveRouteToMinioAll")
+    public Result saveRouteToMinioAll(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
+                                   @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
+                                   @RequestParam("speed") Float speed,    HttpServletRequest request) {
+        try {
+            if (mission == null || mission.size() <= 0) {
+                return ResultUtil.error("航线为空!");
+            }
+            Integer ucId = efUser.getUCId();
+            Integer userId = efUser.getId(); //
+            String userName = efUser.getUName();
+            Date nowdate = new Date();
+
+            Object obj = redisUtils.hmGet("rel_uav_id_sn", uavId); //根据无人机id获取无人机sn
+            if (obj != null) {
+                uavId = obj.toString();
+            }
+            /**航线名称*/
+//            String fileName ="temp_" + uavId + System.currentTimeMillis();
+            String fileName = name;
+
+            if (altType == 0) {
+                // 使用相对高度，获取飞机当前海拔
+                if (homeAlt == -1) {
+                    Object objalt = redisUtils.get(uavId + "_heart");
+                    if (objalt != null) {
+                        EfUavRealtimedata realtimedata = (EfUavRealtimedata) objalt;
+                        if (realtimedata.getAremd() == 1) {
+                            return ResultUtil.error("无人机已经起飞，请先降落无人机！");
+                        }
+                        if (realtimedata.getGpsStatus() == 10 || realtimedata.getGpsStatus() == 5) {
+                            homeAlt = realtimedata.getAltabs();
+                        } else {
+                            return ResultUtil.error("无人机未差分定位！");
+                        }
+                    } else {
+                        return ResultUtil.error("无人机已离线！");
+                    }
+                }
+            }
+            int uavType = 0;
+            //获取飞机类型
+            Object objtype = redisUtils.get(uavId + "_heart");
+            if (objtype != null) {
+                EfUavRealtimedata realtimedata = (EfUavRealtimedata) objtype;
+                uavType = realtimedata.getUavType();
+            }
+            int cid = efUser.getUCId();
+            //#region
+            // 获取当前时间
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            // 计算一周前的时间
+            LocalDateTime oneWeekAgo = currentDateTime.minus(1, ChronoUnit.MONTHS);
+            // 定义日期时间格式
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            // 格式化当前时间为字符串
+            String formattedCurrentDateTime = currentDateTime.format(formatter);
+
+            // 格式化一周前的时间为字符串
+            String formattedOneWeekAgo = oneWeekAgo.format(formatter);
+            List<Integer> list= efTaskKmzService.includeSame(name,cid,formattedOneWeekAgo,formattedCurrentDateTime);
+            if(list.size()>0){
+                return ResultUtil.error("存在命名重复，请修改！");
+            }
+            //#endregion
+
+            //#region 计算距离 点集合
+            int numPoints = mission.size();
+            double distaceCount = 0.0;
+            double distance;
+            for (int i = 0; i < numPoints; i++) {
+                for (int j = i + 1; j < numPoints; j++) {
+                    double[] firstPoint = mission.get(i);  // 获取第一组坐标点
+                    double lng1 = firstPoint[0];  // 获取经度
+                    double lat1 = firstPoint[1];  // 获取纬度
+                    double[] nextPoint = mission.get(j);  // 获取第一组坐标点
+                    double lng2 = nextPoint[0];  // 获取经度
+                    double lat2 = nextPoint[1];  // 获取纬度
+
+                    distance = GisUtil.getDistance(lng1, lat1, lng2, lat2);
+                    distaceCount += distance;
+                    //  System.out.printf("Distance between P%d and P%d: %.2f m\n", i + 1, j + 1, distance);
+                    break;
+                }
+            }
+            //#endregion
+
+
+            //region  其他
+            try {
+                File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed);
+                if (kmzFile == null) {
+                    return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
+                     }
+                // 上传minion
+                String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
+                if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
+                    if (kmzFile.exists()) {
+                        FileUtil.deleteDir(kmzFile.getParent());
+                    }
+                    return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
+                }
+                url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
+                if ("".equals(url)) {
+                    return ResultUtil.error("保存巡检航线失败(错误码 4)！");
+                }
+                long fileSize = kmzFile.length(); // 文件大小
+                // minio上传成功  保存 到数据库
+                EfTaskKmz efTaskKmz = new EfTaskKmz();
+                efTaskKmz.setKmzUpdateTime(nowdate);
+                efTaskKmz.setKmzCreateTime(nowdate);
+                efTaskKmz.setKmzName(fileName);
+                efTaskKmz.setKmzPath(url);
+                efTaskKmz.setKmzVersion("1.0.0");
+                efTaskKmz.setKmzType("kmz");
+                efTaskKmz.setKmzSize(fileSize);
+                efTaskKmz.setKmzDes("");
+                efTaskKmz.setKmzVersion("1.0.0");
+                efTaskKmz.setKmzDistance(distaceCount);
+                efTaskKmz.setKmzDuration((Double) (distaceCount / speed));
+                efTaskKmz.setKmzCreateUser(userName);
+                efTaskKmz.setKmzUpdateUser(userName);
+                efTaskKmz.setKmzUpdateByUserId(userId);
+                efTaskKmz.setKmzCreateByUserId(userId);
+                efTaskKmz.setKmzCompanyId(ucId);
+                //补加
+                efTaskKmz.setKmzCurrentWpNo(0);
+                efTaskKmz.setKmzWpCount(numPoints);
+                efTaskKmz = efTaskKmzService.insert(efTaskKmz);
+                if (efTaskKmz != null) {
+                    return ResultUtil.success("保存航线成功！");
+                }
+                /**移除minio 错误航线*/
+                Boolean gold = minioService.removeObject(BucketNameKmz, url);
+                if (gold) {
+                    return ResultUtil.error("保存航线失败！！！请重新上传");
+                } else {
+                    return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return ResultUtil.error("保存航线成功！"); // 或者返回其他你需要的值
+            //endregion
+
+
+        } catch (Exception e) {
+            LogUtil.logError("保存航线信息异常：" + e.toString());
+            return ResultUtil.error("保存航线信息异常,请联系管理员!");
         }
     }
 
@@ -1742,7 +1982,8 @@ public class UavController {
                             url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
                             if ("".equals(url)) {
                                 return ResultUtil.error("保存巡检航线失败(错误码 4)！");
-                            }
+                            }                //补加
+                            int numPoints = group.size();
                             long fileSize = kmzFile.length(); // 文件大小
                             // minio上传成功  保存 到数据库
                             EfTaskKmz efTaskKmz = new EfTaskKmz();
@@ -1762,6 +2003,9 @@ public class UavController {
                             efTaskKmz.setKmzUpdateByUserId(userId);
                             efTaskKmz.setKmzCreateByUserId(userId);
                             efTaskKmz.setKmzCompanyId(ucId);
+                            //补加
+                            efTaskKmz.setKmzCurrentWpNo(0);
+                            efTaskKmz.setKmzWpCount(numPoints);
                             efTaskKmz = efTaskKmzService.insert(efTaskKmz);
                             if (efTaskKmz != null) {
                                 return ResultUtil.success("保存航线成功！");
@@ -1806,66 +2050,6 @@ public class UavController {
 
             //endregion
 
-//region 测试
-
-//            for (Pair<List<double[]>, Double> pair : groupedPointsWithDistance) {
-//                List<double[]> group = pair.getKey();
-//                Double totalDistance = pair.getValue();
-//                // 提交子任务到线程池
-//                final double finalHomeAlt = homeAlt;
-//                final int finalUavType = uavType;
-//                final String groupfileName = fileName + "（" + index + "-" + fileNum + "）"; // 使用索引值作为文件名的一部分
-//                index++; // 更新索引值
-//                File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath);
-//                if (kmzFile == null) {
-//                    return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
-//                }
-//                // 上传minion
-//                String url = applicationName  +"/kmzTasks/"+ ucId + "/"+ kmzFile.getName();
-//                if (!minioService.uploadfile("kmz", url, "kmz", new FileInputStream(kmzFile))) {
-//                    if (kmzFile.exists()) {
-//                        FileUtil.deleteDir(kmzFile.getParent());
-//                    }
-//                    return ResultUtil.error("保存巡检航线失败(/生成kmzminio有误)！"); //生成kmzminio有误
-//                }
-//                url = minioService.getPresignedObjectUrl(BucketNameKmz, url);
-//                if ("".equals(url)) {
-//                    return ResultUtil.error("保存巡检航线失败(错误码 4)！");
-//                }
-//                long fileSize = kmzFile.length(); // 文件大小
-//                // minio上传成功  保存 到数据库
-//                EfTaskKmz efTaskKmz = new EfTaskKmz();
-//                efTaskKmz.setKmzUpdateTime(nowdate);
-//                efTaskKmz.setKmzCreateTime(nowdate);
-//                efTaskKmz.setKmzName(groupfileName);
-//                efTaskKmz.setKmzPath(url);
-//                efTaskKmz.setKmzVersion("1.0.0");
-//                efTaskKmz.setKmzType("kmz");
-//                efTaskKmz.setKmzSize(fileSize);
-//                efTaskKmz.setKmzDes("");
-//                efTaskKmz.setKmzVersion("1.0.0");
-//                efTaskKmz.setKmzDistance(totalDistance);
-//                efTaskKmz.setKmzDuration((Double) (totalDistance / 5f));
-//                efTaskKmz.setKmzCreateUser(userName);
-//                efTaskKmz.setKmzUpdateUser(userName);
-//                efTaskKmz.setKmzUpdateByUserId(userId);
-//                efTaskKmz.setKmzCreateByUserId(userId);
-//                efTaskKmz.setKmzCompanyId(ucId);
-//                efTaskKmz = efTaskKmzService.insert(efTaskKmz);
-//                if (efTaskKmz != null) {
-//                    return ResultUtil.success("保存航线成功！");
-//                }
-//                /**移除minio 错误航线*/
-//                Boolean gold = minioService.removeObject(BucketNameKmz, url);
-//                if (gold) {
-//                    return ResultUtil.error("保存航线失败！！！请重新上传");
-//                } else {
-//                    return ResultUtil.error("保存航线失败！请联系管理员清理minio文件");
-//                }
-//
-//            }
-
-// endregiom
 
 
             return ResultUtil.success("保存航线成功！");
@@ -2034,8 +2218,13 @@ public class UavController {
             // 获取文件流字节数组
             byte[] fileStream = BytesUtil.inputStreamToByteArray(photo.getInputStream());
             paramMap.put("fileStream", fileStream);
-            taskAnsisPhoto.saveSeedingPhoto(photo, paramMap);
-            return ResultUtil.success();
+           boolean flag =    taskAnsisPhoto.saveSeedingPhoto(photo, paramMap);
+           if(flag ){
+               return ResultUtil.success("推送成功！");
+           }else {
+               return ResultUtil.error("数据处理异常");
+           }
+
         } catch (Exception e) {
             LogUtil.logError("上传分析照片异常：" + e.toString());
             return ResultUtil.error("上传分析照片异常，请联系管理员!");
@@ -2235,21 +2424,28 @@ public class UavController {
 
     //region 补种无人机航线处理
 
+    // 在类中定义一个 Map 用于存储用户消息队列
+    private static Map<String, Queue<String>> userMessageQueueMap = new ConcurrentHashMap<>();
+
+
+    @Autowired
+    private SseClient sseClient;
+
     /**
      * 上传航点任务给补种无人机
      *
      * @param uavId                        无人机ID
-     * @param missionType                  0任务类型，默认0为翼飞任务，1为大疆任务
-     * @param speed                        0执行任务的飞行速度，0表示原始值
-     * @param maxSpeed                     0允许的最大飞行速度，0表示原始值
-     * @param missionOnRCSignalLostEnabled 0确定当飞机与遥控器之间的连接丢失时，任务是否应该停止,0继续任务，1终止。
-     * @param missionFinishedAction        0航点任务完成后，飞机将采取的行动
-     * @param missionFlightPathMode        0飞机在航点之间遵循的路径。飞机可以直接在航路点之间沿直线飞行，也可以在弯道中的航路点附近转弯，航路点位置定义了弯路的一部分。
-     * @param missionGotoWaypointMode      0定义飞机如何从当前位置前往第一个航点。默认值为SAFELY。
-     * @param missionHeadingMode           0机在航点之间移动时的航向。默认值为AUTO。
-     * @param missionRepeatTimes           0任务执行可以重复多次。值范围是[1，255]。如果选择255，则任务将继续执行直到stopMission被调用或发生任何错误。其他值表示任务的确切执行时间。
-     * @param missionWpCount               航线航点数
-     * @param wpsDetailMap                 航点详情表 choosePointList
+     * @param //missionType                  0任务类型，默认0为翼飞任务，1为大疆任务
+     * @param //speed                        0执行任务的飞行速度，0表示原始值
+     * @param //maxSpeed                     0允许的最大飞行速度，0表示原始值
+     * @param //missionOnRCSignalLostEnabled 0确定当飞机与遥控器之间的连接丢失时，任务是否应该停止,0继续任务，1终止。
+     * @param //missionFinishedAction        0航点任务完成后，飞机将采取的行动
+     * @param //missionFlightPathMode        0飞机在航点之间遵循的路径。飞机可以直接在航路点之间沿直线飞行，也可以在弯道中的航路点附近转弯，航路点位置定义了弯路的一部分。
+     * @param //missionGotoWaypointMode      0定义飞机如何从当前位置前往第一个航点。默认值为SAFELY。
+     * @param //missionHeadingMode           0机在航点之间移动时的航向。默认值为AUTO。
+     * @param //missionRepeatTimes           0任务执行可以重复多次。值范围是[1，255]。如果选择255，则任务将继续执行直到stopMission被调用或发生任何错误。其他值表示任务的确切执行时间。
+     * @param //missionWpCount               航线航点数
+     * @param //wpsDetailMap                 航点详情表 choosePointList
      * @return
      */
     @ResponseBody
@@ -2267,6 +2463,8 @@ public class UavController {
             if (obj != null) {
                 uavId = obj.toString();
             }
+
+
 
             //region xin 3102 打包
             int a =5;
@@ -2321,13 +2519,12 @@ public class UavController {
 
             //region 整理数据
             List<WaypointEf> waypointEfList = new ArrayList<>(); //  将数据取出
-            int i = 0;
+            int i = 1;
             for (Map<String, Object> wpsDetailDto : wpsDetailList) {
+                sseClient.settObjectMap( i,wpsDetailDto);
                 WaypointEf waypointEf = new WaypointEf();
-                i++;
                 Object altValue = wpsDetailDto.getOrDefault("alt", null);
                 double alt;
-
                 if (altValue instanceof Integer) {
                     alt = (Integer) altValue;
                 } else if (altValue instanceof Double) {
@@ -2337,13 +2534,21 @@ public class UavController {
                     alt = 0.0; // 设置默认值为 0.0，你可以根据实际需求做调整
                 }
 
+                System.out.println(i+"I");
                 double lng = (double) wpsDetailDto.getOrDefault("lng", null);
                 double lat = (double) wpsDetailDto.getOrDefault("lat", null);
                 waypointEf.setWpNo(i);
                 waypointEf.setLat((int) (lat * 1e7d));
                 waypointEf.setLng((int) (lng * 1e7d));
                 waypointEf.setAltRel((int) (alt * 100));
+                waypointEf.setCommand(16); //
+//                int id = (int) wpsDetailDto.getOrDefault("id",null);
+                int seedNum = (int) wpsDetailDto.getOrDefault("seedNum",null) ;//seedingCount
+                // 补加点id 该id需播种数量
+                waypointEf.setParm1(i); // id
+                waypointEf.setParm2(seedNum);
                 waypointEfList.add(waypointEf);
+                i++;
             }
             //endregion
 
@@ -2357,13 +2562,14 @@ public class UavController {
             eflinkMsg3103.setPacketIndex(0);
             eflinkMsg3103.setWaypointEfList(waypointEfList);
             System.out.println("3103:"+tag+"missionWpCount:"+missionWpCount);
-            //endregion
-           byte[] s=  eflinkMsg3103.packet();
+            byte[] s=  eflinkMsg3103.packet();
             packet = EfLinkUtil.Packet(eflinkMsg3103.EFLINK_MSG_ID, eflinkMsg3103.packet());
             //推送mqtt
             MqttUtil.publish(MqttUtil.Tag_efuavapp, packet, uavId);
+            //endregion
 
-            // region  3102
+
+            // region  3102  no
 //            Object wpsDetail = wpsDetailMap.getOrDefault("wpsDetail", "");
 //            if (wpsDetail == null) {
 //                return ResultUtil.error("航线信息错误！");
@@ -3097,6 +3303,157 @@ public class UavController {
     }
 
 
+    // uploadFile
+
+    @ResponseBody
+    @PostMapping(value = "/uploadFile")
+    public Result uploadFile(@CurrentUser EfUser efUser,@RequestParam(value = "file", required = true) MultipartFile file ,@RequestParam("handleUuid") String handleUuid, @RequestParam("handleDate") long handleDate) {
+
+        int numThread = 3;
+        ExecutorService executorService = Executors.newFixedThreadPool(numThread);
+        try {
+            JSONObject resultObject = new JSONObject();
+            List<Future<JSONObject>> futures = new ArrayList<>();
+            boolean isZIP = isCompressedFile(file.getOriginalFilename());
+            if (!isZIP) {
+                return ResultUtil.error("请发送数据压缩包");
+            }
+            AtomicInteger taskCount = new AtomicInteger(0);
+            // 将 MultipartFile 转换为字节数组输入流
+            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream, Charset.forName("GBK"))) {
+                ZipEntry entry;
+
+                while ((entry = zipInputStream.getNextEntry()) != null) {
+                    if (!entry.isDirectory()) {
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                            byteArrayOutputStream.write(buffer, 0, bytesRead);
+                        }
+                        String key = entry.getName().toLowerCase();
+                        if (key.endsWith(".json")) {
+                            Callable<JSONObject> objectCallable = new Callable<JSONObject>() {
+                                @Override
+                                public JSONObject call() throws Exception {
+                                    JSONObject  executorServiceObject = new JSONObject();
+                                    try{
+                                        boolean containsContinuous = key.contains("continuous");
+                                        boolean containsSingle = key.contains("single");
+                                        if(containsContinuous){
+                                            executorServiceObject =handleContinuousData(byteArrayOutputStream); //new ArrayList<>();
+                                        }else if(containsSingle){
+                                            executorServiceObject =handleSingleData(byteArrayOutputStream);
+                                        } else{
+                                            executorServiceObject =handleOtherData(byteArrayOutputStream);
+                                        }
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                    }finally {
+                                        taskCount.decrementAndGet();
+                                        return  executorServiceObject;
+                                    }
+                                }
+                            };
+                            Future ObjFuture= executorService.submit(objectCallable);
+                            taskCount.incrementAndGet();
+                            futures.add(ObjFuture);
+                        } else if (key.endsWith(".jpg")) {
+                            byte[] bytes = byteArrayOutputStream.toByteArray();
+                            // 使用CompletableFuture在新线程中执行异步任务
+                            executorService.submit(() -> {
+                                // 将字节数组转换为Base64字符串 data:image/png;base64,
+                                String base64Image = Base64.getEncoder().encodeToString(bytes);
+                                // 执行您的操作，例如将Base64字符串存入resultObject
+                                synchronized (resultObject) {
+                                    resultObject.put(key, base64Image);
+                                }
+                                // 任务完成后，减少任务计数
+                                taskCount.decrementAndGet();
+                            });
+                            taskCount.incrementAndGet();
+                        }
+                    }
+                }
+                // 等待所有任务完成
+                while (taskCount.get() > 0) {
+                    Thread.sleep(100);
+                }
+            } catch (Exception e) {
+                return ResultUtil.error("处理文件时出错:" + e);
+            }
+            ArrayList<String> ownerUsers = new ArrayList<>();
+            // 从redis 获取
+            String useridStr = String.valueOf(efUser.getId());
+
+            BlockAll BlockAll = null;
+            List<continuousWaypoints> continuousList =null;
+            List<EfHandleWaypoint> singleList =null;
+            List<EfHandleBlockList>  blockList=null;
+            for (Future<JSONObject> future : futures) {
+                JSONObject jsonObject = future.get();
+                if(jsonObject.containsKey("BlockAll")){
+                    BlockAll = (BlockAll) jsonObject.get("BlockAll");
+                    blockList = (List<EfHandleBlockList>) jsonObject.get("BlockList");
+                    handleUuid= BlockAll.getHandleUuid();
+                }else if(jsonObject.containsKey("BlockList")){
+                    BlockAll = (BlockAll) jsonObject.get("BlockAll");
+                    blockList = (List<EfHandleBlockList>) jsonObject.get("BlockList");
+                    handleUuid= BlockAll.getHandleUuid();
+                }else if(jsonObject.containsKey("continuousWaypoints")){
+                    continuousList = (List<continuousWaypoints>) jsonObject.get("continuousWaypoints");
+                }else if(jsonObject.containsKey("singleWaypoints")){
+                    singleList = (List<EfHandleWaypoint>) jsonObject.get("singleWaypoints");
+                }
+            }
+
+            EfHandle efHandleObj = new EfHandle();
+            efHandleObj.setGapSquare(BlockAll.getGapSquare());
+            efHandleObj.setReseedSquare(BlockAll.getReseedSquare());
+            efHandleObj.setReseedAreaNum(BlockAll.getReseedAreaNum());
+            efHandleObj.setSeedNum(BlockAll.getSeedNum());
+            efHandleObj.setHandleUuid(handleUuid);
+            efHandleObj.setDate(new Date(handleDate));
+            EfHandle efHandle = efHandleService.insert(efHandleObj);
+            int handleId = efHandle.getId(); // 通过数据库表查询
+            blockList.stream().forEach(block -> {
+                block.setHandleId(handleId);
+            })    ;
+            List<EfHandleBlockList> efHandleBlockLists = efHandleBlockListService.insertBatchByList(blockList);
+
+            // 补播路径点存储 单
+            singleList.stream().forEach(waypoint -> {
+                waypoint.setHandleId(handleId);
+            });
+            List<EfHandleWaypoint> efHandleWaypointList = efHandleWaypointService.insertBatchByList(singleList);
+            // 新增
+            continuousList.stream().forEach(waypoint -> {
+                waypoint.setHandleid(handleId);
+                waypoint.setReseedingid(handleId);
+            });
+            List<continuousWaypoints> efHandleContinuousList = efHandleContinuousService.insertBatchByList(continuousList);
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("efHandle", efHandle);
+            jsonObject.put("efHandleBlockLists", efHandleBlockLists);
+            jsonObject.put("efHandleWaypointList", efHandleWaypointList);
+            jsonObject.put("efHandleContinuousList", efHandleContinuousList);
+
+            // 存储
+            ownerUsers.add(useridStr);
+            /**5000--作为推送接口id**/
+            WebSocketLink.push(ResultUtil.success(5001, "blockList", "blockList", jsonObject), ownerUsers); // 推送blockList到对应的用户列
+            //
+            return ResultUtil.success("处理数据");
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        } finally {
+            // 关闭线程池和 MinioClient
+            executorService.shutdown();
+        }
+    }
+
     /**
      * 请求算法服务器发送二次分析的最终结果(block_all,block_list)
      *
@@ -3168,7 +3525,6 @@ public class UavController {
 
 
 
-
     /**
      * 算法服务器第二次调用接口： 返回二次分析的结果文件压缩包
      *readkmz
@@ -3176,8 +3532,8 @@ public class UavController {
      * @param file
      * @return
      */
-    @PostMapping(value = "/secondaryAnalysiss")
-    public Result secondaryAnalysiss(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = true) MultipartFile file) {
+    @PostMapping(value = "/secondaryAnalysis")
+    public Result secondaryAnalysis(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = true) MultipartFile file) {
         int numThread = 3;
         ExecutorService executorService = Executors.newFixedThreadPool(numThread);
         try {
@@ -3353,16 +3709,6 @@ public class UavController {
             jsonObject.put("efHandleBlockLists", efHandleBlockLists);
             jsonObject.put("efHandleWaypointList", efHandleWaypointList);
             // 存储
-//            Callable<EfPvBoardGroup> task1 = new Callable<EfPvBoardGroup>() {
-//                @Override
-//                public EfPvBoardGroup call() throws Exception {
-//                    //查询组串信息
-//                    EfPvBoardGroup efPvBoardGroup = efPvBoardGroupService.queryBygroupId(Sn, groupId);
-//                    return efPvBoardGroup;
-//                }
-//            };
-//            Future<EfPvBoardGroup> future1 = executorService.submit(task1);
-
             ownerUsers.add(useridStr);
             /**5000--作为推送接口id**/
             WebSocketLink.push(ResultUtil.success(5001, "blockList", "blockList", jsonObject), ownerUsers); // 推送blockList到对应的用户列
@@ -3375,6 +3721,245 @@ public class UavController {
         }
     }
 
+
+
+    /**
+     * 算法服务器第二次调用接口： 返回二次分析的结果文件压缩包
+     *readkmz
+     * @param efUser
+     * @param file
+     * @return
+     */
+    @PostMapping(value = "/secondaryAnalysiss")
+    public Result secondaryAnalysiss(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = true) MultipartFile file) {
+        int numThread = 3;
+        ExecutorService executorService = Executors.newFixedThreadPool(numThread);
+        try {
+            JSONObject resultObject = new JSONObject();
+            List<Future<JSONObject>> futures = new ArrayList<>();
+            boolean isZIP = isCompressedFile(file.getOriginalFilename());
+            if (!isZIP) {
+                return ResultUtil.error("请发送数据压缩包");
+            }
+            AtomicInteger taskCount = new AtomicInteger(0);
+            // 将 MultipartFile 转换为字节数组输入流
+            try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(file.getBytes());
+                 ZipInputStream zipInputStream = new ZipInputStream(byteArrayInputStream, Charset.forName("GBK"))) {
+                ZipEntry entry;
+
+                while ((entry = zipInputStream.getNextEntry()) != null) {
+                    if (!entry.isDirectory()) {
+                        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                        byte[] buffer = new byte[1024];
+                        int bytesRead;
+                        while ((bytesRead = zipInputStream.read(buffer)) > 0) {
+                            byteArrayOutputStream.write(buffer, 0, bytesRead);
+                        }
+                        String key = entry.getName().toLowerCase();
+                        if (key.endsWith(".json")) {
+                            Callable<JSONObject> objectCallable = new Callable<JSONObject>() {
+                                @Override
+                                public JSONObject call() throws Exception {
+                                    JSONObject  executorServiceObject = new JSONObject();
+                                    try{
+                                        boolean containsContinuous = key.contains("continuous");
+                                        boolean containsSingle = key.contains("single");
+                                        if(containsContinuous){
+                                            executorServiceObject =handleContinuousData(byteArrayOutputStream); //new ArrayList<>();
+                                        }else if(containsSingle){
+                                            executorServiceObject =handleSingleData(byteArrayOutputStream);
+                                        } else{
+                                            executorServiceObject =handleOtherData(byteArrayOutputStream);
+                                        }
+                                    }catch (Exception e){
+                                        e.printStackTrace();
+                                    }finally {
+                                        taskCount.decrementAndGet();
+                                        return  executorServiceObject;
+                                    }
+                                }
+                            };
+                            Future ObjFuture= executorService.submit(objectCallable);
+                            taskCount.incrementAndGet();
+                            futures.add(ObjFuture);
+                        } else if (key.endsWith(".jpg")) {
+                            byte[] bytes = byteArrayOutputStream.toByteArray();
+                            // 使用CompletableFuture在新线程中执行异步任务
+                            executorService.submit(() -> {
+                                // 将字节数组转换为Base64字符串 data:image/png;base64,
+                                String base64Image = Base64.getEncoder().encodeToString(bytes);
+                                // 执行您的操作，例如将Base64字符串存入resultObject
+                                synchronized (resultObject) {
+                                    resultObject.put(key, base64Image);
+                                }
+                                // 任务完成后，减少任务计数
+                                taskCount.decrementAndGet();
+                            });
+                            taskCount.incrementAndGet();
+                        }
+                    }
+                }
+                // 等待所有任务完成
+                while (taskCount.get() > 0) {
+                    Thread.sleep(100);
+                }
+            } catch (Exception e) {
+                return ResultUtil.error("处理文件时出错:" + e);
+            }
+            ArrayList<String> ownerUsers = new ArrayList<>();
+            // 从redis 获取
+            String useridStr = String.valueOf(efUser.getId());
+            String handleUuid ="";
+            BlockAll BlockAll = null;
+            List<continuousWaypoints> continuousList =null;
+            List<EfHandleWaypoint> singleList =null;
+            List<EfHandleBlockList>  blockList=null;
+            for (Future<JSONObject> future : futures) {
+                JSONObject jsonObject = future.get();
+                if(jsonObject.containsKey("BlockAll")){
+                    BlockAll = (BlockAll) jsonObject.get("BlockAll");
+                    blockList = (List<EfHandleBlockList>) jsonObject.get("BlockList");
+                    handleUuid= BlockAll.getHandleUuid();
+                }else if(jsonObject.containsKey("BlockList")){
+                    BlockAll = (BlockAll) jsonObject.get("BlockAll");
+                    blockList = (List<EfHandleBlockList>) jsonObject.get("BlockList");
+                    handleUuid= BlockAll.getHandleUuid();
+                }else if(jsonObject.containsKey("continuousWaypoints")){
+                 continuousList = (List<continuousWaypoints>) jsonObject.get("continuousWaypoints");
+                }else if(jsonObject.containsKey("singleWaypoints")){
+                  singleList = (List<EfHandleWaypoint>) jsonObject.get("singleWaypoints");
+                }
+            }
+
+            EfHandle efHandleObj = null;
+            RLock lock = redissonClient.getLock(handleLock);
+            boolean isLocked = true;
+            try {
+                isLocked = lock.tryLock(5, 15, TimeUnit.SECONDS);
+                if (isLocked) {
+                    Object efHandle = redisUtils.hmGet(handleUuid, useridStr);
+                    if (efHandle == null) {
+                        LogUtil.logMessage("redis缓存处理信息已过期");
+                        return ResultUtil.error("处理信息过期！");
+                    }
+                    efHandleObj = JSONObject.parseObject(efHandle.toString(), EfHandle.class);
+                    System.out.println(Thread.currentThread().getName() + "释放锁" + LocalDateTime.now());
+                } else {
+                    // 未获得锁，处理锁定失败的情况
+                    System.out.println(Thread.currentThread().getName() + "未能获取到redisson锁，已放弃尝试");
+                }
+
+            } catch (Exception e) {
+                LogUtil.logMessage(e.toString());
+                e.printStackTrace();
+            } finally {
+                if (isLocked && lock.isHeldByCurrentThread()) {
+                    lock.unlock();
+                }
+            }
+
+            EfHandle efHandle = efHandleService.insert(efHandleObj);
+            int handleId = efHandle.getId(); // 通过数据库表查询
+            blockList.stream().forEach(block -> {
+                block.setHandleId(handleId);
+               })    ;
+            List<EfHandleBlockList> efHandleBlockLists = efHandleBlockListService.insertBatchByList(blockList);
+
+
+            // 补播路径点存储 单
+            singleList.stream().forEach(waypoint -> {
+                waypoint.setHandleId(handleId);
+            });
+            List<EfHandleWaypoint> efHandleWaypointList = efHandleWaypointService.insertBatchByList(singleList);
+            // 新增
+            continuousList.stream().forEach(waypoint -> {
+                waypoint.setHandleid(handleId);
+                waypoint.setReseedingid(handleId);
+            });
+            List<continuousWaypoints> efHandleContinuousList = efHandleContinuousService.insertBatchByList(continuousList);
+
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("efHandle", efHandle);
+            jsonObject.put("efHandleBlockLists", efHandleBlockLists);
+            jsonObject.put("efHandleWaypointList", efHandleWaypointList);
+            //
+            // 存储
+            ownerUsers.add(useridStr);
+            /**5000--作为推送接口id**/
+            WebSocketLink.push(ResultUtil.success(5001, "blockList", "blockList", jsonObject), ownerUsers); // 推送blockList到对应的用户列
+
+            return ResultUtil.success("处理数据");
+        } catch (Exception e) {
+            return ResultUtil.error("发送处理信息失败");
+        } finally {
+            // 关闭线程池和 MinioClient
+            executorService.shutdown();
+        }
+    }
+    public  static  JSONObject  handleContinuousData(ByteArrayOutputStream byteArrayOutputStream ) throws UnsupportedEncodingException {
+        JSONArray continuousJsonArray = JSONArray.parseArray(byteArrayOutputStream.toString("UTF-8"));
+        List<continuousWaypoints> continuousList = new ArrayList<>();
+        for (int i = 0; i < continuousJsonArray.size(); i++) {
+            JSONObject jsonObject = continuousJsonArray.getJSONObject(i);
+            JSONArray jsonArray = jsonObject.getJSONArray("reseeding_path_points");
+            continuousWaypoints continuousWaypoints = new continuousWaypoints();
+            JSONArray jsonArray1 = jsonArray.getJSONArray(0);
+            JSONArray jsonArray2 = jsonArray.getJSONArray(1);
+            double lng1 = jsonArray1.getDouble(0);
+            double lat1 = jsonArray1.getDouble(1);
+            double lng2 = jsonArray2.getDouble(0);
+            double lat2 = jsonArray2.getDouble(1);
+            continuousWaypoints.setOnlat(lat1);
+            continuousWaypoints.setOnlng(lng1);
+            continuousWaypoints.setOnalt(5);
+            continuousWaypoints.setOfflat(lat2);
+            continuousWaypoints.setOfflng(lng2);
+            continuousWaypoints.setOffalt(5);
+            continuousList.add(continuousWaypoints);
+        }
+        JSONObject  executorServiceObject = new JSONObject();
+        executorServiceObject.put("continuousWaypoints", continuousList);
+        return executorServiceObject;
+    }
+
+    public  static  JSONObject handleSingleData(ByteArrayOutputStream byteArrayOutputStream) throws UnsupportedEncodingException {
+        JSONArray singleJsonArray = JSONArray.parseArray(byteArrayOutputStream.toString("UTF-8"));
+        List<EfHandleWaypoint> singleList = new ArrayList<>();
+        for (int i = 0; i < singleJsonArray.size(); i++) {
+            JSONObject jsonObject = singleJsonArray.getJSONObject(i);
+            JSONArray jsonArray=  jsonObject.getJSONArray("reseeding_path_points"); // 补播点经纬度
+            int reseedingPoints = jsonObject.getInteger("seed_quantity");
+            JSONArray jsonArray1 = jsonArray.getJSONArray(0);
+            double lng = jsonArray1.getDouble(0);
+            double lat =jsonArray1.getDouble(1);
+            double alt = 5;
+            EfHandleWaypoint waypoint = new EfHandleWaypoint(lng,lat,alt,reseedingPoints);
+            singleList.add(waypoint);
+        }
+        JSONObject  executorServiceObject = new JSONObject();
+        executorServiceObject.put("singleWaypoints", singleList);
+        return  executorServiceObject;
+    }
+    public static  JSONObject handleOtherData(ByteArrayOutputStream byteArrayOutputStream ) throws UnsupportedEncodingException {
+        // 获取json 数据
+        JSONObject  executorServiceObject = new JSONObject();
+        JSONObject jsonObject = JSONObject.parseObject(byteArrayOutputStream.toString("UTF-8"));
+        JSONArray blockAllArray = jsonObject.getJSONArray("block_all"); // 所有地块 统计
+        JSONArray blockListArray = jsonObject.getJSONArray("block_list"); // 作业地块list EfHandleBlockList
+        if (blockAllArray != null) {
+            BlockAll blockAll = JSONObject.parseObject(blockAllArray.getJSONObject(0).toJSONString(), BlockAll.class);
+            executorServiceObject.put("BlockAll", blockAll);
+        }
+        if (blockListArray != null) {
+            List<EfHandleBlockList> blockList = new ArrayList<>();
+            for (int i = 0; i < blockListArray.size(); i++) {
+                EfHandleBlockList block = JSONObject.parseObject(blockListArray.getJSONObject(i).toJSONString(), EfHandleBlockList.class);
+                blockList.add(block);
+            }
+            executorServiceObject.put("BlockList", blockList);
+        }
+        return  executorServiceObject;
+    }
 
     public static boolean isCompressedFile(String fileName) {
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
@@ -3454,14 +4039,21 @@ public class UavController {
      * @return 返回查询结果
      */
     @PostMapping(value = "/queryPointList")
-    public Result queryPointList(@CurrentUser EfUser efUser, @RequestParam(value = "handleId") int handleId) {
+    public Result queryPointList(@CurrentUser EfUser efUser, @RequestParam(value = "handleId") int handleId,@RequestParam("flyTimes") Integer flyTimes) {
         try {
             // 参数验证：确保 handleId 大于 0
             if (handleId <= 0) {
                 return ResultUtil.error("处理记录ID不合法");
             }
-
-            List<EfHandleWaypoint> efHandleWaypoints = efHandleWaypointService.queryByHandleId(handleId);
+//            boolean contains1 = Arrays.asList(flyTimes).contains("1");
+            List<EfHandleWaypoint> efHandleWaypoints =new ArrayList<>();
+            if(flyTimes ==2){
+                efHandleWaypoints = efHandleWaypointService.queryByHandleId(handleId);
+            }else if(flyTimes==1){
+                efHandleWaypoints = efHandleWaypointService.queryByHandleIdandFlyed(handleId,1);
+            }else {
+                efHandleWaypoints = efHandleWaypointService.queryByHandleIdNofly(handleId,0);
+            }
 
             // 查询结果判空处理
             if (efHandleWaypoints != null && !efHandleWaypoints.isEmpty()) {
@@ -3475,6 +4067,40 @@ public class UavController {
         }
     }
 
+    /**
+     * 0:未播种 1:已播种 2:全部
+     * @param efUser
+     * @param handleId
+     * @param flyTimes
+     * @return
+     */
+    @PostMapping(value = "/queryLineList")
+    public Result queryLineList(@CurrentUser EfUser efUser, @RequestParam(value = "handleId") int handleId,@RequestParam("flyTimes") Integer flyTimes) {
+        try {
+            // 参数验证：确保 handleId 大于 0
+            if (handleId <= 0) {
+                return ResultUtil.error("处理记录ID不合法");
+            }
+            List<continuousWaypoints> efHandleWaypoints =new ArrayList<>();
+            if(flyTimes ==2){
+                efHandleWaypoints = efHandleContinuousService.queryByHandleId(handleId);
+            }else if(flyTimes==1){
+                efHandleWaypoints = efHandleContinuousService.queryByHandleIdandFlyed(handleId,1);
+            }else {
+                efHandleWaypoints = efHandleContinuousService.queryByHandleIdNofly(handleId,0);
+            }
+
+            // 查询结果判空处理
+            if (efHandleWaypoints != null && !efHandleWaypoints.isEmpty()) {
+                return ResultUtil.success("查询成功", efHandleWaypoints);
+            } else {
+                return ResultUtil.success("未查询到符合条件的播种路径点信息", Collections.emptyList());
+            }
+        } catch (Exception e) {
+            LogUtil.logError("查询播种路径点列表异常" + e);
+            return ResultUtil.error("查询异常");
+        }
+    }
     /**
      * 测试Ws
      *
