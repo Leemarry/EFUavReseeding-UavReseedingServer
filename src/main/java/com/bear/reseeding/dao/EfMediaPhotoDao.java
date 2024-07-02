@@ -102,5 +102,8 @@ public interface EfMediaPhotoDao {
 
     EfMediaPhoto queryByUavIdAndLatestTime(@Param(value = "uavId") String uavId, @Param(value = "lastTime") Date lastTime);
 
+
+    EfMediaPhoto fuzzyQuery( @Param(value = "tag") String tag,@Param(value = "uavId") String uavId);
+
 }
 

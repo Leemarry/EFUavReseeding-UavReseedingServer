@@ -10,7 +10,7 @@ public class continuousWaypoints {
     private double offalt;
     private int reseedingid;
     private int handleid;
-    private  int flytimes = 0;
+    private  int flyTimes = 0;
 
     public Integer getId() {
         return id;
@@ -84,11 +84,11 @@ public class continuousWaypoints {
         this.handleid = handleid;
     }
 
-    public int getFlytimes() {
-        return flytimes;
+    public int getFlyTimes() {
+        return flyTimes;
     }
 
-    public void setFlytimes(int flytimes) {
-        this.flytimes = flytimes;
+    public void setFlyTimes(int flyTimes) {
+        this.flyTimes = flyTimes;
     }
 }

@@ -105,13 +105,13 @@ public class MinioService {
                     if(!isExists){
                         minioClient.putObject(PutObjectArgs.builder().bucket(bucketName).object(path).stream(stream, stream.available(), -1).contentType(contentType).build());
 
-                        String fileUrl = minioClient.getPresignedObjectUrl(
-                                GetPresignedObjectUrlArgs.builder()
-                                        .method(Method.PUT)
-                                        .bucket(bucketName)
-                                        .object(path)
-                                        .build()
-                        );
+//                        String fileUrl = minioClient.getPresignedObjectUrl(
+//                                GetPresignedObjectUrlArgs.builder()
+//                                        .method(Method.PUT)
+//                                        .bucket(bucketName)
+//                                        .object(path)
+//                                        .build()
+//                        );
                     }
                     String name = System.currentTimeMillis()+""+new Random().nextInt(9999);        //随机文件名
                     result = true;

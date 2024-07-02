@@ -1,4 +1,4 @@
-package com.bear.reseeding.service.impl;
+package com.bear.reseeding.serviceImpl;
 
 import com.bear.reseeding.entity.EfMediaPhoto;
 import com.bear.reseeding.dao.EfMediaPhotoDao;
@@ -111,6 +111,25 @@ public class EfMediaPhotoServiceImpl implements EfMediaPhotoService {
     @Override
     public  EfMediaPhoto queryByUavIdAndLatestTime(String uavId, Date lastTime){
         return efMediaPhotoDao.queryByUavIdAndLatestTime(uavId,lastTime);
+    }
+
+    @Override
+    public EfMediaPhoto fuzzyQuery (String fuzzyTag, String deviceId){
+        return efMediaPhotoDao.fuzzyQuery(fuzzyTag,deviceId);
+    }
+
+    @Override
+    public EfMediaPhoto fuzzyQueryOrAdd(String fuzzyTag,EfMediaPhoto efMediaPhoto){
+        //先查询是否有相同的图片
+        EfMediaPhoto efMediaPhoto1 =fuzzyQuery(fuzzyTag, efMediaPhoto.getDeviceid());
+        if(efMediaPhoto1!=null){
+            efMediaPhoto1.setPathImageAnalysis(efMediaPhoto.getPathImageAnalysis());
+            efMediaPhoto.setSizeImageAnalysis(efMediaPhoto.getSizeImageAnalysis());  // 分析图片大小
+            efMediaPhoto =  update(efMediaPhoto1);
+        }else{
+            efMediaPhoto = insert(efMediaPhoto);        //没有相同的图片，则新增
+        }
+        return efMediaPhoto;
     }
 
 }

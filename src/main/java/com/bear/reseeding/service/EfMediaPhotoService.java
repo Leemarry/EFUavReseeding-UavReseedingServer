@@ -81,4 +81,10 @@ public interface EfMediaPhotoService {
      */
     EfMediaPhoto queryByUavIdAndLatestTime(@Param("uavId") String uavId, @Param("lastTime") Date lastTime);
 
+//    EfMediaPhoto fuzzyQueryByTagAndUavId (@Param("fuzzyTag") String fuzzyTag,@Param("uavId") String uavId);
+
+    EfMediaPhoto fuzzyQuery(String fuzzyTag, String deviceId);
+
+    EfMediaPhoto fuzzyQueryOrAdd (String fuzzyTag, EfMediaPhoto efMediaPhoto);
+
 }

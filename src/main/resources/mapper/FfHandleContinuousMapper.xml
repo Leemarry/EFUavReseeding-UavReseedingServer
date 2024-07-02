@@ -10,7 +10,7 @@
         <result property="offlng" column="off_lng" jdbcType="DOUBLE"/>
         <result property="offalt" column="off_alt" jdbcType="DOUBLE"/>
         <result property="reseedingid" column="reseeding_id" jdbcType="INTEGER"/>
-        <result property="flytimes" column="fly_times" jdbcType="INTEGER"/>
+        <result property="flyTimes" column="fly_times" jdbcType="INTEGER"/>
         <result property="handleid" column="handle_id" jdbcType="INTEGER"/>
     </resultMap>
     <!-- 使用foreach 批量新增    -->

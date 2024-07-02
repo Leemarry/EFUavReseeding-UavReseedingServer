@@ -2204,27 +2204,34 @@ public class UavController {
             }
             // 读取 JSON 文件内容为字符串
             String jsonContent = new String(jsonFile.getBytes());
-
+            // 解析 JSON 文件内容
             Gson gson = new Gson();
             Map<String, Object> paramMap = null;
-            try {
-                paramMap = gson.fromJson(jsonContent, new TypeToken<Map<String, Object>>() {
-                }.getType());
-            } catch (JsonSyntaxException e) {
-                LogUtil.logError("上传分析照片异常：JSON 参数格式不正确！" + e.toString());
-                return ResultUtil.error("上传分析照片异常：JSON 参数格式不正确！");
-            }
-            // 开启线程存储照片
-            // 获取文件流字节数组
-            byte[] fileStream = BytesUtil.inputStreamToByteArray(photo.getInputStream());
-            paramMap.put("fileStream", fileStream);
-           boolean flag =    taskAnsisPhoto.saveSeedingPhoto(photo, paramMap);
-           if(flag ){
-               return ResultUtil.success("推送成功！");
-           }else {
-               return ResultUtil.error("数据处理异常");
-           }
+            JSONObject jsonObjects = null;
 
+//            try {
+//                paramMap = gson.fromJson(jsonContent, new TypeToken<Map<String, Object>>() {
+//                }.getType());
+//                jsonObjects = gson.fromJson(jsonContent, new TypeToken<JSONObject>() {
+//                }.getType());
+//            } catch (JsonSyntaxException e) {
+//                LogUtil.logError("上传分析照片异常：JSON 参数格式不正确！" + e.toString());
+//                return ResultUtil.error("上传分析照片异常：JSON 参数格式不正确！");
+//            }
+            // 判断参数是否为空
+//            if (paramMap == null || paramMap.isEmpty() ||
+//                    !paramMap.containsKey("uavSn") ||
+//                    (paramMap.get("uavSn") != null &&
+//                            ("".equals(paramMap.get("uavSn").toString()) || "null".equalsIgnoreCase(paramMap.get("uavSn").toString())))) {
+//                return ResultUtil.error("上传分析照片失败，JSON 参数为空或无效！");
+//            }
+            // 获取文件流字节数组
+//            byte[] fileStream = BytesUtil.inputStreamToByteArray(photo.getInputStream());
+            JSONObject jsonObject = JSONObject.parseObject(jsonContent);
+
+//            paramMap.put("fileStream", fileStream); // taskAnsisPhoto.saveSeedingPhoto1(photo, paramMap);
+            Result result =   taskAnsisPhoto.saveSeedingPhoto1(photo, jsonObject);
+          return  result;
         } catch (Exception e) {
             LogUtil.logError("上传分析照片异常：" + e.toString());
             return ResultUtil.error("上传分析照片异常，请联系管理员!");
@@ -2464,8 +2471,6 @@ public class UavController {
                 uavId = obj.toString();
             }
 
-
-
             //region xin 3102 打包
             int a =5;
             Random random = new Random();
@@ -2666,6 +2671,17 @@ public class UavController {
             return ResultUtil.error("上传航线给无人机出错,请联系管理员!");
         }
     }
+    @ResponseBody
+    @PostMapping(value = "/uploadLineTask")
+    public Result uploadLineTask(@RequestParam("uavId") String uavId, @RequestBody List<Map<String, Object>> wpsDetailList) {
+        try{
+            return ResultUtil.success("上传航线给无人机成功!");
+        }catch (Exception e) {
+            LogUtil.logError("上传航线给无人机出错：" + e.toString());
+            return ResultUtil.error("上传航线给无人机出错,请联系管理员!");
+        }
+    }
+
 
     /**
      * 补种无人机航线下载
