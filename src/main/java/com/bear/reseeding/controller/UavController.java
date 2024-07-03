@@ -3739,6 +3739,17 @@ public class UavController {
 
 
 
+    // 多文件传递
+    @PostMapping(value = "/secondaryAnalysiss4")
+    public Result secondaryAnalysiss4(@CurrentUser EfUser efUser, @RequestParam(value = "files", required = true) MultipartFile[] files) {
+        return  ResultUtil.success("处理数据");
+    }
+    // 单文件传递
+    @PostMapping(value = "/secondaryAnalysiss5")
+    public Result secondaryAnalysiss5(@CurrentUser EfUser efUser, @RequestParam(value = "file", required = true) MultipartFile file) {
+        return  ResultUtil.success("处理数据");
+    }
+
     /**
      * 算法服务器第二次调用接口： 返回二次分析的结果文件压缩包
      *readkmz
