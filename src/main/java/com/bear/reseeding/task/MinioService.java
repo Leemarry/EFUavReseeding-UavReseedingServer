@@ -257,7 +257,6 @@ public class MinioService {
         }
         return url;
     }
-
     /**
      * 获取 Minio中文件的下载地址
      *

@@ -821,16 +821,41 @@ public class TaskAnsisPhoto {
             String pathMiniImage = ("0".equals(type) ? "uav" : "hive") + "/" + uavSn + "/thumbnail/" + FolderName + "/" + fileName;
             String urlBig = "";  // 原图路径 前端vue代理访问路径
             String urlSmall = "";  // 缩略图路径
+            long sizeSmall = fileSize;
+            String place = ""; //拍摄地址
             boolean photoStorageLocal = MyApplication.appConfig.isPhotoStorage(); // 存云端，还是存本地
             if (!photoStorageLocal) {
+//                CompletableFuture<String> urlBigFuture = new CompletableFuture<>();
+//                urlBig = "resourceminio/photo/" + pathBigImage;
+//                String contentType = "image/" + suffix; // jpeg
+//                if (minioService.uploadImage("efuav", "photo/" + pathBigImage, contentType, file.getInputStream())) {
+//                    LogUtil.logMessage("上传图片到云端成功！");
+//                } else {
+//                    LogUtil.logError("上传图片到云端失败！");
+//                }
                 CompletableFuture<String> urlBigFuture = new CompletableFuture<>();
                 urlBig = "resourceminio/photo/" + pathBigImage;
-                String contentType = "image/" + suffix; // jpeg
-                if (minioService.uploadImage("efuav", "photo/" + pathBigImage, contentType, file.getInputStream())) {
-                    LogUtil.logMessage("上传图片到云端成功！");
+                String contentType = "image/" + suffix;
+                if (minioService.uploadImage("efuav", "photo/" + pathBigImage, contentType, new ByteArrayInputStream(fileStream))) {
+                    // 处理成缩略图并且上传
+//                    File fileNew = FileUtil.getThumbnailInputStream(file);
+                    File fileNew = FileUtil.getThumbnailInputStream(file , 800, 600);
+                    if (fileNew != null && fileNew.exists()) {
+                        sizeSmall = fileNew.length();
+                        InputStream inputStream = new FileInputStream(fileNew);
+                        if (!minioService.uploadImage("efuav", "photo/" + pathMiniImage, contentType, inputStream)) {
+                            LogUtil.logWarn("原图上传成功，缩略图储存失败！");
+                        }
+                        urlBigFuture.complete(urlBig);
+                        inputStream.close();
+                        urlSmall = "resourceminio/photo/" + pathMiniImage;
+//                        place = PhotoUtil.getPlace(lat, lng);
+                        fileNew.delete();
+                    }
                 } else {
                     LogUtil.logError("上传图片到云端失败！");
                 }
+
             } else {
                 //将分析图保存本地
                 urlBig = "resource/photo/" + pathBigImage;
@@ -842,6 +867,8 @@ public class TaskAnsisPhoto {
                 }
             }
             //#endregion
+            String resourceUrl = minioService.getPresignedObjectUrl("efuav", "photo/" + pathBigImage); // pathMiniImage pathBigImage
+
 
             //#region  存储ef_media_photo表
             //  efCavityService  时间问题 怎么知道是哪一个架次 和 图片 ---查询
@@ -877,7 +904,7 @@ public class TaskAnsisPhoto {
                 JSONObject object = jsonArray.getJSONObject(i);
                 final EfMediaPhoto tempEfMediaPhoto = efMediaPhoto;  // 创建一个拷贝
                 final Integer finalEfUavEachsortieId = efUavEachsortieId;
-                final String finalUrlBig = urlBig;
+                final String finalUrlBig =resourceUrl;  //urlBig;
                 Runnable task = new Runnable() {
                     public void run() {
                      try {
@@ -1021,6 +1048,7 @@ public class TaskAnsisPhoto {
         msg10021.setId(efCavity.getId());
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("msg10021", msg10021);
+        System.out.println("msg10021："+owerUsers.toString() + "  、" + uavSn);
         WebSocketLink.push(ResultUtil.success(msg10021.EFLINK_MSG_ID, uavSn, efCavity.getPhotoId().toString(), msg10021), owerUsers);
     }
 

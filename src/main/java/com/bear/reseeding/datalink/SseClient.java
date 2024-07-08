@@ -31,6 +31,11 @@ public class SseClient {
         objectList.add(obj);
     }
 
+    /**
+     *  设置对象
+     * @param wpindex
+     * @param obj
+     */
     public static void settObjectMap(Integer wpindex,Map<String, Object> obj) {
      objectMap.put(wpindex,obj);
     }

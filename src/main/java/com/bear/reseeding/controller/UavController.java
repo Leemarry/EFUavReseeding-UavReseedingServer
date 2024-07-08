@@ -1320,7 +1320,8 @@ public class UavController {
     @ResponseBody
     @PostMapping(value = "/uploadMission")
     public Result uploadMission(@RequestParam(value = "uavId") String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
-                                @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, HttpServletRequest request) {
+                                @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt,
+                                @RequestParam(value = "startTime", required = false) Integer starTime, @RequestParam("endTime") Integer endTime, HttpServletRequest request) {
         try {
             if (mission == null || mission.size() <= 0) {
                 return ResultUtil.error("航线为空!");
@@ -1364,7 +1365,7 @@ public class UavController {
 
 
             // 生成kmz
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed );
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed,starTime,endTime);
             if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
@@ -1491,7 +1492,7 @@ public class UavController {
     @PostMapping(value = "/saveRouteToMinios")
     public Result saveRouteToMinios(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
                                    @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
-                                    @RequestParam("speed") Float speed, HttpServletRequest request) {
+                                    @RequestParam("speed") Float speed, @RequestParam(value = "startTime", required = false) Integer starTime, @RequestParam("endTime") Integer endTime, HttpServletRequest request) {
         try {
             if (mission == null || mission.size() <= 0) {
                 return ResultUtil.error("航线为空!");
@@ -1551,7 +1552,7 @@ public class UavController {
                 Callable<Object> task = new Callable<Object>() {
                     public Object call() {
                         try {
-                            File kmzFile = KmzUtil.beforeDataProcessing(coordinateArray, fileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath,speed);
+                            File kmzFile = KmzUtil.beforeDataProcessing(coordinateArray, fileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath,speed,starTime,endTime);
                             if (kmzFile == null) {
                                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
                             }
@@ -1619,7 +1620,7 @@ public class UavController {
             // 关闭线程池
             executor.shutdown();
             // 生成kmz
-            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed);
+            File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed,0,0);
             if (kmzFile == null) {
                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
             }
@@ -1804,7 +1805,7 @@ public class UavController {
 
             //region  其他
             try {
-                File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed);
+                File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed,0,0);
                 if (kmzFile == null) {
                     return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
                      }
@@ -1967,7 +1968,7 @@ public class UavController {
                 Callable<Result> task = new Callable<Result>() {
                     public Result call() {
                         try {
-                            File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath,speed);
+                            File kmzFile = KmzUtil.beforeDataProcessing(group, groupfileName, takeoffAlt, finalHomeAlt, altType, finalUavType, basePath,speed,0,0);
                             if (kmzFile == null) {
                                 return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
                             }
@@ -2526,7 +2527,7 @@ public class UavController {
             List<WaypointEf> waypointEfList = new ArrayList<>(); //  将数据取出
             int i = 1;
             for (Map<String, Object> wpsDetailDto : wpsDetailList) {
-                sseClient.settObjectMap( i,wpsDetailDto);
+                sseClient.settObjectMap( i,wpsDetailDto); //
                 WaypointEf waypointEf = new WaypointEf();
                 Object altValue = wpsDetailDto.getOrDefault("alt", null);
                 double alt;
@@ -2539,7 +2540,6 @@ public class UavController {
                     alt = 0.0; // 设置默认值为 0.0，你可以根据实际需求做调整
                 }
 
-                System.out.println(i+"I");
                 double lng = (double) wpsDetailDto.getOrDefault("lng", null);
                 double lat = (double) wpsDetailDto.getOrDefault("lat", null);
                 waypointEf.setWpNo(i);
@@ -3425,18 +3425,24 @@ public class UavController {
             }
 
             EfHandle efHandleObj = new EfHandle();
-            efHandleObj.setGapSquare(BlockAll.getGapSquare());
-            efHandleObj.setReseedSquare(BlockAll.getReseedSquare());
-            efHandleObj.setReseedAreaNum(BlockAll.getReseedAreaNum());
-            efHandleObj.setSeedNum(BlockAll.getSeedNum());
+            if(BlockAll!=null){
+                efHandleObj.setGapSquare(BlockAll.getGapSquare());
+                efHandleObj.setReseedSquare(BlockAll.getReseedSquare());
+                efHandleObj.setReseedAreaNum(BlockAll.getReseedAreaNum());
+                efHandleObj.setSeedNum(BlockAll.getSeedNum());
+            }
             efHandleObj.setHandleUuid(handleUuid);
             efHandleObj.setDate(new Date(handleDate));
             EfHandle efHandle = efHandleService.insert(efHandleObj);
             int handleId = efHandle.getId(); // 通过数据库表查询
-            blockList.stream().forEach(block -> {
-                block.setHandleId(handleId);
-            })    ;
-            List<EfHandleBlockList> efHandleBlockLists = efHandleBlockListService.insertBatchByList(blockList);
+            List<EfHandleBlockList> efHandleBlockLists = new ArrayList<>();
+            if(BlockAll!=null){
+                blockList.stream().forEach(block -> {
+                    block.setHandleId(handleId);
+                })    ;
+                efHandleBlockLists   = efHandleBlockListService.insertBatchByList(blockList);
+            }
+
 
             // 补播路径点存储 单
             singleList.stream().forEach(waypoint -> {
@@ -3447,6 +3453,7 @@ public class UavController {
             continuousList.stream().forEach(waypoint -> {
                 waypoint.setHandleid(handleId);
                 waypoint.setReseedingid(handleId);
+                waypoint.setFlyTimes(0);
             });
             List<continuousWaypoints> efHandleContinuousList = efHandleContinuousService.insertBatchByList(continuousList);
 

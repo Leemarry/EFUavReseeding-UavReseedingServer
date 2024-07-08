@@ -17,7 +17,7 @@
     <insert id="insertBatchByList" keyProperty="id" useGeneratedKeys="true">
         INSERT INTO ef_handle_continuous_waypoint (id,reseeding_id,on_lat,on_lng,on_alt,off_lat,off_lng,off_alt,handle_id,fly_times) VALUES
         <foreach collection="entities" item="entity" separator=",">
-            (#{entity.id},#{entity.handleid},#{entity.onlat},#{entity.onlng},#{entity.onalt},#{entity.offlat},#{entity.offlng},#{entity.offalt},#{entity.handleid},#{entity.flytimes})
+            (#{entity.id},#{entity.handleid},#{entity.onlat},#{entity.onlng},#{entity.onalt},#{entity.offlat},#{entity.offlng},#{entity.offalt},#{entity.handleid},#{entity.flyTimes})
         </foreach>
 
     </insert>

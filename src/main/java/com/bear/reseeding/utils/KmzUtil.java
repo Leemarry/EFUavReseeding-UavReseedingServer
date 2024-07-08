@@ -58,7 +58,8 @@ public class KmzUtil {
      * @param uavType
      * @return
      */
-    public static File beforeDataProcessing(List<double[]> coordinateArray, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath ,Float speed) {
+    public static File beforeDataProcessing(List<double[]> coordinateArray, String fileName, double takeoffAlt, double homeAltAbs, int altType,
+                                            int uavType, String topbasePath ,Float speed ,Integer startTime,Integer endTime) {
         boolean flag = false;
         File kmzFile = null; // 返回的文件实例
         try {
@@ -102,8 +103,8 @@ public class KmzUtil {
             //kmlPath
             // endregion
 
-            String wpmlPathString = writewpml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath);
-            String kmlPathString = writeKml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath);
+            String wpmlPathString = writewpml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath, startTime, endTime);
+            String kmlPathString = writeKml(coordinateArray, efTaskWps, fileName, takeoffAlt, homeAltAbs, altType, uavType, topbasePath, startTime, endTime);
             List<String> pathStrList = new ArrayList<>();
             File file1 = null;
             File file2 = null;
@@ -217,7 +218,8 @@ public class KmzUtil {
     }
 // endregion
 
-    public static String writeKml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath) {
+    public static String writeKml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs,
+                                  int altType, int uavType, String topbasePath,Integer startTime,Integer endTime) {
         try {
             Element root = DocumentHelper.createElement("kml");
             Namespace namespace = Namespace.get("http://www.opengis.net/kml/2.2");
@@ -278,7 +280,7 @@ public class KmzUtil {
             globalWaypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
             globalWaypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
-            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndPassWithContinuityCurvature");
+            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithContinuityCurvature"); //
             double direction = 0;
             for (int i = 0; i < coordinateArray.size(); i++) {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
@@ -361,26 +363,31 @@ public class KmzUtil {
 //                actionActuatorFuncParamFour.addElement("wpml:isInfiniteFocus").addText("0");
 //                actionActuatorFuncParamFour.addElement("wpml:payloadPositionIndex").addText("0");
 
-//                Element actionFive = actionGroup.addElement("wpml:action");//动作列表
-//                actionFive.addElement("wpml:actionId").addText("4");//动作id
-//                actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-//                Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
-//                actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText("2");
+                if (startTime != null && startTime != 0) {
+                    Element actionFive = actionGroup.addElement("wpml:action");//动作列表
+                    actionFive.addElement("wpml:actionId").addText("4");//动作id
+                    actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+                    Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
+                    actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText(startTime.toString());
+                }
+
 
                 Element actionSix = actionGroup.addElement("wpml:action");//动作列表
                 actionSix.addElement("wpml:actionId").addText("5");//动作id
                 actionSix.addElement("wpml:actionActuatorFunc").addText("takePhoto");//动作类型
                 Element actionActuatorFuncParamSix = actionSix.addElement("wpml:actionActuatorFuncParam");//动作参数
-                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
+//                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
 //                actionActuatorFuncParamSix.addElement("wpml:payloadLensIndex").addText("ir,zoom");
                 actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
 
+                if (endTime != null && endTime != 0) {
+                    Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
+                    actionSeven.addElement("wpml:actionId").addText("6");//动作id
+                    actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+                    Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
+                    actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
+                }
 
-//                Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
-//                actionSeven.addElement("wpml:actionId").addText("6");//动作id
-//                actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-//                Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
-//                actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText("1");
             }
 
             String basePath = getpIngBasePath(topbasePath);
@@ -405,7 +412,8 @@ public class KmzUtil {
         }
     }
 
-    private static String writewpml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs, int altType, int uavType, String topbasePath) {
+    private static String writewpml(List<double[]> coordinateArray, EfTaskWps efTaskWps, String fileName, double takeoffAlt, double homeAltAbs,
+                                    int altType, int uavType, String topbasePath,Integer startTime,Integer endTime) {
         try {
             Element root = DocumentHelper.createElement("kml");
             Namespace namespace = Namespace.get("http://www.opengis.net/kml/2.2");
@@ -450,19 +458,10 @@ public class KmzUtil {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
                 double lng = firstPoint[0];  // 获取经度
                 double lat = firstPoint[1];  // 获取纬度
-//                Map<double[]> entry = coordinateArray.get(i);
-//                double lng = entry.get("x");
-//                double lat = entry.get("y");
-//                double alt = entry.get("z");
                 for (int j = i + 1; j < coordinateArray.size(); j++) {
                     double[] nextPoint = coordinateArray.get(j);  // 获取第一组坐标点
                     double longitude1 = nextPoint[0];  // 获取经度
                     double latitude2 = nextPoint[1];  // 获取纬度
-//                    Map<String,Double>  nextentry = coordinateArray.get(i+1);
-//                    double lng1 = nextentry.get("x");
-//                    double lat1 = nextentry.get("y");
-//                    double alt1 = nextentry.get("z");
-//                    direction =getDirection(lat,lng,lat1,lng1);
                     direction = getDirection(lat, lng, latitude2, longitude1);
                     break;
                 }
@@ -483,7 +482,7 @@ public class KmzUtil {
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
                 Element waypointTurnParam = placemark.addElement("wpml:waypointTurnParam");//航点转弯模式
-                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndPassWithContinuityCurvature"); // 点不停
+                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndStopWithContinuityCurvature"); // 点不停 toPointAndPassWithContinuityCurvature
                 waypointTurnParam.addElement("wpml:waypointTurnDampingDist").addText("0");
                 placemark.addElement("wpml:useStraightLine").addText("1");
 
@@ -527,12 +526,17 @@ public class KmzUtil {
 //                actionActuatorFuncParamFour.addElement("wpml:focusY").addText("0.5");
 //                actionActuatorFuncParamFour.addElement("wpml:isInfiniteFocus").addText("0");
 //                actionActuatorFuncParamFour.addElement("wpml:payloadPositionIndex").addText("0");
-//
-//                Element actionFive = actionGroup.addElement("wpml:action");//动作列表
-//                actionFive.addElement("wpml:actionId").addText("4");//动作id
-//                actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-//                Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
-//                actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText("2");
+              // startTime 不等于o
+
+                if (startTime != null && startTime != 0) {
+                    Element actionFive = actionGroup.addElement("wpml:action");//动作列表
+                    actionFive.addElement("wpml:actionId").addText("4");//动作id
+                    actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+                    Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
+                    actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText(startTime.toString());
+                }
+
+
 
 //                Element actionSix = actionGroup.addElement("wpml:action");//动作列表
 //                actionSix.addElement("wpml:actionId").addText("5");//动作id
@@ -557,16 +561,20 @@ public class KmzUtil {
                 actionSix.addElement("wpml:actionId").addText("5");//动作id
                 actionSix.addElement("wpml:actionActuatorFunc").addText("takePhoto");//动作类型
                 Element actionActuatorFuncParamSix = actionSix.addElement("wpml:actionActuatorFuncParam");//动作参数
-                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
+//                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
 //                actionActuatorFuncParamSix.addElement("wpml:payloadLensIndex").addText("ir,zoom");
                 actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
 
+                //   endTime 不等于o
+                if (endTime != null && endTime != 0) {
+                    Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
+                    actionSeven.addElement("wpml:actionId").addText("6");//动作id
+                    actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+                    Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
+                    actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
+                }
 
-//                Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
-//                actionSeven.addElement("wpml:actionId").addText("6");//动作id
-//                actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-//                Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
-//                actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText("1");
+
 
             }
 //
