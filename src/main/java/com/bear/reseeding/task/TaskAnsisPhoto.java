@@ -101,7 +101,7 @@ public class TaskAnsisPhoto {
     public void savePhoto(Date date, String uavId, String fileName, String streamSource,
                           double lat, double lng, byte[] fileStream, String FolderName, String type, String suffix,
                           long sizeBig, float alt, float altAbs, CompletableFuture<String> urlBigFuture, MultipartFile file,
-                          double roll, double pitch, double yaw, double gimbalRoll, double gimbalPitch, double gimbalYaw) {
+                          double roll, double pitch, double yaw, double gimbalRoll, double gimbalPitch, double gimbalYaw ,String name) {
         if (threadPoolExecutorPhoto == null) {
             // 构造一个线程池
             threadPoolExecutorPhoto = new ThreadPoolExecutor(10, 200, 30,
@@ -170,6 +170,7 @@ public class TaskAnsisPhoto {
                     efMediaPhoto.setCameraVideoStreamSource(streamSource);
                     efMediaPhoto.setPathImage(urlBig);
                     efMediaPhoto.setSizeImage(sizeBig);
+                    efMediaPhoto.setImageTag(name);
                     efMediaPhoto.setPathThumbnail(urlSmall);
                     efMediaPhoto.setSizeThumbnail(sizeSmall);
                     efMediaPhoto.setCameraVideoStreamSource(streamSource);
@@ -192,7 +193,7 @@ public class TaskAnsisPhoto {
                     }
                 } else {
                     efMediaPhoto = new EfMediaPhoto();
-                    efMediaPhoto.setImageTag(fileName);
+                    efMediaPhoto.setImageTag(name);
                     efMediaPhoto.setCameraVideoStreamSource(streamSource);
                     efMediaPhoto.setPathImage(urlBig);
                     efMediaPhoto.setSizeImage(sizeBig);

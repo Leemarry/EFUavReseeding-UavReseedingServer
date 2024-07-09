@@ -2085,6 +2085,7 @@ public class UavController {
             HashMap<String, Object> map = RequestUtil.getRequestParam(request);
             String MediaName = CommonUtil.getStrValueFromMap(map, "MediaName");
             String UavID = CommonUtil.getStrValueFromMap(map, "UavID");
+            String  name = CommonUtil.getStrValueFromMap(map, "name");
             String uavIdTemp = UavID;
             UavID = redisUtils.getUavIdByUavSn(UavID);
             //根据无人机SN获取无人机ID  2,1,
@@ -2160,7 +2161,7 @@ public class UavController {
                 suffix = oldFileName.substring(oldFileName.lastIndexOf("."));
             }
             //新的文件名称
-            String newFileName = MediaName + suffix;
+            String newFileName = MediaName + suffix;  // name -> DJI_20240709110351_0039_D.JPG
             String FolderName = DateUtil.timeStamp2Date(MediaCreatTime, "yyyyMMdd");
             double lat = ConvertUtil.convertToDouble(latStr, 0);
             double lng = ConvertUtil.convertToDouble(lngStr, 0);
@@ -2181,7 +2182,7 @@ public class UavController {
             // 开启线程储存照片
             CompletableFuture<String> urlBigFuture = new CompletableFuture<>();
             taskAnsisPhoto.savePhoto(new Date(MediaCreatTime), UavID, newFileName, StreamSource, lat, lng, fileStream,
-                    FolderName, type, suffix, sizeBig, alt, altAbs, urlBigFuture, file, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw);
+                    FolderName, type, suffix, sizeBig, alt, altAbs, urlBigFuture, file, roll, pitch, yaw, gimbalRoll, gimbalPitch, gimbalYaw,name);
             return ResultUtil.success("上传图片成功!");
         } catch (Exception e) {
             LogUtil.logError("上传图片出错：" + e.toString());
