@@ -1718,7 +1718,7 @@ public class UavController {
     @PostMapping(value = "/saveRouteToMinioAll")
     public Result saveRouteToMinioAll(@CurrentUser EfUser efUser, @RequestParam(value = "uavId", required = false) String uavId, @RequestBody List<double[]> mission, @RequestParam("altType") int altType,
                                    @RequestParam("takeoffAlt") double takeoffAlt, @RequestParam(value = "homeAlt", required = false) double homeAlt, @RequestParam(value = "name") String name,
-                                   @RequestParam("speed") Float speed,    HttpServletRequest request) {
+                                   @RequestParam("speed") Float speed,   @RequestParam(value = "startTime", required = false) Integer startTime, @RequestParam("endTime") Integer endTime,  HttpServletRequest request) {
         try {
             if (mission == null || mission.size() <= 0) {
                 return ResultUtil.error("航线为空!");
@@ -1805,7 +1805,7 @@ public class UavController {
 
             //region  其他
             try {
-                File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed,0,0);
+                File kmzFile = KmzUtil.beforeDataProcessing(mission, fileName, takeoffAlt, homeAlt, altType, uavType, basePath,speed,startTime,endTime);
                 if (kmzFile == null) {
                     return ResultUtil.error("保存巡检航线失败(/生成kmz有误)！"); //生成kmz有误
                      }
