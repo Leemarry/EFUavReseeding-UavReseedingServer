@@ -280,7 +280,7 @@ public class KmzUtil {
             globalWaypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
             globalWaypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
-            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithContinuityCurvature"); //
+            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature"); //
             double direction = 0;
             for (int i = 0; i < coordinateArray.size(); i++) {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
@@ -337,14 +337,17 @@ public class KmzUtil {
 //                Element actionActuatorFuncParamZero = actionZero.addElement("wpml:actionActuatorFuncParam");
 //                actionActuatorFuncParamZero.addElement("wpml:aircraftHeading").addText(String.valueOf(0));  // 相机朝向
 //                actionActuatorFuncParamZero.addElement("wpml:gimbalRotateMode").addText("counterClockwise");
-//
-                Element actionTwo = actionGroup.addElement("wpml:action");//动作列表
-                actionTwo.addElement("wpml:actionId").addText("1");//动作id
-                actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
-                Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
-                actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
-                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
-                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-90));//云台俯仰转动角度
+
+
+                    Element actionTwo = actionGroup.addElement("wpml:action");//动作列表
+                    actionTwo.addElement("wpml:actionId").addText("0");//动作id
+                    actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
+                    Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
+                    actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
+                    actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
+                    actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-90));//云台俯仰转动角度
+
+
 //
 //                Element actionThree = actionGroup.addElement("wpml:action");//动作列表
 //                actionThree.addElement("wpml:actionId").addText("2");//动作id
@@ -363,17 +366,17 @@ public class KmzUtil {
 //                actionActuatorFuncParamFour.addElement("wpml:isInfiniteFocus").addText("0");
 //                actionActuatorFuncParamFour.addElement("wpml:payloadPositionIndex").addText("0");
 
-                if (startTime != null && startTime != 0) {
-                    Element actionFive = actionGroup.addElement("wpml:action");//动作列表
-                    actionFive.addElement("wpml:actionId").addText("4");//动作id
-                    actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-                    Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
-                    actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText(startTime.toString());
-                }
+//                if (startTime != null && startTime != 0) {
+//                    Element actionFive = actionGroup.addElement("wpml:action");//动作列表
+//                    actionFive.addElement("wpml:actionId").addText("4");//动作id
+//                    actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+//                    Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
+//                    actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText(startTime.toString());
+//                }
 
 
                 Element actionSix = actionGroup.addElement("wpml:action");//动作列表
-                actionSix.addElement("wpml:actionId").addText("5");//动作id
+                actionSix.addElement("wpml:actionId").addText("1");//动作id
                 actionSix.addElement("wpml:actionActuatorFunc").addText("takePhoto");//动作类型
                 Element actionActuatorFuncParamSix = actionSix.addElement("wpml:actionActuatorFuncParam");//动作参数
 //                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
@@ -382,7 +385,7 @@ public class KmzUtil {
 
                 if (endTime != null && endTime != 0) {
                     Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
-                    actionSeven.addElement("wpml:actionId").addText("6");//动作id
+                    actionSeven.addElement("wpml:actionId").addText("2");//动作id
                     actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
                     Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
                     actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
@@ -482,7 +485,7 @@ public class KmzUtil {
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
                 Element waypointTurnParam = placemark.addElement("wpml:waypointTurnParam");//航点转弯模式
-                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndStopWithContinuityCurvature"); // 点不停 toPointAndPassWithContinuityCurvature
+                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature"); // 点不停 toPointAndPassWithContinuityCurvature   toPointAndStopWithContinuityCurvature
                 waypointTurnParam.addElement("wpml:waypointTurnDampingDist").addText("0");
                 placemark.addElement("wpml:useStraightLine").addText("1");
 
@@ -501,14 +504,17 @@ public class KmzUtil {
 //                Element actionActuatorFuncParamZero = actionZero.addElement("wpml:actionActuatorFuncParam");
 //                actionActuatorFuncParamZero.addElement("wpml:aircraftHeading").addText(String.valueOf(0));  //拍摄时的朝向，无人机或相机朝向?
 //                actionActuatorFuncParamZero.addElement("wpml:gimbalRotateMode").addText("counterClockwise");
-//
-                Element actionTwo = actionGroup.addElement("wpml:action");//动作列表 无人机
-                actionTwo.addElement("wpml:actionId").addText("1");//动作id
-                actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
-                Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
-                actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
-                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
-                actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-90));//云台俯仰转动角度
+
+
+                    Element actionTwo = actionGroup.addElement("wpml:action");//动作列表 无人机
+                    actionTwo.addElement("wpml:actionId").addText("0");//动作id
+                    actionTwo.addElement("wpml:actionActuatorFunc").addText("gimbalRotate");//动作类型
+                    Element actionActuatorFuncParamTwo = actionTwo.addElement("wpml:actionActuatorFuncParam");//动作参数
+                    actionActuatorFuncParamTwo.addElement("wpml:gimbalRotateMode").addText("absoluteAngle");//云台转动模式
+                    actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateEnable").addText("1");//是否使能云台俯仰转动
+                    actionActuatorFuncParamTwo.addElement("wpml:gimbalPitchRotateAngle").addText(String.valueOf(-90));//云台俯仰转动角度
+
+
 //
 //                Element actionThree = actionGroup.addElement("wpml:action");//动作列表
 //                actionThree.addElement("wpml:actionId").addText("2");//动作id
@@ -528,13 +534,13 @@ public class KmzUtil {
 //                actionActuatorFuncParamFour.addElement("wpml:payloadPositionIndex").addText("0");
               // startTime 不等于o
 
-                if (startTime != null && startTime != 0) {
-                    Element actionFive = actionGroup.addElement("wpml:action");//动作列表
-                    actionFive.addElement("wpml:actionId").addText("4");//动作id
-                    actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-                    Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
-                    actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText(startTime.toString());
-                }
+//                if (startTime != null && startTime != 0) {
+//                    Element actionFive = actionGroup.addElement("wpml:action");//动作列表
+//                    actionFive.addElement("wpml:actionId").addText("4");//动作id
+//                    actionFive.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+//                    Element actionActuatorFuncParamFive = actionFive.addElement("wpml:actionActuatorFuncParam");//动作参数
+//                    actionActuatorFuncParamFive.addElement("wpml:hoverTime").addText(startTime.toString());
+//                }
 
 
 
@@ -558,7 +564,7 @@ public class KmzUtil {
 //                actionActuatorFuncParamSix.addElement("wpml:gimbalRotateTime").addText("0");//云台转动用时
 //                gimbalRollRotateEnable
                 Element actionSix = actionGroup.addElement("wpml:action");//动作列表
-                actionSix.addElement("wpml:actionId").addText("5");//动作id
+                actionSix.addElement("wpml:actionId").addText("1");//动作id
                 actionSix.addElement("wpml:actionActuatorFunc").addText("takePhoto");//动作类型
                 Element actionActuatorFuncParamSix = actionSix.addElement("wpml:actionActuatorFuncParam");//动作参数
 //                actionActuatorFuncParamSix.addElement("wpml:fileSuffix").addText("ponit" + String.valueOf(i + 1));
@@ -568,7 +574,7 @@ public class KmzUtil {
                 //   endTime 不等于o
                 if (endTime != null && endTime != 0) {
                     Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
-                    actionSeven.addElement("wpml:actionId").addText("6");//动作id
+                    actionSeven.addElement("wpml:actionId").addText("2");//动作id
                     actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
                     Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
                     actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
