@@ -275,12 +275,12 @@ public class KmzUtil {
 
             Element globalWaypointHeadingParam = folder.addElement("wpml:globalWaypointHeadingParam");
 
-            globalWaypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("followWayline");
+            globalWaypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("followWayline"); //  followWayline
             globalWaypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText("0");
             globalWaypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
             globalWaypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
-            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature"); //
+            folder.addElement("wpml:globalWaypointTurnMode").addText("toPointAndPassWithContinuityCurvature"); // toPointAndPassWithContinuityCurvature
             double direction = 0;
             for (int i = 0; i < coordinateArray.size(); i++) {
                 double[] firstPoint = coordinateArray.get(i);  // 获取第一组坐标点
@@ -312,7 +312,7 @@ public class KmzUtil {
                 placemark.addElement("wpml:ellipsoidHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs)); //String.valueOf(alt - homeAltAbs) : String.valueOf(alt)
                 placemark.addElement("wpml:height").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs));
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");
-                waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
+                waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("followWayline"); // smoothTransition
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(0));  //朝向？ direction
                 waypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPathMode").addText("followBadArc");
@@ -383,13 +383,13 @@ public class KmzUtil {
 //                actionActuatorFuncParamSix.addElement("wpml:payloadLensIndex").addText("ir,zoom");
                 actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
 
-                if (endTime != null && endTime != 0) {
-                    Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
-                    actionSeven.addElement("wpml:actionId").addText("2");//动作id
-                    actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-                    Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
-                    actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
-                }
+//                if (endTime != null && endTime != 0) {
+//                    Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
+//                    actionSeven.addElement("wpml:actionId").addText("2");//动作id
+//                    actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+//                    Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
+//                    actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
+//                }
 
             }
 
@@ -478,14 +478,14 @@ public class KmzUtil {
                 placemark.addElement("wpml:executeHeight").addText(altType == 0 ? String.valueOf(takeoffAlt) : String.valueOf(homeAltAbs));//航点执行高度
                 placemark.addElement("wpml:waypointSpeed").addText(String.valueOf(efTaskWps.getWpsSpeed()));//航点飞行速度
                 Element waypointHeadingParam = placemark.addElement("wpml:waypointHeadingParam");//偏航角参数模式
-                waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("smoothTransition");
+                waypointHeadingParam.addElement("wpml:waypointHeadingMode").addText("followWayline"); //  smoothTransition
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngle").addText(String.valueOf(0)); //朝向？ direction
                 waypointHeadingParam.addElement("wpml:waypointPoiPoint").addText("0.000000,0.000000,0.000000");
                 waypointHeadingParam.addElement("wpml:waypointHeadingPathMode").addText("followBadArc");
                 waypointHeadingParam.addElement("wpml:waypointHeadingAngleEnable").addText("0");
 
                 Element waypointTurnParam = placemark.addElement("wpml:waypointTurnParam");//航点转弯模式
-                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndStopWithDiscontinuityCurvature"); // 点不停 toPointAndPassWithContinuityCurvature   toPointAndStopWithContinuityCurvature
+                waypointTurnParam.addElement("wpml:waypointTurnMode").addText("toPointAndPassWithContinuityCurvature"); // 点不停 toPointAndPassWithContinuityCurvature   toPointAndStopWithDiscontinuityCurvature
                 waypointTurnParam.addElement("wpml:waypointTurnDampingDist").addText("0");
                 placemark.addElement("wpml:useStraightLine").addText("1");
 
@@ -572,13 +572,13 @@ public class KmzUtil {
                 actionActuatorFuncParamSix.addElement("wpml:payloadPositionIndex").addText("0");
 
                 //   endTime 不等于o
-                if (endTime != null && endTime != 0) {
-                    Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
-                    actionSeven.addElement("wpml:actionId").addText("2");//动作id
-                    actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
-                    Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
-                    actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
-                }
+//                if (endTime != null && endTime != 0) {
+//                    Element actionSeven = actionGroup.addElement("wpml:action");//动作列表
+//                    actionSeven.addElement("wpml:actionId").addText("2");//动作id
+//                    actionSeven.addElement("wpml:actionActuatorFunc").addText("hover");//动作类型
+//                    Element actionActuatorFuncParamSeven = actionSeven.addElement("wpml:actionActuatorFuncParam");//动作参数
+//                    actionActuatorFuncParamSeven.addElement("wpml:hoverTime").addText(endTime.toString());
+//                }
 
 
 
